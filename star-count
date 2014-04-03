@@ -626,7 +626,7 @@
  (magit-filenotify . 7)
  (magit-commit-training-wheels . 1)
  (magit-annex . 3)
- (magit . 1)
+ (magit . 1066)
  (mag-menu . 4)
  (macrostep . 22)
  (macro-math . 2)

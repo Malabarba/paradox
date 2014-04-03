@@ -61,15 +61,19 @@ Also saves result to `package-star-count'"
     (setq recipes-dir paradox-recipes-directory))
   (setq paradox-star-count nil)
   (with-temp-buffer
-    (dolist (file (directory-files recipes-dir t "\\`[^\\.]"))
-      (insert-file-contents file)
-      (let ((package (read (buffer-string))))
-        (when (eq 'github (cadr (memq :fetcher package)))
-          (add-to-list
-           'paradox-star-count
-           (cons (car package)
-                 (paradox-fetch-star-count (cadr (memq :repo package)))))))
-      (erase-buffer)))
+    (let* ((i 0)
+           (files (directory-files recipes-dir t "\\`[^\\.]"))
+           (N (length files)))
+      (dolist (file files)
+        (message "%s / %s" (incf i) N)
+        (insert-file-contents file)
+        (let ((package (read (buffer-string))))
+          (when (eq 'github (cadr (memq :fetcher package)))
+            (add-to-list
+             'paradox-star-count
+             (cons (car package)
+                   (paradox-fetch-star-count (cadr (memq :repo package)))))))
+        (erase-buffer))))
   (paradox-list-to-file 'paradox-star-count))
 
 (defun paradox-log (&rest s)
@@ -79,7 +83,7 @@ Also saves result to `package-star-count'"
   "Save list NAME in file given by the NAME-output-file variable."
   (let ((filename (eval (intern (format "%s-output-file" name)))))
     (with-temp-file filename
-      (princ (eval name) (current-buffer)))))
+      (pp (eval name) (current-buffer)))))
 
 (defun paradox-github-api-request (req)
   (with-temp-buffer
@@ -102,4 +106,3 @@ Also saves result to `package-star-count'"
 
 (provide 'paradox-counter)
 ;;; paradox-counter.el ends here.
-

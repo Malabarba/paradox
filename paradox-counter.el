@@ -25,6 +25,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.1 - 2014/04/03 - Generator complete.
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
@@ -57,31 +58,22 @@
 Also saves result to `package-star-count'"
   (interactive)
   (unless recipes-dir
-    (setq recipes-dir package-recipes-directory))
+    (setq recipes-dir paradox-recipes-directory))
   (setq paradox-star-count nil)
   (with-temp-buffer
-    (dolist (file (directory-files recipes-dir t))
-      (unless (string-match "/\\.dir-locals\\.el\\'" file)
-        (insert-file-contents file)
-        (let ((package (read (buffer-string)))
-              (sc 0)
-              owner/repo)
-          (when (eq 'github (cadr (memq :fetcher package)))
-            (setq owner/repo (cadr (memq :repo package)))
-            (with-current-buffer 
-                (url-retrieve-synchronously 
-                 (format "https://api.github.com/repos/%s/stargazers" owner/repo))
-              (search-forward-regexp "^$" nil t)
-              (forward-char 1)
-              (if (looking-at "[")
-                  (while (null (looking-at "]"))
-                    (incf sc)
-                    (forward-sexp 1)))
-              (kill-buffer))
-            (add-to-list 'package-star-count
-                         (cons (car package) sc))))))
-    (erase-buffer))
+    (dolist (file (directory-files recipes-dir t "\\`[^\\.]"))
+      (insert-file-contents file)
+      (let ((package (read (buffer-string))))
+        (when (eq 'github (cadr (memq :fetcher package)))
+          (add-to-list
+           'paradox-star-count
+           (cons (car package)
+                 (paradox-fetch-star-count (cadr (memq :repo package)))))))
+      (erase-buffer)))
   (paradox-list-to-file 'paradox-star-count))
+
+(defun paradox-log (&rest s)
+  (apply 'message s))
 
 (defun paradox-list-to-file (name)
   "Save list NAME in file given by the NAME-output-file variable."
@@ -89,5 +81,25 @@ Also saves result to `package-star-count'"
     (with-temp-file filename
       (princ (eval name) (current-buffer)))))
 
+(defun paradox-github-api-request (req)
+  (with-temp-buffer
+    (shell-command
+     (format 
+      "curl -s -u %s:x-oauth-basic https://api.github.com/%s"
+      paradox-personal-access-token req)
+     t)
+    (goto-char (point-min))
+    (json-read)))
+
+(defun paradox-fetch-star-count (repo)
+  (with-current-buffer
+      (url-retrieve-synchronously (format "https://github.com/%s/" repo))
+    (when (search-forward-regexp (format "href=\"/%s/stargazers\">" repo) nil t)
+      (skip-chars-forward "\n 	")
+      (if (looking-at "[0-9]")
+          (thing-at-point 'number)
+        nil))))
+
 (provide 'paradox-counter)
 ;;; paradox-counter.el ends here.
+

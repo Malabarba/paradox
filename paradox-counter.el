@@ -101,7 +101,13 @@ Also saves result to `package-star-count'"
     (when (search-forward-regexp (format "href=\"/%s/stargazers\">" repo) nil t)
       (skip-chars-forward "\n 	")
       (if (looking-at "[0-9]")
-          (thing-at-point 'number)
+          (progn
+            (while (looking-at "[0-9]")
+              (forward-char 1)
+              (when (looking-at ",")
+                (delete-char 1)))
+            (forward-char -1)
+            (thing-at-point 'number))
         nil))))
 
 (provide 'paradox-counter)

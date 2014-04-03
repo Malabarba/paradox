@@ -63,8 +63,28 @@ Please include your emacs and paradox versions."
 
 (defvar paradox-star-count nil)
 
-;;;###autoload
+(defcustom paradox-star-count-url
+  "https://raw.github.com/Bruce-Connor/paradox/data/star-count"
+  "Address of the raw star-count file."
+  :type 'url
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
 
+(defadvice package-refresh-contents
+    (before paradox-before-package-refresh-contents-advice () activate)
+  "Download paradox data when updating packages buffer."
+  (paradox-refresh-star-count))
+
+;;;###autoload
+(defun paradox-refresh-star-count ()
+  "Download the star-count file and populate the respective variable."
+  (interactive)
+  (setq
+   paradox-star-count
+   (with-current-buffer 
+       (url-retrieve-synchronously paradox-star-count-url)
+     (when (search-forward "\n\n")
+       (read (current-buffer))))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

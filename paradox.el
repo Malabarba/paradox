@@ -86,5 +86,46 @@ Please include your emacs and paradox versions."
      (when (search-forward "\n\n")
        (read (current-buffer))))))
 
+(defvar paradox-hide-buffer-identification t
+  "If non-nil, no buffer-name will be displayed in the packages buffer.")
+(defvaralias 'paradox-hide-buffer-name 'paradox-hide-buffer-identification)
+
+(defvar paradox-installed-count
+  (concat 
+   "Installed: "
+   (propertize "30" 'face 'mode-line-buffer-id)))
+(put 'paradox-installed-count 'risky-local-variable t)
+
+(defvar paradox-total-count "30")
+(put 'paradox-total-count 'risky-local-variable t)
+
+(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
+  "Major mode for browsing a list of packages.
+Letters do not insert themselves; instead, they are commands.
+\\<package-menu-mode-map>
+\\{package-menu-mode-map}"
+  (setq mode-line-buffer-identification
+        (list
+         (propertized-buffer-identification
+          (format "%%%sb" (length (buffer-name))))
+         " " 
+         '(:eval (propertize paradox-installed-count
+                             'mouse-face 'mode-line-highlight
+                             'local-map mode-line-buffer-identification-keymap))
+         " " 
+         '(:propertize ("Total: " (:propertize paradox-total-count face mode-line-buffer-id))
+                       mouse-face mode-line-highlight)))
+  (setq tabulated-list-format
+        `[("Package" 18 package-menu--name-predicate)
+          ("Version" 12 nil)
+          ("Status"  10 package-menu--status-predicate)
+          ,@(if (cdr package-archives)
+                '(("Archive" 10 package-menu--archive-predicate)))
+          ("Description" 0 nil)])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Status" nil))
+  (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (tabulated-list-init-header))
+
 (provide 'paradox)
 ;;; paradox.el ends here.

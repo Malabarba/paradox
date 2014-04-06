@@ -6,24 +6,38 @@
 ;; URL: http://github.com/Bruce-Connor/paradox
 ;; Version: 0.1
 ;; Keywords: 
+;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0"))
 ;; Prefix: paradox 
 ;; Separator: -
 
 ;;; Commentary:
-;;
 ;; 
+;; Project for generating and displaying Package Ratings for Emacs packages.
+;; 
+;; To install it, open the file and call M-x `package-install-from-buffer'.
+;; 
+;; To use it, simply call M-x `paradox-list-packages' (instead of the regular `list-packages').
+;; 
+;; ## Current Features ##
+;; 
+;; * Display number of github stars the package has (right before the description).
+;; * Display useful information on the mode-line.
+;; * `hl-line-mode' enabled by default.
+;; 
+;; ## Planned Features ##
+;; 
+;; * Star and unstar packages from within the Package Menu.
+;; * Package filtering.
+;; * More fontification.
+;; * More customization.
 
 ;;; Instructions:
 ;;
 ;; INSTALLATION
 ;;
-;; This package is available fom Melpa, you may install it by calling
-;; M-x package-install.
-;;
-;; Alternatively, you can download it manually, place it in your
-;; `load-path' and require it with
-;;
-;;     (require 'paradox)
+;; To install it, open the file and call M-x `package-install-from-buffer'.
+;; 
+;; To use it, simply call M-x `paradox-list-packages' (instead of the regular `list-packages').
 
 ;;; License:
 ;;
@@ -44,6 +58,7 @@
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
+(require 'package)
 (defconst paradox-version "0.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
@@ -61,28 +76,30 @@ Please include your emacs and paradox versions."
   :prefix "paradox-"
   :package-version '(paradox . "0.1"))
 
-(defvar paradox-star-count nil)
+(defface paradox-star-face
+  '((t :inherit font-lock-comment-face))
+  "Face used on the star count number."
+  :group 'paradox)
 
-(defcustom paradox-star-count-url
+(defvar paradox--star-count nil)
+
+(defvar paradox--star-count-url
   "https://raw.github.com/Bruce-Connor/paradox/data/star-count"
-  "Address of the raw star-count file."
-  :type 'url
-  :group 'paradox
-  :package-version '(paradox . "0.1"))
+  "Address of the raw star-count file.")
 
 (defadvice package-refresh-contents
     (before paradox-before-package-refresh-contents-advice () activate)
   "Download paradox data when updating packages buffer."
-  (paradox-refresh-star-count))
+  (paradox--refresh-star-count))
 
 ;;;###autoload
-(defun paradox-refresh-star-count ()
+(defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
   (setq
-   paradox-star-count
+   paradox--star-count
    (with-current-buffer 
-       (url-retrieve-synchronously paradox-star-count-url)
+       (url-retrieve-synchronously paradox--star-count-url)
      (when (search-forward "\n\n")
        (read (current-buffer))))))
 
@@ -90,42 +107,193 @@ Please include your emacs and paradox versions."
   "If non-nil, no buffer-name will be displayed in the packages buffer.")
 (defvaralias 'paradox-hide-buffer-name 'paradox-hide-buffer-identification)
 
-(defvar paradox-installed-count
-  (concat 
-   "Installed: "
-   (propertize "30" 'face 'mode-line-buffer-id)))
-(put 'paradox-installed-count 'risky-local-variable t)
+(defun paradox--build-buffer-id (st n)
+  (list st (list :propertize (int-to-string n)
+                 'face 'mode-line-buffer-id)))
 
-(defvar paradox-total-count "30")
-(put 'paradox-total-count 'risky-local-variable t)
+;;;###autoload
+(defun paradox-list-packages (no-fetch)
+  "Improved version of `package-list-packages'.
+Shows star count for packages, and extra information in the
+mode-line."
+  (interactive "P")
+  (paradox-enable)
+  (unless no-fetch (paradox--refresh-star-count))
+  (package-list-packages no-fetch))
+
+(defun paradox-enable ()
+  "Enable paradox, overriding the default package-menu."
+  (interactive)
+  (if (version< emacs-version "24.3.50")
+      (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat)
+    (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
+  ;; (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
+
+(defvar paradox--backups nil)
+
+(defun paradox-disable ()
+  "Disable paradox, and go back to regular package-menu."
+  (interactive)
+  (dolist (it paradox--backups)
+    (message "Restoring %s to %s" (car it) (eval (cdr it)))
+    (fset (car it) (eval (cdr it))))
+  (setq paradox--backups nil))
+
+(defun paradox--override-definition (sym newdef)
+  "Temporarily override SYM's function definition with TEMPDEF.
+Sym gets evaluated multiple times, so make sure it's just a
+symbol."
+  (let ((backup-name (intern (format "paradox--%s-backup" sym)))
+        (def (symbol-function sym)))
+    (unless (assoc def paradox--backups)
+      (message "Overriding %s with %s" sym newdef)
+      (eval (list 'defvar backup-name nil))
+      (add-to-list 'paradox--backups (cons sym backup-name))
+      (set backup-name def)
+      (fset sym newdef))))
+
+(defun paradox--print-info (pkg)
+  "Return a package entry suitable for `tabulated-list-entries'.
+PKG has the form (PKG-DESC . STATUS).
+Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
+  (let* ((pkg-desc (car pkg))
+         (status  (cdr pkg))
+         (face (pcase status
+                 (`"built-in"  'font-lock-builtin-face)
+                 (`"available" 'default)
+                 (`"new"       'bold)
+                 (`"held"      'font-lock-constant-face)
+                 (`"disabled"  'font-lock-warning-face)
+                 (`"installed" 'font-lock-comment-face)
+                 (`"unsigned"  'font-lock-warning-face)
+                 (_            'font-lock-warning-face)))) ; obsolete.
+    (list pkg-desc
+          `[,(list (symbol-name (package-desc-name pkg-desc))
+                   'face 'link
+                   'follow-link t
+                   'package-desc pkg-desc
+                   'action 'package-menu-describe-package)
+            ,(propertize (package-version-join
+                          (package-desc-version pkg-desc))
+                         'font-lock-face face)
+            ,(propertize status 'font-lock-face face)
+            ,@(if (cdr package-archives)
+                  (list (propertize (or (package-desc-archive pkg-desc) "")
+                                    'font-lock-face face)))
+            ,(paradox--package-star-count (package-desc-name pkg-desc))
+            ,(propertize (package-desc-summary pkg-desc)
+                         'font-lock-face face)])))
+
+(defun paradox--print-info-compat (pkg)
+  "Return a package entry suitable for `tabulated-list-entries' (package-1.0 version).
+PKG has the form ((PACKAGE . VERSION) STATUS DOC).
+Return (KEY [NAME VERSION STATUS DOC]), where KEY is the
+identifier (NAME . VERSION-LIST)."
+  (let* ((package (caar pkg))
+         (version (cdr (car pkg)))
+         (status  (nth 1 pkg))
+         (doc (or (nth 2 pkg) ""))
+         (face (cond
+                ((string= status "built-in")  'font-lock-builtin-face)
+                ((string= status "available") 'default)
+                ((string= status "new") 'bold)
+                ((string= status "held")      'font-lock-constant-face)
+                ((string= status "disabled")  'font-lock-warning-face)
+                ((string= status "installed") 'font-lock-comment-face)
+                (t 'font-lock-warning-face)))) ; obsolete.
+    (list (cons package version)
+          (vector (list (symbol-name package)
+                        'face 'link
+                        'follow-link t
+                        'package-symbol package
+                        'action 'package-menu-describe-package)
+                  (propertize (package-version-join version)
+                              'font-lock-face face)
+                  (propertize status 'font-lock-face face)
+                  (paradox--package-star-count package)
+                  (propertize doc 'font-lock-face face)))))
+
+(defun paradox--improve-entry (entry)
+  (setcdr entry (list 
+    (vconcat (list (paradox--entry-star-count entry))
+             (cadr entry)))))
+
+(defun paradox--entry-star-count (entry)
+  (paradox--package-star-count ;; The package symbol should be in the ID field, but that's not mandatory,
+   (or (ignore-errors (elt (car entry) 1))
+       ;; So we also try interning the package name.
+       (intern (car (elt (cadr entry) 0))))))
+
+(defun paradox--package-star-count (package)
+  (propertize  
+   (format "%s" (or (cdr (assoc package paradox--star-count)) ""))
+   'face 'paradox-star-face))
+
+(defun paradox--star-predicate (A B)
+  (< (string-to-int (elt (cadr A) 4))
+     (string-to-int (elt (cadr B) 4))))
+
+;; (defvar paradox--current-filter nil)
+;; (make-variable-buffer-local 'paradox--current-filter)
+
+;; (defun paradox--generate-menu (remember-pos packages &optional keywords)
+;;   "Populate the Package Menu, without hacking into the header-format.
+;; If REMEMBER-POS is non-nil, keep point on the same entry.
+;; PACKAGES should be t, which means to display all known packages,
+;; or a list of package names (symbols) to display.
+
+;; With KEYWORDS given, only packages with those keywords are
+;; shown."
+;;   (package-menu--refresh packages keywords)
+;;   (setq paradox--current-filter
+;;         (if keywords (mapconcat 'identity keywords ",")
+;;           nil))
+;;   (if keywords
+;;       (define-key package-menu-mode-map "q" 'package-show-package-list)
+;;     (define-key package-menu-mode-map "q" 'quit-window))
+;;   (tabulated-list-print remember-pos))
+
+(defvar paradox-menu-mode-map package-menu-mode-map)
 
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
 Letters do not insert themselves; instead, they are commands.
-\\<package-menu-mode-map>
-\\{package-menu-mode-map}"
-  (setq mode-line-buffer-identification
-        (list
-         (propertized-buffer-identification
-          (format "%%%sb" (length (buffer-name))))
-         " " 
-         '(:eval (propertize paradox-installed-count
-                             'mouse-face 'mode-line-highlight
-                             'local-map mode-line-buffer-identification-keymap))
-         " " 
-         '(:propertize ("Total: " (:propertize paradox-total-count face mode-line-buffer-id))
-                       mouse-face mode-line-highlight)))
+\\<paradox-menu-mode-map>
+\\{paradox-menu-mode-map}"
+  (hl-line-mode 1)  
+  (paradox--update-mode-line)
   (setq tabulated-list-format
         `[("Package" 18 package-menu--name-predicate)
           ("Version" 12 nil)
           ("Status"  10 package-menu--status-predicate)
           ,@(if (cdr package-archives)
                 '(("Archive" 10 package-menu--archive-predicate)))
+          (,(if (char-displayable-p ?★) "★" "*")     4 paradox--star-predicate :right-align t)
           ("Description" 0 nil)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
-  (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
-  (tabulated-list-init-header))
+  ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
+  (tabulated-list-init-header)
+  ;; We need package-menu-mode to be our parent, otherwise some
+  ;; commands throw errors. But we can't actually derive from it,
+  ;; otherwise its initialization will screw up the header-format. So
+  ;; we "patch" it like this.
+  (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
+  (run-hooks 'package-menu-mode-hook))
+
+(defun paradox--update-mode-line ()
+  (setq mode-line-buffer-identification
+        (list
+         (propertized-buffer-identification
+          (format "%%%sb" (length (buffer-name))))
+         ;; '(paradox--current-filter
+         ;;   ("[" paradox--current-filter "]"))
+         " " '(:eval (paradox--build-buffer-id "New: " (length package-menu--new-package-list)))
+         " " (paradox--build-buffer-id "Installed: " (length package-alist))
+         " " (paradox--build-buffer-id "Total: " (length package-archive-contents)))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

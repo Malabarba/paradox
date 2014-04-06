@@ -59,7 +59,7 @@ Also saves result to `package-star-count'"
   (interactive)
   (unless recipes-dir
     (setq recipes-dir paradox-recipes-directory))
-  (setq paradox-star-count nil)
+  (setq paradox--star-count nil)
   (with-temp-buffer
     (let* ((i 0)
            (files (directory-files recipes-dir t "\\`[^\\.]"))
@@ -70,11 +70,11 @@ Also saves result to `package-star-count'"
         (let ((package (read (buffer-string))))
           (when (eq 'github (cadr (memq :fetcher package)))
             (add-to-list
-             'paradox-star-count
+             'paradox--star-count
              (cons (car package)
                    (paradox-fetch-star-count (cadr (memq :repo package)))))))
         (erase-buffer))))
-  (paradox-list-to-file 'paradox-star-count))
+  (paradox-list-to-file 'paradox--star-count))
 
 (defun paradox-log (&rest s)
   (apply 'message s))

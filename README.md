@@ -1,4 +1,4 @@
-paradox
+Paradox
 =======
 
 Project for generating and displaying Package Ratings for Emacs packages.
@@ -9,7 +9,7 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 
 ## Current Features ##
 
-* Display number of github stars the package has (right before the description).
+* Display number of GitHub Stars the package has (right before the description).
 * Display useful information on the mode-line.
 * `hl-line-mode` enabled by default.
 
@@ -19,3 +19,4 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 * Package filtering.
 * More fontification.
 * More customization.
+

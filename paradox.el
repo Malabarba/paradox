@@ -141,9 +141,8 @@ mode-line."
   (setq paradox--backups nil))
 
 (defun paradox--override-definition (sym newdef)
-  "Temporarily override SYM's function definition with TEMPDEF.
-Sym gets evaluated multiple times, so make sure it's just a
-symbol."
+  "Temporarily override SYM's function definition with NEWDEF.
+The original definition is saved to paradox--SYM-backup."
   (let ((backup-name (intern (format "paradox--%s-backup" sym)))
         (def (symbol-function sym)))
     (unless (assoc def paradox--backups)
@@ -152,6 +151,29 @@ symbol."
       (add-to-list 'paradox--backups (cons sym backup-name))
       (set backup-name def)
       (fset sym newdef))))
+
+(defvar paradox--upgradeable-packages nil)
+(defvar paradox--upgradeable-packages-number nil)
+(defvar paradox--upgradeable-packages-any? nil)
+
+(defadvice package-refresh-contents
+    (after paradox-after-package-refresh-contents-advice () activate)
+  "Save the upgradeable packages to a variable."
+  (when (paradox--active-p)
+    (paradox-refresh-upgradeable-packages)))
+
+;;; Right now this is trivial, but we leave it as function so it's easy to improve.
+(defun paradox--active-p ()
+  (null (null paradox--backups)))
+
+(defun paradox-refresh-upgradeable-packages ()
+  "Refresh the list of upgradeable packages."
+  (interactive)
+  (setq paradox--upgradeable-packages (package-menu--find-upgrades))
+  (setq paradox--upgradeable-packages-number
+        (length paradox--upgradeable-packages))
+  (setq paradox--upgradeable-packages-any?
+        (> paradox--upgradeable-packages-number 0)))
 
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
@@ -291,9 +313,12 @@ Letters do not insert themselves; instead, they are commands.
           (format "%%%sb" (length (buffer-name))))
          ;; '(paradox--current-filter
          ;;   ("[" paradox--current-filter "]"))
-         " " '(:eval (paradox--build-buffer-id "New: " (length package-menu--new-package-list)))
-         " " (paradox--build-buffer-id "Installed: " (length package-alist))
-         " " (paradox--build-buffer-id "Total: " (length package-archive-contents)))))
+         '(paradox--upgradeable-packages-any?
+           (:eval (paradox--build-buffer-id " Upgradable:" paradox--upgradeable-packages-number)))         
+         '(package-menu--new-package-list
+           (:eval (paradox--build-buffer-id " New:" (length package-menu--new-package-list))))
+         " " (paradox--build-buffer-id "Installed:" (length package-alist))
+         " " (paradox--build-buffer-id "Total:" (length package-archive-contents)))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

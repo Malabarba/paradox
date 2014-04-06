@@ -314,7 +314,7 @@ Letters do not insert themselves; instead, they are commands.
          ;; '(paradox--current-filter
          ;;   ("[" paradox--current-filter "]"))
          '(paradox--upgradeable-packages-any?
-           (:eval (paradox--build-buffer-id " Upgradable:" paradox--upgradeable-packages-number)))         
+           (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))         
          '(package-menu--new-package-list
            (:eval (paradox--build-buffer-id " New:" (length package-menu--new-package-list))))
          " " (paradox--build-buffer-id "Installed:" (length package-alist))

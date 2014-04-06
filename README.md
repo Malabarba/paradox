@@ -20,3 +20,8 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 * More fontification.
 * More customization.
 
+## Known Bugs ##
+
+* Annoying gnutls error message after downloading the star counts `gnutls.c: [0] (Emacs) fatal error: The TLS connection was non-properly terminated.`.  
+  If anyone knows how to fix it, I'm all ears.
+

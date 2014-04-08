@@ -55,6 +55,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
 ;; 0.2 - 2014/04/08 - Customizable widths.
 ;; 0.2 - 2014/04/08 - Prettier trunctation.
 ;; 0.1 - 2014/04/03 - Created File.
@@ -335,6 +336,14 @@ Letters do not insert themselves; instead, they are commands.
   ;; we "patch" it like this.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
+
+(defun paradox--archive-format ()
+  (when (cdr package-archives)
+    (list (list "Archive" 
+                (apply 'max (mapcar 'length (mapcar 'car package-archives)))
+                'package-menu--archive-predicate))))
+
+(add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
 
 (defun paradox--update-mode-line ()
   (setq mode-line-buffer-identification

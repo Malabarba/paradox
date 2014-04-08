@@ -47,7 +47,7 @@
   :type 'directory
   :group 'paradox)
 
-(defcustom paradox-star-count-output-file 
+(defcustom paradox--star-count-output-file 
   (expand-file-name "./star-count")
   "File where a list of star counts will be saved."
   :type 'file

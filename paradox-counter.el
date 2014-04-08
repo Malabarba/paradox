@@ -29,6 +29,7 @@
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
+(add-to-list 'load-path (expand-file-name "./"))
 (require 'paradox)
 (defconst paradox-counter-version "0.1" "Version of the paradox-counter.el package.")
 

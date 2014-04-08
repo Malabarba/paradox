@@ -55,6 +55,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/08 - Even better mode-line.
 ;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
 ;; 0.2 - 2014/04/08 - Customizable widths.
 ;; 0.2 - 2014/04/08 - Prettier trunctation.
@@ -149,7 +150,7 @@ mode-line."
 The original definition is saved to paradox--SYM-backup."
   (let ((backup-name (intern (format "paradox--%s-backup" sym)))
         (def (symbol-function sym)))
-    (unless (assoc def paradox--backups)
+    (unless (assoc sym paradox--backups)
       (message "Overriding %s with %s" sym newdef)
       (eval (list 'defvar backup-name nil))
       (add-to-list 'paradox--backups (cons sym backup-name))
@@ -174,8 +175,6 @@ The original definition is saved to paradox--SYM-backup."
 (defun paradox-refresh-upgradeable-packages ()
   "Refresh the list of upgradeable packages."
   (interactive)
-  (message "Current buffer: %s" (current-buffer))
-  (message "mode: %s" major-mode)
   (setq paradox--upgradeable-packages (package-menu--find-upgrades))
   (setq paradox--upgradeable-packages-number
         (length paradox--upgradeable-packages))
@@ -245,8 +244,8 @@ identifier (NAME . VERSION-LIST)."
 
 (defun paradox--improve-entry (entry)
   (setcdr entry (list 
-    (vconcat (list (paradox--entry-star-count entry))
-             (cadr entry)))))
+                 (vconcat (list (paradox--entry-star-count entry))
+                          (cadr entry)))))
 
 (defun paradox--entry-star-count (entry)
   (paradox--package-star-count ;; The package symbol should be in the ID field, but that's not mandatory,
@@ -345,19 +344,45 @@ Letters do not insert themselves; instead, they are commands.
 
 (add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
 
+(defcustom paradox-local-variables
+  '(mode-line-mule-info
+    mode-line-client mode-line-modified
+    mode-line-remote mode-line-position
+    column-number-mode size-indication-mode
+    (mode-line-front-space . " "))
+  "Variables which will take special values on the Packages buffer.
+This is a list, where each element is either SYMBOL or (SYMBOL . VALUE).
+
+Each SYMBOL (if it is bound) will be locally set to VALUE (or
+nil) on the Packages buffer."
+  :type '(repeat (choice symbol (cons symbol sexp)))
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
 (defun paradox--update-mode-line ()
+  (mapc
+   #'paradox--set-local-value
+   paradox-local-variables)
   (setq mode-line-buffer-identification
         (list
+         `(line-number-mode
+           ("(" (:propertize "%4l" face mode-line-buffer-id) "/"
+            ,(int-to-string (line-number-at-pos (point-max))) ")"))
          (propertized-buffer-identification
           (format "%%%sb" (length (buffer-name))))
          ;; '(paradox--current-filter
          ;;   ("[" paradox--current-filter "]"))
          '(paradox--upgradeable-packages-any?
-           (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))         
+           (" " (:eval (paradox--build-buffer-id "Upgrade:" paradox--upgradeable-packages-number))))         
          '(package-menu--new-package-list
-           (:eval (paradox--build-buffer-id " New:" (length package-menu--new-package-list))))
+           (" " (:eval (paradox--build-buffer-id "New:" (length package-menu--new-package-list)))))
          " " (paradox--build-buffer-id "Installed:" (length package-alist))
          " " (paradox--build-buffer-id "Total:" (length package-archive-contents)))))
+
+(defun paradox--set-local-value (x)
+  (let ((sym (or (car-safe x) x)))
+    (when (boundp sym)
+      (set (make-local-variable sym) (cdr-safe x)))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

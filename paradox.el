@@ -55,6 +55,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/08 - Customizable widths.
 ;; 0.2 - 2014/04/08 - Prettier trunctation.
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
@@ -283,6 +284,30 @@ identifier (NAME . VERSION-LIST)."
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 
+(defcustom paradox-column-width-package  18
+  "Width of the \"Package\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-version  9
+  "Width of the \"Version\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-status  10
+  "Width of the \"Status\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-star 4
+  "Width of the \"Star\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
 Letters do not insert themselves; instead, they are commands.
@@ -291,16 +316,16 @@ Letters do not insert themselves; instead, they are commands.
   (hl-line-mode 1)  
   (paradox--update-mode-line)
   (setq tabulated-list-format
-        `[("Package" 18 package-menu--name-predicate)
-          ("Version" 12 nil)
-          ("Status"  10 package-menu--status-predicate)
-          ,@(if (cdr package-archives)
-                '(("Archive" 10 package-menu--archive-predicate)))
-          (,(if (char-displayable-p ?★) "★" "*")     4 paradox--star-predicate :right-align t)
+        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
+          ("Version" ,paradox-column-width-version nil)
+          ("Status" ,paradox-column-width-status package-menu--status-predicate)
+          ,@(paradox--archive-format)
+          (,(if (char-displayable-p ?★) "★" "*") ,paradox-column-width-star paradox--star-predicate :right-align t)
           ("Description" 0 nil)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
   (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
   (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
   (tabulated-list-init-header)

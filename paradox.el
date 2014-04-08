@@ -55,6 +55,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/08 - Prettier trunctation.
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
@@ -128,6 +129,7 @@ mode-line."
       (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat)
     (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
   ;; (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
 
 (defvar paradox--backups nil)
@@ -152,23 +154,26 @@ The original definition is saved to paradox--SYM-backup."
       (set backup-name def)
       (fset sym newdef))))
 
-(defvar paradox--upgradeable-packages nil)
-(defvar paradox--upgradeable-packages-number nil)
-(defvar paradox--upgradeable-packages-any? nil)
-
-(defadvice package-refresh-contents
-    (after paradox-after-package-refresh-contents-advice () activate)
-  "Save the upgradeable packages to a variable."
-  (when (paradox--active-p)
-    (paradox-refresh-upgradeable-packages)))
-
 ;;; Right now this is trivial, but we leave it as function so it's easy to improve.
 (defun paradox--active-p ()
   (null (null paradox--backups)))
 
+(defun paradox--truncate-string-to-width (&rest args)
+  "Like `truncate-string-to-width', except default ellipsis is \"…\" on package buffer."
+  (when (and (eq major-mode 'paradox-menu-mode)
+             (eq t (nth 4 args)))
+    (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
+  (apply paradox--truncate-string-to-width-backup args))
+
+(defvar paradox--upgradeable-packages nil)
+(defvar paradox--upgradeable-packages-number nil)
+(defvar paradox--upgradeable-packages-any? nil)
+
 (defun paradox-refresh-upgradeable-packages ()
   "Refresh the list of upgradeable packages."
   (interactive)
+  (message "Current buffer: %s" (current-buffer))
+  (message "mode: %s" major-mode)
   (setq paradox--upgradeable-packages (package-menu--find-upgrades))
   (setq paradox--upgradeable-packages-number
         (length paradox--upgradeable-packages))

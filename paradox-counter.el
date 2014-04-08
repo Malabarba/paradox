@@ -31,6 +31,7 @@
 
 (add-to-list 'load-path (expand-file-name "./"))
 (require 'paradox)
+(require 'cl)
 (defconst paradox-counter-version "0.1" "Version of the paradox-counter.el package.")
 
 (defcustom paradox-melpa-directory

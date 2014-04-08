@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: 
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0"))
 ;; Prefix: paradox 
@@ -55,11 +55,14 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
+;; 0.2 - 2014/04/08 - Customizable widths.
+;; 0.2 - 2014/04/08 - Prettier trunctation.
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
 (require 'package)
-(defconst paradox-version "0.1" "Version of the paradox.el package.")
+(defconst paradox-version "0.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -128,6 +131,7 @@ mode-line."
       (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat)
     (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
   ;; (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
 
 (defvar paradox--backups nil)
@@ -152,23 +156,26 @@ The original definition is saved to paradox--SYM-backup."
       (set backup-name def)
       (fset sym newdef))))
 
-(defvar paradox--upgradeable-packages nil)
-(defvar paradox--upgradeable-packages-number nil)
-(defvar paradox--upgradeable-packages-any? nil)
-
-(defadvice package-refresh-contents
-    (after paradox-after-package-refresh-contents-advice () activate)
-  "Save the upgradeable packages to a variable."
-  (when (paradox--active-p)
-    (paradox-refresh-upgradeable-packages)))
-
 ;;; Right now this is trivial, but we leave it as function so it's easy to improve.
 (defun paradox--active-p ()
   (null (null paradox--backups)))
 
+(defun paradox--truncate-string-to-width (&rest args)
+  "Like `truncate-string-to-width', except default ellipsis is \"…\" on package buffer."
+  (when (and (eq major-mode 'paradox-menu-mode)
+             (eq t (nth 4 args)))
+    (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
+  (apply paradox--truncate-string-to-width-backup args))
+
+(defvar paradox--upgradeable-packages nil)
+(defvar paradox--upgradeable-packages-number nil)
+(defvar paradox--upgradeable-packages-any? nil)
+
 (defun paradox-refresh-upgradeable-packages ()
   "Refresh the list of upgradeable packages."
   (interactive)
+  (message "Current buffer: %s" (current-buffer))
+  (message "mode: %s" major-mode)
   (setq paradox--upgradeable-packages (package-menu--find-upgrades))
   (setq paradox--upgradeable-packages-number
         (length paradox--upgradeable-packages))
@@ -253,8 +260,8 @@ identifier (NAME . VERSION-LIST)."
    'face 'paradox-star-face))
 
 (defun paradox--star-predicate (A B)
-  (< (string-to-int (elt (cadr A) 4))
-     (string-to-int (elt (cadr B) 4))))
+  (< (string-to-number (elt (cadr A) 4))
+     (string-to-number (elt (cadr B) 4))))
 
 ;; (defvar paradox--current-filter nil)
 ;; (make-variable-buffer-local 'paradox--current-filter)
@@ -278,6 +285,30 @@ identifier (NAME . VERSION-LIST)."
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 
+(defcustom paradox-column-width-package  18
+  "Width of the \"Package\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-version  9
+  "Width of the \"Version\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-status  10
+  "Width of the \"Status\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-star 4
+  "Width of the \"Star\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
 Letters do not insert themselves; instead, they are commands.
@@ -286,16 +317,16 @@ Letters do not insert themselves; instead, they are commands.
   (hl-line-mode 1)  
   (paradox--update-mode-line)
   (setq tabulated-list-format
-        `[("Package" 18 package-menu--name-predicate)
-          ("Version" 12 nil)
-          ("Status"  10 package-menu--status-predicate)
-          ,@(if (cdr package-archives)
-                '(("Archive" 10 package-menu--archive-predicate)))
-          (,(if (char-displayable-p ?★) "★" "*")     4 paradox--star-predicate :right-align t)
+        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
+          ("Version" ,paradox-column-width-version nil)
+          ("Status" ,paradox-column-width-status package-menu--status-predicate)
+          ,@(paradox--archive-format)
+          (,(if (char-displayable-p ?★) "★" "*") ,paradox-column-width-star paradox--star-predicate :right-align t)
           ("Description" 0 nil)])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
   (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
   (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
   (tabulated-list-init-header)
@@ -305,6 +336,14 @@ Letters do not insert themselves; instead, they are commands.
   ;; we "patch" it like this.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
+
+(defun paradox--archive-format ()
+  (when (cdr package-archives)
+    (list (list "Archive" 
+                (apply 'max (mapcar 'length (mapcar 'car package-archives)))
+                'package-menu--archive-predicate))))
+
+(add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
 
 (defun paradox--update-mode-line ()
   (setq mode-line-buffer-identification

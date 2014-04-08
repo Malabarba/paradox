@@ -253,8 +253,8 @@ identifier (NAME . VERSION-LIST)."
    'face 'paradox-star-face))
 
 (defun paradox--star-predicate (A B)
-  (< (string-to-int (elt (cadr A) 4))
-     (string-to-int (elt (cadr B) 4))))
+  (< (string-to-number (elt (cadr A) 4))
+     (string-to-number (elt (cadr B) 4))))
 
 ;; (defvar paradox--current-filter nil)
 ;; (make-variable-buffer-local 'paradox--current-filter)

@@ -20,9 +20,11 @@
 ;; 
 ;; ## Current Features ##
 ;; 
-;; * Display number of github stars the package has (right before the description).
-;; * Display useful information on the mode-line.
+;; * Display number of GitHub Stars the package has (right before the description).
+;; * Display useful information on the mode-line and cleanup a bunch of
+;;   useless stuff.
 ;; * `hl-line-mode' enabled by default.
+;; * Customizable column widths, and automatic width for the `Archive' column.
 ;; 
 ;; ## Planned Features ##
 ;; 
@@ -30,7 +32,13 @@
 ;; * Package filtering.
 ;; * More fontification.
 ;; * More customization.
-
+;; 
+;; ## Known Bugs ##
+;; 
+;; * On some cases there's an annoying gnutls error message after downloading the star counts
+;;       <gnutls>.c: [0] (Emacs) fatal error: The TLS connection was non-properly terminated.
+;;   If anyone knows how to fix it, I'm all ears.
+ç
 ;;; Instructions:
 ;;
 ;; INSTALLATION

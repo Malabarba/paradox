@@ -35,10 +35,10 @@
 ;; 
 ;; ## Known Bugs ##
 ;; 
-;; * On some cases there's an annoying gnutls error message after downloading the star counts
+;; * On some paradox--cases there's an annoying gnutls error message after downloading the star counts
 ;;       <gnutls>.c: [0] (Emacs) fatal error: The TLS connection was non-properly terminated.
 ;;   If anyone knows how to fix it, I'm all ears.
-ç
+
 ;;; Instructions:
 ;;
 ;; INSTALLATION
@@ -99,6 +99,9 @@ Please include your emacs and paradox versions."
   "https://raw.github.com/Bruce-Connor/paradox/data/star-count"
   "Address of the raw star-count file.")
 
+(defmacro paradox--cas (string)
+  `(cdr (assoc-string ,string paradox--package-count)))
+
 (defadvice package-refresh-contents
     (before paradox-before-package-refresh-contents-advice () activate)
   "Download paradox data when updating packages buffer."
@@ -139,7 +142,7 @@ mode-line."
   (if (version< emacs-version "24.3.50")
       (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat)
     (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
-  ;; (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
   (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
 
@@ -204,6 +207,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                  (`"installed" 'font-lock-comment-face)
                  (`"unsigned"  'font-lock-warning-face)
                  (_            'font-lock-warning-face)))) ; obsolete.
+    (paradox--incf status)
     (list pkg-desc
           `[,(list (symbol-name (package-desc-name pkg-desc))
                    'face 'link
@@ -238,6 +242,8 @@ identifier (NAME . VERSION-LIST)."
                 ((string= status "disabled")  'font-lock-warning-face)
                 ((string= status "installed") 'font-lock-comment-face)
                 (t 'font-lock-warning-face)))) ; obsolete.
+    
+    (paradox--incf status)
     (list (cons package version)
           (vector (list (symbol-name package)
                         'face 'link
@@ -249,6 +255,10 @@ identifier (NAME . VERSION-LIST)."
                   (propertize status 'font-lock-face face)
                   (paradox--package-star-count package)
                   (propertize doc 'font-lock-face face)))))
+
+(defun paradox--incf (status)
+  (incf (paradox--cas status))
+  (incf (paradox--cas "total")))
 
 (defun paradox--improve-entry (entry)
   (setcdr entry (list 
@@ -270,25 +280,43 @@ identifier (NAME . VERSION-LIST)."
   (< (string-to-number (elt (cadr A) 4))
      (string-to-number (elt (cadr B) 4))))
 
-;; (defvar paradox--current-filter nil)
-;; (make-variable-buffer-local 'paradox--current-filter)
+(defvar paradox--current-filter nil)
+(make-variable-buffer-local 'paradox--current-filter)
 
-;; (defun paradox--generate-menu (remember-pos packages &optional keywords)
-;;   "Populate the Package Menu, without hacking into the header-format.
-;; If REMEMBER-POS is non-nil, keep point on the same entry.
-;; PACKAGES should be t, which means to display all known packages,
-;; or a list of package names (symbols) to display.
+(defvar paradox--package-count
+  '(("total" . 0) ("built-in" . 0)
+    ("available" . 0) ("new" . 0)
+    ("held" . 0) ("disabled" . 0)
+    ("installed" . 0) ("unsigned" . 0)))
 
-;; With KEYWORDS given, only packages with those keywords are
-;; shown."
-;;   (package-menu--refresh packages keywords)
-;;   (setq paradox--current-filter
-;;         (if keywords (mapconcat 'identity keywords ",")
-;;           nil))
-;;   (if keywords
-;;       (define-key package-menu-mode-map "q" 'package-show-package-list)
-;;     (define-key package-menu-mode-map "q" 'quit-window))
-;;   (tabulated-list-print remember-pos))
+(defun paradox--generate-menu (remember-pos packages &optional keywords)
+  "Populate the Package Menu, without hacking into the header-format.
+If REMEMBER-POS is non-nil, keep point on the same entry.
+PACKAGES should be t, which means to display all known packages,
+or a list of package names (symbols) to display.
+
+With KEYWORDS given, only packages with those keywords are
+shown."
+  (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
+  (package-menu--refresh packages keywords)
+  (setq paradox--current-filter
+        (if keywords (mapconcat 'identity keywords ",")
+          nil))
+  (let ((idx (paradox--column-index "^Package")))
+    (setcar (aref tabulated-list-format idx)
+            (if keywords
+                (concat "Package[" paradox--current-filter "]")
+              "Package")))  
+  (if keywords
+      (define-key package-menu-mode-map "q" 'package-show-package-list)
+    (define-key package-menu-mode-map "q" 'quit-window))
+  (tabulated-list-print remember-pos)
+  (tabulated-list-init-header)
+  (paradox--update-mode-line))
+
+(defun paradox--column-index (regexp)
+  (position regexp tabulated-list-format
+            :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 
@@ -368,9 +396,7 @@ nil) on the Packages buffer."
   :package-version '(paradox . "0.1"))
 
 (defun paradox--update-mode-line ()
-  (mapc
-   #'paradox--set-local-value
-   paradox-local-variables)
+  (mapc #'paradox--set-local-value paradox-local-variables)
   (setq mode-line-buffer-identification
         (list
          `(line-number-mode
@@ -378,14 +404,18 @@ nil) on the Packages buffer."
             ,(int-to-string (line-number-at-pos (point-max))) ")"))
          (propertized-buffer-identification
           (format "%%%sb" (length (buffer-name))))
-         ;; '(paradox--current-filter
-         ;;   ("[" paradox--current-filter "]"))
+         '(paradox--current-filter ("[" paradox--current-filter "]"))
          '(paradox--upgradeable-packages-any?
            (" " (:eval (paradox--build-buffer-id "Upgrade:" paradox--upgradeable-packages-number))))         
          '(package-menu--new-package-list
-           (" " (:eval (paradox--build-buffer-id "New:" (length package-menu--new-package-list)))))
-         " " (paradox--build-buffer-id "Installed:" (length package-alist))
-         " " (paradox--build-buffer-id "Total:" (length package-archive-contents)))))
+           (" " (:eval (paradox--build-buffer-id "New:" (paradox--cas "new")))))
+         " " (paradox--build-buffer-id "Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
+         `(paradox--current-filter ""
+           (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
+
+;;           (" " (:eval (paradox--build-buffer-id "New:" (length package-menu--new-package-list)))))
+;;         " " (paradox--build-buffer-id "Installed:" (length package-alist))
+;;         " " (paradox--build-buffer-id "Total:" (length package-archive-contents)))))
 
 (defun paradox--set-local-value (x)
   (let ((sym (or (car-safe x) x)))

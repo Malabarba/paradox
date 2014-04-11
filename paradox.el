@@ -63,6 +63,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
 ;; 0.2 - 2014/04/08 - Even better mode-line.
 ;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
 ;; 0.2 - 2014/04/08 - Customizable widths.
@@ -395,6 +396,12 @@ nil) on the Packages buffer."
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
+(defcustom paradox-display-buffer-name nil
+  "If nil, *Packages* buffer name won't be displayed in the mode-line."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
+
 (defun paradox--update-mode-line ()
   (mapc #'paradox--set-local-value paradox-local-variables)
   (setq mode-line-buffer-identification
@@ -402,8 +409,9 @@ nil) on the Packages buffer."
          `(line-number-mode
            ("(" (:propertize "%4l" face mode-line-buffer-id) "/"
             ,(int-to-string (line-number-at-pos (point-max))) ")"))
-         (propertized-buffer-identification
-          (format "%%%sb" (length (buffer-name))))
+         (list 'paradox-display-buffer-name
+               (propertized-buffer-identification
+                (format "%%%sb" (length (buffer-name)))))
          '(paradox--current-filter ("[" paradox--current-filter "]"))
          '(paradox--upgradeable-packages-any?
            (" " (:eval (paradox--build-buffer-id "Upgrade:" paradox--upgradeable-packages-number))))         
@@ -411,7 +419,7 @@ nil) on the Packages buffer."
            (" " (:eval (paradox--build-buffer-id "New:" (paradox--cas "new")))))
          " " (paradox--build-buffer-id "Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
          `(paradox--current-filter ""
-           (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
+                                   (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
 
 ;;           (" " (:eval (paradox--build-buffer-id "New:" (length package-menu--new-package-list)))))
 ;;         " " (paradox--build-buffer-id "Installed:" (length package-alist))

@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.2
+;; Version: 0.5
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0"))
 ;; Prefix: paradox 
@@ -63,6 +63,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.5 - 2014/04/13 - (Un)Star packages with the "s" key!.
 ;; 0.2 - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
 ;; 0.2 - 2014/04/13 - New archive face.
 ;; 0.2 - 2014/04/13 - Define filtering keys (fk, fu, fr).
@@ -76,7 +77,7 @@
 
 (require 'package)
 (require 'cl)
-(defconst paradox-version "0.2" "Version of the paradox.el package.")
+(defconst paradox-version "0.5" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -486,6 +487,39 @@ nil) on the Packages buffer."
 
 
 ;;; Github api stuff
+(defcustom paradox-github-token nil
+  "Access token to use for github actions.
+Currently, that means (un)starring repos.
+
+To generate an access token:
+  1. Visit the page https://github.com/settings/tokens/new
+  2. Login to github (if asked).
+  3. Give the token any name you want (Paradox, for instance).
+  4. The only permission we need is \"public_repo\", so go ahead and unmark all others.
+  5. Click on \"Generate Token\", copy the generated token, and save it to this variable."
+  :type 'string
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
+
+(defcustom paradox-automatically-star 'all
+  "When you install new packages, should they be automatically
+starred? Paradox is capable of automatically starring packages
+when you install them. This variable defines whether this will
+happen to all packages you install (recommended), only to
+packages you manually request to install (by hitting \"I\"), or
+not at all.
+
+This variable must be a symbol, and has 4 possible values:
+    all: Star ALL installed packages, including dependencies. (Default)
+    installed-manually: Star installed packages, except those installed as dependencies.
+    ask: Star ALL installed packages, but ask first (for each one).
+    nil: Don't automatically star installed packages."
+  :type '(choice (const :tag "Star installed packages, except those installed as dependencies." installed-manually)
+                 (const :tag "Star ALL installed packages, including dependencies. (Default)" all)
+                 (const :tag "Star ALL installed packages, but ask first (for each one)." ask)
+                 (const :tag "Don't automatically star installed packages." nil))
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
 
 (defvar paradox--user-starred-list nil)
 

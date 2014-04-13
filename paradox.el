@@ -126,11 +126,6 @@ Please include your emacs and paradox versions."
 (defmacro paradox--cas (string)
   `(cdr (assoc-string ,string paradox--package-count)))
 
-(defadvice package-refresh-contents
-    (before paradox-before-package-refresh-contents-advice () activate)
-  "Download paradox data when updating packages buffer."
-  (paradox--refresh-star-count))
-
 ;;;###autoload
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
@@ -141,7 +136,9 @@ Please include your emacs and paradox versions."
           (when (search-forward "\n\n")
             (read (current-buffer))))
     (setq paradox--package-repo-list (read (current-buffer)))
-    (kill-buffer)))
+    (kill-buffer))
+  (when paradox-github-token
+    (paradox--refresh-user-starred-list)))
 
 (defvar paradox-hide-buffer-identification t
   "If non-nil, no buffer-name will be displayed in the packages buffer.")
@@ -502,12 +499,13 @@ To generate an access token:
   :package-version '(paradox . "0.2"))
 
 (defcustom paradox-automatically-star 'all
-  "When you install new packages, should they be automatically
-starred? Paradox is capable of automatically starring packages
-when you install them. This variable defines whether this will
-happen to all packages you install (recommended), only to
-packages you manually request to install (by hitting \"I\"), or
-not at all.
+  "When you install new packages, should they be automatically starred? 
+NOTE: This variable has no effect if `paradox-github-token' isn't set.
+
+Paradox is capable of automatically starring packages when you
+install them. This variable defines whether this will happen to
+all packages you install (recommended), only to packages you
+manually request to install (by hitting \"I\"), or not at all.
 
 This variable must be a symbol, and has 4 possible values:
     all: Star ALL installed packages, including dependencies. (Default)

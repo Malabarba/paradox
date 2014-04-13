@@ -1,7 +1,8 @@
 Paradox
 =======
 
-Project for generating and displaying Package Ratings for Emacs packages.
+Project for modernizing Emacs' Package Menu. With package ratings,
+usage statistics, customizability, and more.
 
 ### Before ###
 ![Regular Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/before.png)

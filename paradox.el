@@ -5,7 +5,7 @@
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
 ;; Version: 0.2
-;; Keywords: 
+;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0"))
 ;; Prefix: paradox 
 ;; Separator: -
@@ -63,6 +63,8 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
+;; 0.2 - 2014/04/13 - New archive face.
 ;; 0.2 - 2014/04/13 - Define filtering keys (fk, fu, fr).
 ;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
 ;; 0.2 - 2014/04/08 - Even better mode-line.
@@ -73,6 +75,7 @@
 ;;; Code:
 
 (require 'package)
+(require 'cl)
 (defconst paradox-version "0.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
@@ -90,10 +93,27 @@ Please include your emacs and paradox versions."
   :prefix "paradox-"
   :package-version '(paradox . "0.1"))
 
+(defface paradox-name-face
+  '((t :inherit link))
+  "Face used on the name column."
+  :group 'paradox)
+;; (defface paradox-version-face
+;;   '((t :inherit default))
+;;   "Face used on the version column."
+;;   :group 'paradox)
+(defface paradox-archive-face
+  '((((background light)) :foreground "Grey60")
+    (((background dark)) :foreground "Grey40"))
+  "Face used on the archive column."
+  :group 'paradox)
 (defface paradox-star-face
   '((t :inherit font-lock-comment-face))
-  "Face used on the star count number."
+  "Face used on the star column."
   :group 'paradox)
+;; (defface paradox-description-face
+;;   '((t :inherit default))
+;;   "Face used on the description column."
+;;   :group 'paradox)
 
 (defvar paradox--star-count nil)
 
@@ -194,25 +214,34 @@ The original definition is saved to paradox--SYM-backup."
   (setq paradox--upgradeable-packages-any?
         (> paradox--upgradeable-packages-number 0)))
 
+(defcustom paradox-status-face-alist
+  '(("built-in"  . font-lock-builtin-face)
+    ("available" . default)
+    ("new"       . bold)
+    ("held"      . font-lock-constant-face)
+    ("disabled"  . font-lock-warning-face)
+    ("installed" . font-lock-comment-face)
+    ("unsigned"  . font-lock-warning-face))
+  "List of (\"STATUS\" . FACE) cons cells.
+When displaying the package menu, FACE will be used to paint the
+Version, Status, and Description columns of each package whose
+status is STATUS. "
+  :type '(repeat (cons string face))
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
+
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
 Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
   (let* ((pkg-desc (car pkg))
          (status  (cdr pkg))
-         (face (pcase status
-                 (`"built-in"  'font-lock-builtin-face)
-                 (`"available" 'default)
-                 (`"new"       'bold)
-                 (`"held"      'font-lock-constant-face)
-                 (`"disabled"  'font-lock-warning-face)
-                 (`"installed" 'font-lock-comment-face)
-                 (`"unsigned"  'font-lock-warning-face)
-                 (_            'font-lock-warning-face)))) ; obsolete.
+         (face (or (cdr (assoc-string status paradox-status-face-alist))
+                   'font-lock-warning-face))) ; obsolete.
     (paradox--incf status)
     (list pkg-desc
           `[,(list (symbol-name (package-desc-name pkg-desc))
-                   'face 'link
+                   'face 'paradox-name-face
                    'follow-link t
                    'package-desc pkg-desc
                    'action 'package-menu-describe-package)
@@ -222,7 +251,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
             ,(propertize status 'font-lock-face face)
             ,@(if (cdr package-archives)
                   (list (propertize (or (package-desc-archive pkg-desc) "")
-                                    'font-lock-face face)))
+                                    'font-lock-face 'paradox-archive-face)))
             ,(paradox--package-star-count (package-desc-name pkg-desc))
             ,(propertize (package-desc-summary pkg-desc)
                          'font-lock-face face)])))
@@ -236,19 +265,12 @@ identifier (NAME . VERSION-LIST)."
          (version (cdr (car pkg)))
          (status  (nth 1 pkg))
          (doc (or (nth 2 pkg) ""))
-         (face (cond
-                ((string= status "built-in")  'font-lock-builtin-face)
-                ((string= status "available") 'default)
-                ((string= status "new") 'bold)
-                ((string= status "held")      'font-lock-constant-face)
-                ((string= status "disabled")  'font-lock-warning-face)
-                ((string= status "installed") 'font-lock-comment-face)
-                (t 'font-lock-warning-face)))) ; obsolete.
-    
+         (face (or (cdr (assoc-string status paradox-status-face-alist))
+                   'font-lock-warning-face))) ; obsolete.
     (paradox--incf status)
     (list (cons package version)
           (vector (list (symbol-name package)
-                        'face 'link
+                        'face 'paradox-name-face
                         'follow-link t
                         'package-symbol package
                         'action 'package-menu-describe-package)
@@ -260,7 +282,8 @@ identifier (NAME . VERSION-LIST)."
 
 (defun paradox--incf (status)
   (incf (paradox--cas status))
-  (incf (paradox--cas "total")))
+  (unless (string= status "obsolete")
+    (incf (paradox--cas "total"))))
 
 (defun paradox--improve-entry (entry)
   (setcdr entry (list 
@@ -268,7 +291,8 @@ identifier (NAME . VERSION-LIST)."
                           (cadr entry)))))
 
 (defun paradox--entry-star-count (entry)
-  (paradox--package-star-count ;; The package symbol should be in the ID field, but that's not mandatory,
+  (paradox--package-star-count
+   ;; The package symbol should be in the ID field, but that's not mandatory,
    (or (ignore-errors (elt (car entry) 1))
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
@@ -287,6 +311,7 @@ identifier (NAME . VERSION-LIST)."
 
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)
+    ("obsolete" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
     ("installed" . 0) ("unsigned" . 0)))

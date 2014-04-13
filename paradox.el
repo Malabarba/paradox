@@ -107,7 +107,7 @@ Please include your emacs and paradox versions."
   "Face used on the archive column."
   :group 'paradox)
 (defface paradox-star-face
-  '((t :inherit font-lock-comment-face))
+  '((t :inherit font-lock-string-face))
   "Face used on the star column."
   :group 'paradox)
 ;; (defface paradox-description-face
@@ -116,9 +116,10 @@ Please include your emacs and paradox versions."
 ;;   :group 'paradox)
 
 (defvar paradox--star-count nil)
+(defvar paradox--package-repo-list nil)
 
 (defvar paradox--star-count-url
-  "https://raw.github.com/Bruce-Connor/paradox/data/star-count"
+  "https://raw.github.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
 (defmacro paradox--cas (string)
@@ -133,12 +134,13 @@ Please include your emacs and paradox versions."
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (setq
-   paradox--star-count
-   (with-current-buffer 
-       (url-retrieve-synchronously paradox--star-count-url)
-     (when (search-forward "\n\n")
-       (read (current-buffer))))))
+  (with-current-buffer 
+      (url-retrieve-synchronously paradox--star-count-url)
+    (setq paradox--star-count
+          (when (search-forward "\n\n")
+            (read (current-buffer))))
+    (setq paradox--package-repo-list (read (current-buffer)))
+    (kill-buffer)))
 
 (defvar paradox-hide-buffer-identification t
   "If non-nil, no buffer-name will be displayed in the packages buffer.")
@@ -346,14 +348,16 @@ shown."
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
-(define-prefix-command 'paradox--filter-map)
 (define-key paradox-menu-mode-map "f" 'paradox--filter-map)
+(define-key paradox-menu-mode-map "s" 'paradox-menu-mark-star-unstar)
+
+(define-prefix-command 'paradox--filter-map)
 (define-key package-menu-mode-map "F" 'package-menu-filter)
-(define-key 'paradox--filter-map "k" #'package-menu-filter)
-(define-key 'paradox--filter-map "f" #'package-menu-filter)
-(define-key 'paradox--filter-map "r" #'occur)
-(define-key 'paradox--filter-map "o" #'occur)
-(define-key 'paradox--filter-map "u" #'paradox-filter-upgrades)
+(define-key paradox--filter-map "k" #'package-menu-filter)
+(define-key paradox--filter-map "f" #'package-menu-filter)
+(define-key paradox--filter-map "r" #'occur)
+(define-key paradox--filter-map "o" #'occur)
+(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
 
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."
@@ -479,6 +483,89 @@ nil) on the Packages buffer."
   (let ((sym (or (car-safe x) x)))
     (when (boundp sym)
       (set (make-local-variable sym) (cdr-safe x)))))
+
+
+;;; Github api stuff
+
+(defvar paradox--user-starred-list nil)
+
+(defun paradox-menu-mark-star-unstar (n)
+  "Mark a package for (un)starring and move to the next line."
+  (interactive "p")
+  (unless paradox--user-starred-list
+    (paradox--refresh-user-starred-list))
+  ;; Get package name
+  (let ((pkg (intern (car (elt (tabulated-list-get-entry) 0))))
+        will-delete)
+    (unless pkg (error "Couldn't find package-name for this entry."))
+    ;; get repo for this package
+    (setq pkg (cdr-safe (assoc pkg paradox--package-repo-list)))
+    ;; (Un)Star repo
+    (if (not pkg)
+        (message "This package is not a GitHub repo.")
+      (setq will-delete (member pkg paradox--user-starred-list))
+      (paradox--star-repo pkg will-delete))
+    (forward-line 1)
+    
+    ;; (setq tag (if 
+    ;;               "U" "S"))
+    ;; (save-excursion
+    ;;   (forward-line 0)
+    ;;   (when (and (setq ctag (thing-at-point 'word))
+    ;;              (string-match "\\`[ID]\\'" ctag))
+    ;;     (setq tag (concat tag ctag))))
+    ;; (tabulated-list-put-tag tag t)
+    ))
+
+(defun paradox--star-repo (pkg &optional delete query)
+  (when (or (not query)
+            (y-or-n-p (format "Really %sstar %s? "
+                              (if delete "un" "") pkg)))  
+    (paradox--github-action-star pkg delete)
+    (message "%starred %s." (if delete "Uns" "S") pkg)
+    (if delete
+        (setq paradox--user-starred-list
+              (remove pkg paradox--user-starred-list))
+      (add-to-list 'paradox--user-starred-list pkg))))
+
+(defun paradox--refresh-user-starred-list ()
+  (setq paradox--user-starred-list
+        (mapcar
+         (lambda (x) (cdr (assoc 'full_name x)))
+         (paradox--github-action "user/starred"))))
+
+(defun paradox--github-action-star (repo &optional delete no-result)
+  (paradox--github-action (concat "user/starred/" repo)
+                          (if (stringp delete) delete (if delete "DELETE" "PUT"))
+                          no-result))
+
+(defun paradox--github-action (action &optional method no-result)
+  ;; Make sure the token's configured.
+  (unless (stringp paradox-github-token)
+    (describe-variable 'paradox-github-token)
+    (when (get-buffer "*Help*")
+      (switch-to-buffer "*Help*")
+      (delete-other-windows))
+    (error "You need to set your access token first! See the `paradox-github-token' variable."))
+  ;; Make the request
+  (with-current-buffer (get-buffer-create "plplpl")
+    (shell-command
+     (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic https://api.github.com/%s"
+             (or method "GET") paradox-github-token action)
+     t)
+    (unless no-result
+      (goto-char (point-min))
+      (unless (search-forward "\nStatus: " nil t)
+        (message "%s" (buffer-string))
+        (error ""))
+      ;; 204 means OK, but no content.
+      (if (looking-at "204") t
+        ;; 404 is not found.
+        (if (looking-at "404") nil
+          ;; Anything else gets interpreted.
+          (search-forward-regexp "^?$")
+          (skip-chars-forward "[:blank:]\n")
+          (unless (eobp) (json-read)))))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

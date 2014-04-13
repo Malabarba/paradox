@@ -27,14 +27,19 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
     * `f u` filters by upgrades;
     * `f k` filters by keyword.
 * `hl-line-mode` enabled by default.
-* Customizable column widths, and automatic width for the `Archive` column.
-* Display useful information on the mode-line and cleanup a bunch of useless stuff (customizable).
+* Display useful information on the mode-line and cleanup a bunch of
+  useless stuff (customizable).
+* Customization! Just call `M-x paradox-customize` to see what you can
+  do.
+    * Customize column widths.
+    * Customize faces (`paradox-star-face`,
+      `paradox-status-face-alist` and `paradox-archive-face`).
+    * Customize local variables.
+
 
 ## Planned Features ##
 
 * Star and unstar packages from within the Package Menu.
-* More fontification.
-* More customization.
 
 ## Known Bugs ##
 

@@ -63,6 +63,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/13 - Define filtering keys (ff, fu, fo).
 ;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
 ;; 0.2 - 2014/04/08 - Even better mode-line.
 ;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
@@ -320,6 +321,29 @@ shown."
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
+(define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "f" 'paradox--filter-map)
+(define-key package-menu-mode-map "F" 'package-menu-filter)
+(define-key 'paradox--filter-map "k" #'package-menu-filter)
+(define-key 'paradox--filter-map "f" #'package-menu-filter)
+(define-key 'paradox--filter-map "o" #'occur)
+(define-key 'paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defun paradox-filter-upgrades ()
+  "Show only upgradable packages."
+  (interactive)
+  (package-show-package-list
+   (mapcar 'car paradox--upgradeable-packages)
+   nil)
+  (paradox--add-filter "Upgrade"))
+
+(defun paradox--add-filter (keyword)
+  "Append KEYWORD to `paradox--current-filter', and rebind \"q\"."
+  ;; (unless (= 0 (length paradox--current-filter))
+  ;;   (setq paradox--current-filter 
+  ;;         (concat paradox--current-filter ",")))
+  (setq paradox--current-filter keyword)
+  (define-key package-menu-mode-map "q" 'quit-window))
 
 (defcustom paradox-column-width-package  18
   "Width of the \"Package\" column."

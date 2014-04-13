@@ -47,8 +47,14 @@
   :type 'directory
   :group 'paradox)
 
-(defcustom paradox--star-count-output-file 
+(defcustom paradox--star-count-output-file
   (expand-file-name "./star-count")
+  "File where a list of star counts will be saved."
+  :type 'file
+  :group 'paradox-counter
+  :package-version '(paradox-counter . "0.1"))
+(defcustom paradox--output-data-file
+  (expand-file-name "./data")
   "File where a list of star counts will be saved."
   :type 'file
   :group 'paradox-counter
@@ -85,7 +91,7 @@ Also saves result to `package-star-count'"
 
 (defun paradox-list-to-file ()
   "Save lists in \"data\" file."
-  (with-temp-file "data"
+  (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
     (pp paradox--package-repo-list (current-buffer))))
 

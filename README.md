@@ -9,15 +9,19 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 
 ## Current Features ##
 
-* Display number of GitHub Stars the package has (to the left of the description).
-* Display useful information on the mode-line and cleanup a bunch of useless stuff (customizable).
+* Display number of GitHub Stars the package has (to the left of the
+  description).
+* Shortcuts for package filtering:
+    * `f r` filters by regexp (`occur`);
+    * `f u` filters by upgrades;
+    * `f k` filters by keyword.
 * `hl-line-mode` enabled by default.
 * Customizable column widths, and automatic width for the `Archive` column.
+* Display useful information on the mode-line and cleanup a bunch of useless stuff (customizable).
 
 ## Planned Features ##
 
 * Star and unstar packages from within the Package Menu.
-* Integration with ioccur.
 * More fontification.
 * More customization.
 

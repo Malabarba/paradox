@@ -63,7 +63,7 @@
 ;; 
 
 ;;; Change Log:
-;; 0.2 - 2014/04/13 - Define filtering keys (ff, fu, fo).
+;; 0.2 - 2014/04/13 - Define filtering keys (fk, fu, fr).
 ;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
 ;; 0.2 - 2014/04/08 - Even better mode-line.
 ;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
@@ -326,6 +326,7 @@ shown."
 (define-key package-menu-mode-map "F" 'package-menu-filter)
 (define-key 'paradox--filter-map "k" #'package-menu-filter)
 (define-key 'paradox--filter-map "f" #'package-menu-filter)
+(define-key 'paradox--filter-map "r" #'occur)
 (define-key 'paradox--filter-map "o" #'occur)
 (define-key 'paradox--filter-map "u" #'paradox-filter-upgrades)
 

@@ -5,7 +5,7 @@
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
 ;; Version: 0.2
-;; Keywords: 
+;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0"))
 ;; Prefix: paradox 
 ;; Separator: -
@@ -63,6 +63,10 @@
 ;; 
 
 ;;; Change Log:
+;; 0.2 - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
+;; 0.2 - 2014/04/13 - New archive face.
+;; 0.2 - 2014/04/13 - Define filtering keys (fk, fu, fr).
+;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
 ;; 0.2 - 2014/04/08 - Even better mode-line.
 ;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
 ;; 0.2 - 2014/04/08 - Customizable widths.
@@ -71,6 +75,7 @@
 ;;; Code:
 
 (require 'package)
+(require 'cl)
 (defconst paradox-version "0.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
@@ -88,15 +93,33 @@ Please include your emacs and paradox versions."
   :prefix "paradox-"
   :package-version '(paradox . "0.1"))
 
-(defface paradox-star-face
-  '((t :inherit font-lock-comment-face))
-  "Face used on the star count number."
+(defface paradox-name-face
+  '((t :inherit link))
+  "Face used on the name column."
   :group 'paradox)
+;; (defface paradox-version-face
+;;   '((t :inherit default))
+;;   "Face used on the version column."
+;;   :group 'paradox)
+(defface paradox-archive-face
+  '((((background light)) :foreground "Grey60")
+    (((background dark)) :foreground "Grey40"))
+  "Face used on the archive column."
+  :group 'paradox)
+(defface paradox-star-face
+  '((t :inherit font-lock-string-face))
+  "Face used on the star column."
+  :group 'paradox)
+;; (defface paradox-description-face
+;;   '((t :inherit default))
+;;   "Face used on the description column."
+;;   :group 'paradox)
 
 (defvar paradox--star-count nil)
+(defvar paradox--package-repo-list nil)
 
 (defvar paradox--star-count-url
-  "https://raw.github.com/Bruce-Connor/paradox/data/star-count"
+  "https://raw.github.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
 (defmacro paradox--cas (string)
@@ -111,12 +134,13 @@ Please include your emacs and paradox versions."
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (setq
-   paradox--star-count
-   (with-current-buffer 
-       (url-retrieve-synchronously paradox--star-count-url)
-     (when (search-forward "\n\n")
-       (read (current-buffer))))))
+  (with-current-buffer 
+      (url-retrieve-synchronously paradox--star-count-url)
+    (setq paradox--star-count
+          (when (search-forward "\n\n")
+            (read (current-buffer))))
+    (setq paradox--package-repo-list (read (current-buffer)))
+    (kill-buffer)))
 
 (defvar paradox-hide-buffer-identification t
   "If non-nil, no buffer-name will be displayed in the packages buffer.")
@@ -192,25 +216,34 @@ The original definition is saved to paradox--SYM-backup."
   (setq paradox--upgradeable-packages-any?
         (> paradox--upgradeable-packages-number 0)))
 
+(defcustom paradox-status-face-alist
+  '(("built-in"  . font-lock-builtin-face)
+    ("available" . default)
+    ("new"       . bold)
+    ("held"      . font-lock-constant-face)
+    ("disabled"  . font-lock-warning-face)
+    ("installed" . font-lock-comment-face)
+    ("unsigned"  . font-lock-warning-face))
+  "List of (\"STATUS\" . FACE) cons cells.
+When displaying the package menu, FACE will be used to paint the
+Version, Status, and Description columns of each package whose
+status is STATUS. "
+  :type '(repeat (cons string face))
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
+
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
 Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
   (let* ((pkg-desc (car pkg))
          (status  (cdr pkg))
-         (face (pcase status
-                 (`"built-in"  'font-lock-builtin-face)
-                 (`"available" 'default)
-                 (`"new"       'bold)
-                 (`"held"      'font-lock-constant-face)
-                 (`"disabled"  'font-lock-warning-face)
-                 (`"installed" 'font-lock-comment-face)
-                 (`"unsigned"  'font-lock-warning-face)
-                 (_            'font-lock-warning-face)))) ; obsolete.
+         (face (or (cdr (assoc-string status paradox-status-face-alist))
+                   'font-lock-warning-face))) ; obsolete.
     (paradox--incf status)
     (list pkg-desc
           `[,(list (symbol-name (package-desc-name pkg-desc))
-                   'face 'link
+                   'face 'paradox-name-face
                    'follow-link t
                    'package-desc pkg-desc
                    'action 'package-menu-describe-package)
@@ -220,7 +253,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
             ,(propertize status 'font-lock-face face)
             ,@(if (cdr package-archives)
                   (list (propertize (or (package-desc-archive pkg-desc) "")
-                                    'font-lock-face face)))
+                                    'font-lock-face 'paradox-archive-face)))
             ,(paradox--package-star-count (package-desc-name pkg-desc))
             ,(propertize (package-desc-summary pkg-desc)
                          'font-lock-face face)])))
@@ -234,19 +267,12 @@ identifier (NAME . VERSION-LIST)."
          (version (cdr (car pkg)))
          (status  (nth 1 pkg))
          (doc (or (nth 2 pkg) ""))
-         (face (cond
-                ((string= status "built-in")  'font-lock-builtin-face)
-                ((string= status "available") 'default)
-                ((string= status "new") 'bold)
-                ((string= status "held")      'font-lock-constant-face)
-                ((string= status "disabled")  'font-lock-warning-face)
-                ((string= status "installed") 'font-lock-comment-face)
-                (t 'font-lock-warning-face)))) ; obsolete.
-    
+         (face (or (cdr (assoc-string status paradox-status-face-alist))
+                   'font-lock-warning-face))) ; obsolete.
     (paradox--incf status)
     (list (cons package version)
           (vector (list (symbol-name package)
-                        'face 'link
+                        'face 'paradox-name-face
                         'follow-link t
                         'package-symbol package
                         'action 'package-menu-describe-package)
@@ -258,7 +284,8 @@ identifier (NAME . VERSION-LIST)."
 
 (defun paradox--incf (status)
   (incf (paradox--cas status))
-  (incf (paradox--cas "total")))
+  (unless (string= status "obsolete")
+    (incf (paradox--cas "total"))))
 
 (defun paradox--improve-entry (entry)
   (setcdr entry (list 
@@ -266,7 +293,8 @@ identifier (NAME . VERSION-LIST)."
                           (cadr entry)))))
 
 (defun paradox--entry-star-count (entry)
-  (paradox--package-star-count ;; The package symbol should be in the ID field, but that's not mandatory,
+  (paradox--package-star-count
+   ;; The package symbol should be in the ID field, but that's not mandatory,
    (or (ignore-errors (elt (car entry) 1))
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
@@ -285,6 +313,7 @@ identifier (NAME . VERSION-LIST)."
 
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)
+    ("obsolete" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
     ("installed" . 0) ("unsigned" . 0)))
@@ -319,6 +348,32 @@ shown."
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
+(define-key paradox-menu-mode-map "f" 'paradox--filter-map)
+(define-key paradox-menu-mode-map "s" 'paradox-menu-mark-star-unstar)
+
+(define-prefix-command 'paradox--filter-map)
+(define-key package-menu-mode-map "F" 'package-menu-filter)
+(define-key paradox--filter-map "k" #'package-menu-filter)
+(define-key paradox--filter-map "f" #'package-menu-filter)
+(define-key paradox--filter-map "r" #'occur)
+(define-key paradox--filter-map "o" #'occur)
+(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defun paradox-filter-upgrades ()
+  "Show only upgradable packages."
+  (interactive)
+  (package-show-package-list
+   (mapcar 'car paradox--upgradeable-packages)
+   nil)
+  (paradox--add-filter "Upgrade"))
+
+(defun paradox--add-filter (keyword)
+  "Append KEYWORD to `paradox--current-filter', and rebind \"q\"."
+  ;; (unless (= 0 (length paradox--current-filter))
+  ;;   (setq paradox--current-filter 
+  ;;         (concat paradox--current-filter ",")))
+  (setq paradox--current-filter keyword)
+  (define-key package-menu-mode-map "q" 'quit-window))
 
 (defcustom paradox-column-width-package  18
   "Width of the \"Package\" column."
@@ -395,6 +450,12 @@ nil) on the Packages buffer."
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
+(defcustom paradox-display-buffer-name nil
+  "If nil, *Packages* buffer name won't be displayed in the mode-line."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "0.2"))
+
 (defun paradox--update-mode-line ()
   (mapc #'paradox--set-local-value paradox-local-variables)
   (setq mode-line-buffer-identification
@@ -402,8 +463,9 @@ nil) on the Packages buffer."
          `(line-number-mode
            ("(" (:propertize "%4l" face mode-line-buffer-id) "/"
             ,(int-to-string (line-number-at-pos (point-max))) ")"))
-         (propertized-buffer-identification
-          (format "%%%sb" (length (buffer-name))))
+         (list 'paradox-display-buffer-name
+               (propertized-buffer-identification
+                (format "%%%sb" (length (buffer-name)))))
          '(paradox--current-filter ("[" paradox--current-filter "]"))
          '(paradox--upgradeable-packages-any?
            (" " (:eval (paradox--build-buffer-id "Upgrade:" paradox--upgradeable-packages-number))))         
@@ -411,7 +473,7 @@ nil) on the Packages buffer."
            (" " (:eval (paradox--build-buffer-id "New:" (paradox--cas "new")))))
          " " (paradox--build-buffer-id "Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
          `(paradox--current-filter ""
-           (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
+                                   (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
 
 ;;           (" " (:eval (paradox--build-buffer-id "New:" (length package-menu--new-package-list)))))
 ;;         " " (paradox--build-buffer-id "Installed:" (length package-alist))
@@ -421,6 +483,89 @@ nil) on the Packages buffer."
   (let ((sym (or (car-safe x) x)))
     (when (boundp sym)
       (set (make-local-variable sym) (cdr-safe x)))))
+
+
+;;; Github api stuff
+
+(defvar paradox--user-starred-list nil)
+
+(defun paradox-menu-mark-star-unstar (n)
+  "Mark a package for (un)starring and move to the next line."
+  (interactive "p")
+  (unless paradox--user-starred-list
+    (paradox--refresh-user-starred-list))
+  ;; Get package name
+  (let ((pkg (intern (car (elt (tabulated-list-get-entry) 0))))
+        will-delete)
+    (unless pkg (error "Couldn't find package-name for this entry."))
+    ;; get repo for this package
+    (setq pkg (cdr-safe (assoc pkg paradox--package-repo-list)))
+    ;; (Un)Star repo
+    (if (not pkg)
+        (message "This package is not a GitHub repo.")
+      (setq will-delete (member pkg paradox--user-starred-list))
+      (paradox--star-repo pkg will-delete))
+    (forward-line 1)
+    
+    ;; (setq tag (if 
+    ;;               "U" "S"))
+    ;; (save-excursion
+    ;;   (forward-line 0)
+    ;;   (when (and (setq ctag (thing-at-point 'word))
+    ;;              (string-match "\\`[ID]\\'" ctag))
+    ;;     (setq tag (concat tag ctag))))
+    ;; (tabulated-list-put-tag tag t)
+    ))
+
+(defun paradox--star-repo (pkg &optional delete query)
+  (when (or (not query)
+            (y-or-n-p (format "Really %sstar %s? "
+                              (if delete "un" "") pkg)))  
+    (paradox--github-action-star pkg delete)
+    (message "%starred %s." (if delete "Uns" "S") pkg)
+    (if delete
+        (setq paradox--user-starred-list
+              (remove pkg paradox--user-starred-list))
+      (add-to-list 'paradox--user-starred-list pkg))))
+
+(defun paradox--refresh-user-starred-list ()
+  (setq paradox--user-starred-list
+        (mapcar
+         (lambda (x) (cdr (assoc 'full_name x)))
+         (paradox--github-action "user/starred"))))
+
+(defun paradox--github-action-star (repo &optional delete no-result)
+  (paradox--github-action (concat "user/starred/" repo)
+                          (if (stringp delete) delete (if delete "DELETE" "PUT"))
+                          no-result))
+
+(defun paradox--github-action (action &optional method no-result)
+  ;; Make sure the token's configured.
+  (unless (stringp paradox-github-token)
+    (describe-variable 'paradox-github-token)
+    (when (get-buffer "*Help*")
+      (switch-to-buffer "*Help*")
+      (delete-other-windows))
+    (error "You need to set your access token first! See the `paradox-github-token' variable."))
+  ;; Make the request
+  (with-current-buffer (get-buffer-create "plplpl")
+    (shell-command
+     (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic https://api.github.com/%s"
+             (or method "GET") paradox-github-token action)
+     t)
+    (unless no-result
+      (goto-char (point-min))
+      (unless (search-forward "\nStatus: " nil t)
+        (message "%s" (buffer-string))
+        (error ""))
+      ;; 204 means OK, but no content.
+      (if (looking-at "204") t
+        ;; 404 is not found.
+        (if (looking-at "404") nil
+          ;; Anything else gets interpreted.
+          (search-forward-regexp "^?$")
+          (skip-chars-forward "[:blank:]\n")
+          (unless (eobp) (json-read)))))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

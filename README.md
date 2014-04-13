@@ -3,6 +3,16 @@ Paradox
 
 Project for generating and displaying Package Ratings for Emacs packages.
 
+### Before ###
+![Regular Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/before.png)
+
+### After ###
+![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/after.png)  
+*These screenshots use smart-mode-line, but a similar effect is obtained with the regular mode-line.*
+
+Usage
+===
+
 To install it, open the file and call `M-x package-install-from-buffer`.
 
 To use it, simply call `M-x paradox-list-packages` (instead of the regular `list-packages`).

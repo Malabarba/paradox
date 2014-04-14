@@ -20,8 +20,25 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 
 ## Current Features ##
 
-* Display number of GitHub Stars the package has (to the left of the
-  description).
+### Package Ratings ###
+
+The first feature you should know about is our integration with
+**GitHub Stars**, which works as rough package rating system.  
+That is, Paradox package menu will:
+
+1. Display the number of GitHub Stars each package has (assuming it's in a github repo, of course);
+1. Let you star and unstar packages by hitting the `s` key;
+1. Let you star all packages you have installed with `M-x paradox-star-all-installed-packages`.
+
+Item **1.** will work out of the box, items **2.** and **3.** obviously
+require a github account (Paradox will help you generate a token the
+first time you call `paradox-list-packages`).
+  
+### Other Features ###
+
+Other features include many small improvements to the package menu
+itself and also work out of the box.
+
 * Shortcuts for package filtering:
     * `f r` filters by regexp (`occur`);
     * `f u` filters by upgrades;
@@ -36,10 +53,6 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
       `paradox-status-face-alist` and `paradox-archive-face`).
     * Customize local variables.
 
-
-## Planned Features ##
-
-* Star and unstar packages from within the Package Menu.
 
 ## Known Bugs ##
 

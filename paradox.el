@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.9
+;; Version: 0.9.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (json "1.4") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
@@ -101,7 +101,7 @@
 (require 'json)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.9" "Version of the paradox.el package.")
+(defconst paradox-version "0.9.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -554,8 +554,6 @@ nil) on the Packages buffer."
       (let ((before (paradox--repo-alist)) after)
         ad-do-it
         (setq after (paradox--repo-alist))
-        (message "after-before: %s" (-difference after before))
-        (message "before-after: %s" (-difference before after))
         (mapc #'paradox--star-repo
               (-difference (-difference after before) paradox--user-starred-list))
         (mapc #'paradox--unstar-repo

@@ -29,10 +29,8 @@
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
-(add-to-list 'load-path (expand-file-name "./"))
 (require 'paradox)
-(require 'cl)
-(defconst paradox-counter-version "0.1" "Version of the paradox-counter.el package.")
+(eval-when-compile (require 'cl))
 
 (defcustom paradox-melpa-directory
   (expand-file-name "~/Git-Projects/melpa/")
@@ -47,8 +45,14 @@
   :type 'directory
   :group 'paradox)
 
-(defcustom paradox--star-count-output-file 
+(defcustom paradox--star-count-output-file
   (expand-file-name "./star-count")
+  "File where a list of star counts will be saved."
+  :type 'file
+  :group 'paradox-counter
+  :package-version '(paradox-counter . "0.1"))
+(defcustom paradox--output-data-file
+  (expand-file-name "./data")
   "File where a list of star counts will be saved."
   :type 'file
   :group 'paradox-counter
@@ -69,33 +73,25 @@ Also saves result to `package-star-count'"
       (dolist (file files)
         (message "%s / %s" (incf i) N)
         (insert-file-contents file)
-        (let ((package (read (buffer-string))))
+        (let ((package (read (buffer-string)))
+              repo)
           (when (eq 'github (cadr (memq :fetcher package)))
-            (add-to-list
-             'paradox--star-count
-             (cons (car package)
-                   (paradox-fetch-star-count (cadr (memq :repo package)))))))
+            (setq repo (cadr (memq :repo package)))
+            (push (cons (car package) (paradox-fetch-star-count repo))
+                  paradox--star-count)
+            (push (cons (car package) repo)
+                  paradox--package-repo-list)))
         (erase-buffer))))
-  (paradox-list-to-file 'paradox--star-count))
+  (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
   (apply 'message s))
 
-(defun paradox-list-to-file (name)
-  "Save list NAME in file given by the NAME-output-file variable."
-  (let ((filename (eval (intern (format "%s-output-file" name)))))
-    (with-temp-file filename
-      (pp (eval name) (current-buffer)))))
-
-(defun paradox-github-api-request (req)
-  (with-temp-buffer
-    (shell-command
-     (format 
-      "curl -s -u %s:x-oauth-basic https://api.github.com/%s"
-      paradox-personal-access-token req)
-     t)
-    (goto-char (point-min))
-    (json-read)))
+(defun paradox-list-to-file ()
+  "Save lists in \"data\" file."
+  (with-temp-file paradox--output-data-file
+    (pp paradox--star-count (current-buffer))
+    (pp paradox--package-repo-list (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
   (with-current-buffer

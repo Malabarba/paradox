@@ -14,7 +14,7 @@ usage statistics, customizability, and more.
 Usage
 ===
 
-To install it, open the file and call `M-x package-install-from-buffer`.
+To install it, call `M-x package-install RET paradox`.
 
 To use it, simply call `M-x paradox-list-packages` (instead of the regular `list-packages`).
 
@@ -23,26 +23,28 @@ To use it, simply call `M-x paradox-list-packages` (instead of the regular `list
 ### Package Ratings ###
 
 The first feature you should know about is our integration with
-**GitHub Stars**, which works as rough package rating system.  
+**GitHub Stars**, which works as *rough package rating* system.  
 That is, Paradox package menu will:
 
-1. Display the number of GitHub Stars each package has (assuming it's in a github repo, of course);
-1. Let you star and unstar packages by hitting the `s` key;
-1. Let you star all packages you have installed with `M-x paradox-star-all-installed-packages`.
+1. Display the number of GitHub Stars each package has (assuming it's
+   in a github repo, of course);
+2. Automatically star packages you install, and unstar packages you delete;
+3. Let you star and unstar packages by hitting the `s` key;
+4. Let you star all packages you have installed with `M-x paradox-star-all-installed-packages`.
 
-Item **1.** will work out of the box, items **2.** and **3.** obviously
+Item **1.** will work out of the box, the other items obviously
 require a github account (Paradox will help you generate a token the
 first time you call `paradox-list-packages`).
   
-### Other Features ###
+### Several Improvements ###
 
 Other features include many small improvements to the package menu
 itself and also work out of the box.
 
 * Shortcuts for package filtering:
     * `f r` filters by regexp (`occur`);
-    * `f u` filters by upgrades;
-    * `f k` filters by keyword.
+    * `f u` display only packages with upgrades;
+    * `f k` filters by keyword (emacs 24.4 only).
 * `hl-line-mode` enabled by default.
 * Display useful information on the mode-line and cleanup a bunch of
   useless stuff (customizable).

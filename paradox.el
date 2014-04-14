@@ -12,32 +12,53 @@
 
 ;;; Commentary:
 ;; 
-;; Project for generating and displaying Package Ratings for Emacs packages.
+;; Project for modernizing Emacs' Package Menu. With package ratings,
+;; usage statistics, customizability, and more.
 ;; 
-;; To install it, open the file and call M-x `package-install-from-buffer'.
+;; Usage
+;; ===
+;; 
+;; To install it, call M-x `package-install' RET paradox.
 ;; 
 ;; To use it, simply call M-x `paradox-list-packages' (instead of the regular `list-packages').
 ;; 
 ;; ## Current Features ##
 ;; 
-;; * Display number of GitHub Stars the package has (right before the description).
-;; * Display useful information on the mode-line and cleanup a bunch of
-;;   useless stuff.
+;; ### Package Ratings ###
+;; 
+;; The first feature you should know about is our integration with
+;; **GitHub Stars**, which works as *rough package rating* system.  
+;; That is, Paradox package menu will:
+;; 
+;; 1. Display the number of GitHub Stars each package has (assuming it's
+;;    in a github repo, of course);
+;; 2. Automatically star packages you install, and unstar packages you delete;
+;; 3. Let you star and unstar packages by hitting the `s' key;
+;; 4. Let you star all packages you have installed with M-x `paradox-star-all-installed-packages'.
+;; 
+;; Item **1.** will work out of the box, the other items obviously
+;; require a github account (Paradox will help you generate a token the
+;; first time you call `paradox-list-packages').
+;;   
+;; ### Several Improvements ###
+;; 
+;; Other features include many small improvements to the package menu
+;; itself and also work out of the box.
+;; 
+;; * Shortcuts for package filtering:
+;;     * <f> r< filters> by regexp (`occur');
+;;     * <f> u< display> only packages with upgrades;
+;;     * <f> k< filters> by keyword (emacs 24.4 only).
 ;; * `hl-line-mode' enabled by default.
-;; * Customizable column widths, and automatic width for the `Archive' column.
+;; * Display useful information on the mode-line and cleanup a bunch of
+;;   useless stuff (customizable).
+;; * Customization! Just call M-x `paradox-customize' to see what you can
+;;   do.
+;;     * Customize column widths.
+;;     * Customize faces (`paradox-star-face',
+;;       `paradox-status-face-alist' and `paradox-archive-face').
+;;     * Customize local variables.
 ;; 
-;; ## Planned Features ##
-;; 
-;; * Star and unstar packages from within the Package Menu.
-;; * Package filtering.
-;; * More fontification.
-;; * More customization.
-;; 
-;; ## Known Bugs ##
-;; 
-;; * On some paradox--cases there's an annoying gnutls error message after downloading the star counts
-;;       <gnutls>.c: [0] (Emacs) fatal error: The TLS connection was non-properly terminated.
-;;   If anyone knows how to fix it, I'm all ears.
 
 ;;; Instructions:
 ;;

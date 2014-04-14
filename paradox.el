@@ -20,7 +20,15 @@
 ;; 
 ;; To install it, call M-x `package-install' RET paradox.
 ;; 
-;; To use it, simply call M-x `paradox-list-packages' (instead of the regular `list-packages').
+;; To use it, simply call M-x `paradox-list-packages' (instead of the
+;; regular `list-packages').  
+;; This will give you most features out of the box. If you want to be
+;; able to star packages as well, just configure the
+;; `paradox-github-token' variable then call `paradox-list-packages'
+;; again.
+;; 
+;; If you'd like to stop using Paradox, you may call `paradox-disable'
+;; and go back to using the regular `list-packages'.
 ;; 
 ;; ## Current Features ##
 ;; 
@@ -46,9 +54,9 @@
 ;; itself and also work out of the box.
 ;; 
 ;; * Shortcuts for package filtering:
-;;     * <f> r< filters> by regexp (`occur');
-;;     * <f> u< display> only packages with upgrades;
-;;     * <f> k< filters> by keyword (emacs 24.4 only).
+;;     * <f r> filters by regexp (`occur');
+;;     * <f u> display only packages with upgrades;
+;;     * <f k> filters by keyword (emacs 24.4 only).
 ;; * `hl-line-mode' enabled by default.
 ;; * Display useful information on the mode-line and cleanup a bunch of
 ;;   useless stuff (customizable).
@@ -58,15 +66,6 @@
 ;;     * Customize faces (`paradox-star-face',
 ;;       `paradox-status-face-alist' and `paradox-archive-face').
 ;;     * Customize local variables.
-;; 
-
-;;; Instructions:
-;;
-;; INSTALLATION
-;;
-;; To install it, open the file and call M-x `package-install-from-buffer'.
-;; 
-;; To use it, simply call M-x `paradox-list-packages' (instead of the regular `list-packages').
 
 ;;; License:
 ;;
@@ -84,6 +83,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.9 - 2014/04/14 - First full feature release.
 ;; 0.5 - 2014/04/14 - Star all installed packages.
 ;; 0.5 - 2014/04/13 - (Un)Star packages with the "s" key!.
 ;; 0.2 - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
@@ -124,12 +124,16 @@ Please include your emacs and paradox versions."
 Currently, that means (un)starring repos.
 
 To generate an access token:
-  1. Visit the page https://github.com/settings/tokens/new and login to github (if asked).
-  3. Give the token any name you want (Paradox, for instance).
-  4. The only permission we need is \"public_repo\", so unmark all others.
-  5. Click on \"Generate Token\", copy the generated token, and save it to this variable by writing
+  1. Visit the page https://github.com/settings/tokens/new and
+     login to github (if asked).
+  2. Give the token any name you want (Paradox, for instance).
+  3. The only permission we need is \"public_repo\", so unmark
+     all others.
+  4. Click on \"Generate Token\", copy the generated token, and
+     save it to this variable by writing
          (setq paradox-github-token TOKEN)
-     somewhere in your configuration.
+     somewhere in your configuration and evaluating it (or just
+     restart emacs).
 
 This is similar to how erc or jabber handle authentication in
 emacs, but the following disclaimer always worth reminding.

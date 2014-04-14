@@ -16,7 +16,15 @@ Usage
 
 To install it, call `M-x package-install RET paradox`.
 
-To use it, simply call `M-x paradox-list-packages` (instead of the regular `list-packages`).
+To use it, simply call `M-x paradox-list-packages` (instead of the
+regular `list-packages`).  
+This will give you most features out of the box. If you want to be
+able to star packages as well, just configure the
+`paradox-github-token` variable then call `paradox-list-packages`
+again.
+
+If you'd like to stop using Paradox, you may call `paradox-disable`
+and go back to using the regular `list-packages`.
 
 ## Current Features ##
 

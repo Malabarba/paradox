@@ -83,18 +83,19 @@
 ;; 
 
 ;;; Change Log:
-;; 0.9 - 2014/04/14 - First full feature release.
-;; 0.5 - 2014/04/14 - Star all installed packages.
-;; 0.5 - 2014/04/13 - (Un)Star packages with the "s" key!.
-;; 0.2 - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
-;; 0.2 - 2014/04/13 - New archive face.
-;; 0.2 - 2014/04/13 - Define filtering keys (fk, fu, fr).
-;; 0.2 - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
-;; 0.2 - 2014/04/08 - Even better mode-line.
-;; 0.2 - 2014/04/08 - Intelligent width for the "archive" column.
-;; 0.2 - 2014/04/08 - Customizable widths.
-;; 0.2 - 2014/04/08 - Prettier trunctation.
-;; 0.1 - 2014/04/03 - Created File.
+;; 0.9.1 - 2014/04/14 - paradox-filter-upgrades is informative when there are no upgrades.
+;; 0.9   - 2014/04/14 - First full feature release.
+;; 0.5   - 2014/04/14 - Star all installed packages.
+;; 0.5   - 2014/04/13 - (Un)Star packages with the "s" key!.
+;; 0.2   - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
+;; 0.2   - 2014/04/13 - New archive face.
+;; 0.2   - 2014/04/13 - Define filtering keys (fk, fu, fr).
+;; 0.2   - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
+;; 0.2   - 2014/04/08 - Even better mode-line.
+;; 0.2   - 2014/04/08 - Intelligent width for the "archive" column.
+;; 0.2   - 2014/04/08 - Customizable widths.
+;; 0.2   - 2014/04/08 - Prettier trunctation.
+;; 0.1   - 2014/04/03 - Created File.
 ;;; Code:
 
 (require 'package)
@@ -160,7 +161,6 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "0.2"))
-
 
 (defface paradox-name-face
   '((t :inherit link))
@@ -401,7 +401,8 @@ shown."
     (define-key package-menu-mode-map "q" 'quit-window))
   (tabulated-list-print remember-pos)
   (tabulated-list-init-header)
-  (paradox--update-mode-line))
+  (paradox--update-mode-line)
+  (paradox-refresh-upgradeable-packages))
 
 (unless (version< emacs-version "24.3.50")
   (defalias 'paradox-menu--refresh 'package-menu--refresh))
@@ -425,9 +426,14 @@ shown."
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."
   (interactive)
-  (package-show-package-list
-   (mapcar 'car paradox--upgradeable-packages))
-  (paradox--add-filter "Upgrade"))
+  (if (null paradox--upgradeable-packages)
+      (message "No packages have upgrades.")
+    (package-show-package-list
+     (mapcar 'car paradox--upgradeable-packages))
+    (if keywords
+        (define-key package-menu-mode-map "q" 'package-show-package-list)
+      (define-key package-menu-mode-map "q" 'quit-window))
+    (paradox--add-filter "Upgrade")))
 
 (defun paradox--add-filter (keyword)
   "Append KEYWORD to `paradox--current-filter', and rebind \"q\"."

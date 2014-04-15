@@ -564,8 +564,9 @@ nil) on the Packages buffer."
   "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
   (when (and (stringp paradox-github-token)
              (eq paradox-automatically-star 'unconfigured))
-    (setq paradox-automatically-star
-          (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
+    (customize-save-variable
+     'paradox-automatically-star
+     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
   (if (and (stringp paradox-github-token) paradox-automatically-star)
       (let ((before (paradox--repo-alist)) after)
         ad-do-it

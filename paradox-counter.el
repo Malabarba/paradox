@@ -66,6 +66,7 @@ Also saves result to `package-star-count'"
   (unless recipes-dir
     (setq recipes-dir paradox-recipes-directory))
   (setq paradox--star-count nil)
+  (setq paradox--package-repo-list nil)
   (with-temp-buffer
     (let* ((i 0)
            (files (directory-files recipes-dir t "\\`[^\\.]"))

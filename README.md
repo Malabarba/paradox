@@ -14,7 +14,10 @@ usage statistics, customizability, and more.
 Usage
 ===
 
-To install it from Melpa or Melpa-stable, call `M-x package-install RET paradox`.
+Paradox can be installed from Melpa with `M-x package-install RET
+paradox`.  
+It can also be installed manually in the usual way, just be mindful of
+the dependencies.
 
 To use it, simply call `M-x paradox-list-packages` (instead of the
 regular `list-packages`).  

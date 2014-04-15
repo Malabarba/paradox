@@ -4,9 +4,9 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.9.2
+;; Version: 0.9.3
 ;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (json "1.4") (dash "2.6.0") (cl-lib "1.0"))
+;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
 ;; Separator: -
 
@@ -101,10 +101,9 @@
 ;;; Code:
 
 (require 'package)
-(require 'json)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.9.2" "Version of the paradox.el package.")
+(defconst paradox-version "0.9.3" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -665,7 +664,7 @@ No questions asked."
   "Contact the github api performing ACTION with METHOD.
 Default METHOD is \"GET\".
 
-Action can be anything such as \"/user/starred?per_page=100\". If
+Action can be anything such as \"user/starred?per_page=100\". If
 it's not a full url, it will be prepended with
 \"https://api.github.com/\".
 
@@ -696,7 +695,7 @@ Return value is always a list.
          (shell-command
           (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
                   (or method "GET") paradox-github-token action) t))
-       (unless reader
+       (when reader
          (unless (search-forward "\nStatus: " nil t)
            (message "%s" (buffer-string))
            (error ""))

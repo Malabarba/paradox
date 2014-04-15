@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.9.3
+;; Version: 0.9.4
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
@@ -103,7 +103,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.9.3" "Version of the paradox.el package.")
+(defconst paradox-version "0.9.4" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -409,7 +409,8 @@ shown."
   (paradox--update-mode-line)
   (paradox-refresh-upgradeable-packages))
 
-(unless (version< emacs-version "24.3.50")
+(if (version< emacs-version "24.3.50")
+    (require 'paradox-compat)
   (defalias 'paradox-menu--refresh 'package-menu--refresh))
 
 (defun paradox--column-index (regexp)
@@ -506,7 +507,8 @@ Letters do not insert themselves; instead, they are commands.
   (run-hooks 'package-menu-mode-hook))
 
 (defun paradox--archive-format ()
-  (when (cdr package-archives)
+  (when (and (cdr package-archives) 
+             (null (version< emacs-version "24.3.50")))
     (list (list "Archive" 
                 (apply 'max (mapcar 'length (mapcar 'car package-archives)))
                 'package-menu--archive-predicate))))

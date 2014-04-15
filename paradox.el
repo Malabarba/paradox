@@ -632,8 +632,9 @@ No questions asked."
 
 (defun paradox--refresh-user-starred-list ()
   (setq paradox--user-starred-list
-        (paradox--github-action "user/starred?per_page=100" nil nil 
-                                'paradox--full-name-reader)))
+        (paradox--github-action
+         "user/starred?per_page=100" nil
+         'paradox--full-name-reader)))
 
 (defun paradox--full-name-reader ()
   "Return all \"full_name\" properties in the buffer. Much faster than `json-read'."
@@ -647,9 +648,30 @@ No questions asked."
 (defun paradox--github-action-star (repo &optional delete no-result)
   (paradox--github-action (concat "user/starred/" repo)
                           (if (stringp delete) delete (if delete "DELETE" "PUT"))
-                          no-result))
+                          (null no-result)))
 
-(defun paradox--github-action (action &optional method no-result reader)
+(defun paradox--github-action (action &optional method reader)
+  "Contact the github api performing ACTION with METHOD.
+Default METHOD is \"GET\".
+
+Action can be anything such as \"/user/starred?per_page=100\". If
+it's not a full url, it will be prepended with
+\"https://api.github.com/\".
+
+This function does nothing if `paradox-github-token' isn't set.
+This function also handles the pagination used in github results,
+results of each page are appended.
+
+Return value is always a list.
+- If READER is nil, the result of the action is completely
+  ignored (no pagination is performed on this case, making it
+  much faster).
+- Otherwise:
+  - If the result was a 404, the function returns nil;
+  - Otherwise, READER is called as a function with point right
+    after the headers and should always return a list. As a
+    special exception, if READER is t, it is equivalent to a
+    function that returns (t)."
   ;; Make sure the token's configured.
   (unless (stringp paradox-github-token) (keyboard-quit))
   (unless (string-match "\\`https://" action)
@@ -662,9 +684,8 @@ No questions asked."
        (save-excursion
          (shell-command
           (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
-                  (or method "GET") paradox-github-token action)
-          t))
-       (unless no-result
+                  (or method "GET") paradox-github-token action) t))
+       (unless reader
          (unless (search-forward "\nStatus: " nil t)
            (message "%s" (buffer-string))
            (error ""))
@@ -677,8 +698,8 @@ No questions asked."
                (setq next (match-string-no-properties 1)))
              (search-forward-regexp "^?$")
              (skip-chars-forward "[:blank:]\n")
-             (unless (eobp) (funcall (or reader 'json-read)))))))
-     (when next (paradox--github-action next method no-result reader)))))
+             (unless (eobp) (if (eq reader t) t (funcall reader)))))))
+     (when next (paradox--github-action next method reader)))))
 
 (defun paradox--check-github-token ()
   (if (stringp paradox-github-token)

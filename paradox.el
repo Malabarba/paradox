@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.9.1
+;; Version: 0.9.2
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (json "1.4") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
@@ -83,6 +83,8 @@
 ;; 
 
 ;;; Change Log:
+;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
+;; 0.9.2 - 2014/04/15 - Ask the user before automatically starring.
 ;; 0.9.1 - 2014/04/14 - paradox-filter-upgrades is informative when there are no upgrades.
 ;; 0.9   - 2014/04/14 - First full feature release.
 ;; 0.5   - 2014/04/14 - Star all installed packages.
@@ -102,7 +104,7 @@
 (require 'json)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.9.1" "Version of the paradox.el package.")
+(defconst paradox-version "0.9.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -146,7 +148,7 @@ token grants (very) limited access to your account."
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defcustom paradox-automatically-star t
+(defcustom paradox-automatically-star 'unconfigured
   "When you install new packages, should they be automatically starred? 
 NOTE: This variable has no effect if `paradox-github-token' isn't set.
 
@@ -158,7 +160,9 @@ auto (un)star packages that were simply upgraded.
 If this variable is nil, this behaviour is disabled. \\<paradox-menu-mode-map>
 
 On the Package Menu, you can always manually star packages with \\[paradox-menu-mark-star-unstar]."
-  :type 'boolean
+  :type '(choice (const :tag "Yes." t)
+                 (const :tag "No." nil)
+                 (const :tag "Ask later." unconfigured))
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
@@ -243,6 +247,7 @@ mode-line."
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
+  (ad-activate 'package-menu-execute)
   (if (version< emacs-version "24.3.50")
       (progn
         (require 'paradox-compat)
@@ -257,6 +262,7 @@ mode-line."
 (defun paradox-disable ()
   "Disable paradox, and go back to regular package-menu."
   (interactive)
+  (ad-deactivate 'package-menu-execute)
   (dolist (it paradox--backups)
     (message "Restoring %s to %s" (car it) (eval (cdr it)))
     (fset (car it) (eval (cdr it))))
@@ -554,8 +560,13 @@ nil) on the Packages buffer."
       (set (make-local-variable sym) (cdr-safe x)))))
 
 (defadvice package-menu-execute 
-    (around paradox-around-package-menu-execute-advice () activate)
+    (around paradox-around-package-menu-execute-advice ())
   "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
+  (when (and (stringp paradox-github-token)
+             (eq paradox-automatically-star 'unconfigured))
+    (customize-save-variable
+     'paradox-automatically-star
+     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
   (if (and (stringp paradox-github-token) paradox-automatically-star)
       (let ((before (paradox--repo-alist)) after)
         ad-do-it

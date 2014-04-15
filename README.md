@@ -14,7 +14,10 @@ usage statistics, customizability, and more.
 Usage
 ===
 
-To install it, call `M-x package-install RET paradox`.
+Paradox can be installed from Melpa with `M-x package-install RET
+paradox`.  
+It can also be installed manually in the usual way, just be mindful of
+the dependencies.
 
 To use it, simply call `M-x paradox-list-packages` (instead of the
 regular `list-packages`).  
@@ -31,7 +34,7 @@ and go back to using the regular `list-packages`.
 ### Package Ratings ###
 
 The first feature you should know about is our integration with
-**GitHub Stars**, which works as *rough package rating* system.  
+**GitHub Stars**, which works as **rough** package rating system.  
 That is, Paradox package menu will:
 
 1. Display the number of GitHub Stars each package has (assuming it's

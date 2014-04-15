@@ -106,7 +106,8 @@ Also saves result to `package-star-count'"
                 (delete-char 1)))
             (forward-char -1)
             (thing-at-point 'number))
-        nil))))
+        nil))
+    (kill-buffer)))
 
 (provide 'paradox-counter)
 ;;; paradox-counter.el ends here.

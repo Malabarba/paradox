@@ -14,7 +14,10 @@ usage statistics, customizability, and more.
 Usage
 ===
 
-To install it, call `M-x package-install RET paradox`.
+Paradox can be installed from Melpa with `M-x package-install RET
+paradox`.  
+It can also be installed manually in the usual way, just be mindful of
+the dependencies.
 
 To use it, simply call `M-x paradox-list-packages` (instead of the
 regular `list-packages`).  
@@ -31,12 +34,14 @@ and go back to using the regular `list-packages`.
 ### Package Ratings ###
 
 The first feature you should know about is our integration with
-**GitHub Stars**, which works as *rough package rating* system.  
+**GitHub Stars**, which works as **rough** package rating system.  
 That is, Paradox package menu will:
 
 1. Display the number of GitHub Stars each package has (assuming it's
    in a github repo, of course);
-2. Automatically star packages you install, and unstar packages you delete;
+2. Possibly automatically star packages you install, and unstar
+   packages you delete (you will be asked the first time whether you
+   want this);
 3. Let you star and unstar packages by hitting the `s` key;
 4. Let you star all packages you have installed with `M-x paradox-star-all-installed-packages`.
 
@@ -69,3 +74,18 @@ itself and also work out of the box.
 * On some cases there's an annoying gnutls error message after downloading the star counts `gnutls.c: [0] (Emacs) fatal error: The TLS connection was non-properly terminated.`.  
   If anyone knows how to fix it, I'm all ears.
 
+## How Star Displaying Works ##
+
+We generate a map of `Package Name -> Repository` from
+[Melpa](https://github.com/milkypostman/melpa.git)'s `recipe`
+directory, some repos may correspond to more than one package. 
+This map is used count the stars a given package has.
+_This doesn't mean you need Melpa to see the star counts, the numbers
+will be displayed regardless of what archives you use._
+
+Currently, packages that are not hosted on GitHub are listed with a
+blank star count, which is clearly different from 0-star packages
+(which are displayed with a 0, obviously).  
+If you know of an alternative that could be used for these packages,
+[open an issue](https://github.com/Bruce-Connor/paradox/issues/new)
+here, I'd love to hear.

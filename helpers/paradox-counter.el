@@ -52,7 +52,7 @@
   :group 'paradox-counter
   :package-version '(paradox-counter . "0.1"))
 (defcustom paradox--output-data-file
-  (expand-file-name "./data")
+  (expand-file-name "../data")
   "File where a list of star counts will be saved."
   :type 'file
   :group 'paradox-counter
@@ -95,20 +95,21 @@ Also saves result to `package-star-count'"
     (pp paradox--package-repo-list (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
-  (with-current-buffer
-      (url-retrieve-synchronously (format "https://github.com/%s/" repo))
-    (when (search-forward-regexp (format "href=\"/%s/stargazers\">" repo) nil t)
-      (skip-chars-forward "\n 	")
-      (if (looking-at "[0-9]")
-          (progn
-            (while (looking-at "[0-9]")
-              (forward-char 1)
-              (when (looking-at ",")
-                (delete-char 1)))
-            (forward-char -1)
-            (thing-at-point 'number))
-        nil))
-    (kill-buffer)))
+  (let (res)
+    (with-current-buffer (url-retrieve-synchronously (format "https://github.com/%s/" repo))
+      (when (search-forward-regexp (format "href=\"/%s/stargazers\">" repo) nil t)
+        (skip-chars-forward "\n 	")
+        (if (looking-at "[0-9]")
+            (progn
+              (while (looking-at "[0-9]")
+                (forward-char 1)
+                (when (looking-at ",")
+                  (delete-char 1)))
+              (forward-char -1)
+              (setq res (thing-at-point 'number)))
+          (setq res nil)))
+      (kill-buffer))
+    res))
 
 (provide 'paradox-counter)
 ;;; paradox-counter.el ends here.

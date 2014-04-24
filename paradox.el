@@ -205,7 +205,7 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
 
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)
-    ("obsolete" . 0)
+    ("obsolete" . 0) ("deleted" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
     ("installed" . 0) ("unsigned" . 0)))
@@ -315,6 +315,7 @@ The original definition is saved to paradox--SYM-backup."
     ("held"      . font-lock-constant-face)
     ("disabled"  . font-lock-warning-face)
     ("installed" . font-lock-comment-face)
+    ("deleted"   . font-lock-comment-face)
     ("unsigned"  . font-lock-warning-face))
   "List of (\"STATUS\" . FACE) cons cells.
 When displaying the package menu, FACE will be used to paint the

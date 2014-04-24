@@ -83,6 +83,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.10  - 2014/04/25 - Links to package homepages.
 ;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
 ;; 0.9.2 - 2014/04/15 - Ask the user before automatically starring.
 ;; 0.9.1 - 2014/04/14 - paradox-filter-upgrades is informative when there are no upgrades.
@@ -167,7 +168,11 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
 
 (defface paradox-name-face
   '((t :inherit link))
-  "Face used on the name column."
+  "Face used on the package's name."
+  :group 'paradox)
+(defface paradox-homepage-button-face
+  '((t :underline t :inherit font-lock-comment-face))
+  "Face used on the homepage button."
   :group 'paradox)
 ;; (defface paradox-version-face
 ;;   '((t :inherit default))
@@ -319,6 +324,19 @@ status is STATUS. "
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
+(defcustom paradox-homepage-button-string "url"
+  "String used to for the link that takes you to a package's homepage."
+  :type 'string
+  :group 'paradox
+  :package-version '(paradox . "0.10"))
+
+(defcustom paradox-use-homepage-buttons t
+  "If non-nil a button will be added after the name of each package.
+This button takes you to the package's homepage."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "0.10"))
+
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
@@ -326,14 +344,34 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
   (let* ((pkg-desc (car pkg))
          (status  (cdr pkg))
          (face (or (cdr (assoc-string status paradox-status-face-alist))
-                   'font-lock-warning-face))) ; obsolete.
+                   'font-lock-warning-face))
+         (url (paradox--package-homepage pkg-desc))
+         (name (symbol-name (package-desc-name pkg-desc)))
+         (name-length (length name))
+         (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
     (list pkg-desc
-          `[,(list (symbol-name (package-desc-name pkg-desc))
-                   'face 'paradox-name-face
-                   'follow-link t
-                   'package-desc pkg-desc
-                   'action 'package-menu-describe-package)
+          `[,(concat 
+              (propertize name
+                          'face 'paradox-name-face
+                          'button t
+                          'follow-link t
+                          'help-echo (format "Package: %s" name)
+                          'package-desc pkg-desc
+                          'action 'package-menu-describe-package)
+              (if (and paradox-use-homepage-buttons url
+                       (< (+ name-length button-length) paradox-column-width-package))
+                  (concat
+                   (make-string (- paradox-column-width-package name-length button-length) ?\s)
+                   (propertize paradox-homepage-button-string
+                               'face 'paradox-homepage-button-face
+                               'mouse-face 'custom-button-mouse
+                               'help-echo (format "Visit %s" url)
+                               'button t
+                               'follow-link t
+                               'action
+                               `(lambda (&rest ignore) (interactive) (browse-url ,url))))
+                ""))
             ,(propertize (package-version-join
                           (package-desc-version pkg-desc))
                          'font-lock-face face)
@@ -344,6 +382,12 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
             ,(paradox--package-star-count (package-desc-name pkg-desc))
             ,(propertize (package-desc-summary pkg-desc)
                          'font-lock-face face)])))
+
+(defun paradox--package-homepage (pkg)
+  (let* ((desc pkg)
+         (extras (and desc (package-desc-extras desc)))
+         (homepage (cdr (assoc :url extras))))
+    homepage))
 
 (defun paradox--incf (status)
   (cl-incf (paradox--cas status))
@@ -419,10 +463,11 @@ shown."
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
-(define-key paradox-menu-mode-map "f" 'paradox--filter-map)
-(define-key paradox-menu-mode-map "s" 'paradox-menu-mark-star-unstar)
+(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
+(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
+(define-key paradox-menu-mode-map [return] #'push-button)
 
-(define-key package-menu-mode-map "F" 'package-menu-filter)
+(define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
 (define-key paradox--filter-map "f" #'package-menu-filter)
 (define-key paradox--filter-map "r" #'occur)

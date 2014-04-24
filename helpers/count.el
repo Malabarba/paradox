@@ -1,0 +1,5 @@
+(add-to-list 'load-path (expand-file-name "./"))
+(add-to-list 'load-path (expand-file-name "../"))
+(setq paradox-melpa-directory (expand-file-name "../../.melpa/"))
+(require 'paradox-counter)
+(paradox-generate-star-count)

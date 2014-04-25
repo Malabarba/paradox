@@ -252,7 +252,7 @@ mode-line."
   "Enable paradox, overriding the default package-menu."
   (interactive)
   (ad-activate 'package-menu-execute)
-  (if (version< emacs-version "24.3.50")
+  (if (paradox--compat-p)
       (progn
         (require 'paradox-compat)
         (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat))
@@ -260,6 +260,10 @@ mode-line."
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
   (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
+
+(defun paradox--compat-p ()
+  "Non-nil if we need to enable pre-24.4 compatibility features."
+  (version< emacs-version "24.3.50"))
 
 (defvar paradox--backups nil)
 
@@ -454,7 +458,7 @@ shown."
   (paradox--update-mode-line)
   (paradox-refresh-upgradeable-packages))
 
-(if (version< emacs-version "24.3.50")
+(if (paradox--compat-p)
     (require 'paradox-compat)
   (defalias 'paradox-menu--refresh 'package-menu--refresh))
 
@@ -529,6 +533,9 @@ Letters do not insert themselves; instead, they are commands.
 \\{paradox-menu-mode-map}"
   (hl-line-mode 1)  
   (paradox--update-mode-line)
+  (when (paradox--compat-p)
+    (require 'paradox-compat)
+    (setq tabulated-list-printer 'paradox--print-entry-compat))
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)
           ("Version" ,paradox-column-width-version nil)
@@ -554,7 +561,7 @@ Letters do not insert themselves; instead, they are commands.
 
 (defun paradox--archive-format ()
   (when (and (cdr package-archives) 
-             (null (version< emacs-version "24.3.50")))
+             (null (paradox--compat-p)))
     (list (list "Archive" 
                 (apply 'max (mapcar 'length (mapcar 'car package-archives)))
                 'package-menu--archive-predicate))))

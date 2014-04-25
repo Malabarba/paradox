@@ -73,7 +73,11 @@ identifier (NAME . VERSION-LIST)."
                               'font-lock-face face)
                   (propertize status 'font-lock-face face)
                   (paradox--package-star-count package)
-                  (propertize doc 'font-lock-face face)))))
+                  (propertize (concat desc-prefix doc desc-suffix)
+                              'font-lock-face
+                              (if (> paradox-lines-per-entry 1)
+                                  'paradox-description-face-multiline
+                                'paradox-description-face))))))
 
 (defun paradox--print-entry-compat (id cols)
   "Printer used by `paradox-menu-mode'.

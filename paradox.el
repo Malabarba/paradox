@@ -83,6 +83,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
 ;; 0.10  - 2014/04/25 - Links to package homepages.
 ;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
 ;; 0.9.2 - 2014/04/15 - Ask the user before automatically starring.
@@ -191,10 +192,18 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   '((t :weight bold :inherit paradox-star-face))
   "Face used on the star column, for packages you have starred."
   :group 'paradox)
-;; (defface paradox-description-face
-;;   '((t :inherit default))
-;;   "Face used on the description column."
-;;   :group 'paradox)
+(defface paradox-description-face
+  '((t :inherit default))
+  "Face used on the description column.
+If `paradox-lines-per-entry' > 1, the face
+`paradox-description-face-multiline' is used instead."
+  :group 'paradox)
+(defface paradox-description-face-multiline
+  '((t :inherit font-lock-doc-face))
+  "Face used on the description column when `paradox-lines-per-entry' > 1.
+If `paradox-lines-per-entry' = 1, the face
+`paradox-description-face' is used instead."
+  :group 'paradox)
 
 (defvar paradox--star-count nil)
 (defvar paradox--package-repo-list nil)
@@ -342,6 +351,18 @@ This button takes you to the package's homepage."
   :group 'paradox
   :package-version '(paradox . "0.10"))
 
+(defvar desc-suffix nil)
+(defvar desc-prefix nil)
+
+(defcustom paradox-lines-per-entry 1
+  "Number of lines used to display each entry in the Package Menu.
+1 Gives you the regular package menu.
+2 Displays the description on a separate line below the entry.
+3+ Adds empty lines separating the entries."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.10"))
+
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
@@ -385,8 +406,12 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                   (list (propertize (or (package-desc-archive pkg-desc) "")
                                     'font-lock-face 'paradox-archive-face)))
             ,(paradox--package-star-count (package-desc-name pkg-desc))
-            ,(propertize (package-desc-summary pkg-desc)
-                         'font-lock-face face)])))
+            ,(propertize ;; (package-desc-summary pkg-desc)
+                         (concat desc-prefix (package-desc-summary pkg-desc) desc-suffix) ;└╰
+                         'font-lock-face
+                         (if (> paradox-lines-per-entry 1)
+                             'paradox-description-face-multiline
+                           'paradox-description-face))])))
 
 (defun paradox--package-homepage (pkg)
   (let* ((desc pkg)
@@ -441,7 +466,9 @@ or a list of package names (symbols) to display.
 With KEYWORDS given, only packages with those keywords are
 shown."
   (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
-  (paradox-menu--refresh packages keywords)
+  (let ((desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
+        (desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
+    (paradox-menu--refresh packages keywords))
   (setq paradox--current-filter
         (if keywords (mapconcat 'identity keywords ",")
           nil))
@@ -468,6 +495,8 @@ shown."
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
+(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
 (define-key paradox-menu-mode-map "f" #'paradox--filter-map)
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map [return] #'push-button)
@@ -478,6 +507,22 @@ shown."
 (define-key paradox--filter-map "r" #'occur)
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defun paradox-previous-entry (&optional n)
+  "Move to previous entry, which might not be the previous line."
+  (interactive "p")
+  (paradox-next-entry (- n))
+  (forward-line 0)
+  (forward-button 1))
+
+(defun paradox-next-entry (&optional n)
+  "Move to next entry, which might not be the next line."
+  (interactive "p")
+  (dotimes (it (abs n))
+      (let ((d (signum n)))
+        (forward-line d)
+        (if (eobp) (forward-line -1))
+        (forward-button d))))
 
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."

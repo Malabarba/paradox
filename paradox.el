@@ -414,8 +414,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                            'paradox-description-face))])))
 
 (defun paradox--package-homepage (pkg)
-  (let* ((desc pkg)
-         (extras (and desc (package-desc-extras desc)))
+  (let* ((extras (and pkg (package-desc-extras pkg)))
          (homepage (cdr (assoc :url extras))))
     homepage))
 
@@ -519,7 +518,7 @@ shown."
   "Move to next entry, which might not be the next line."
   (interactive "p")
   (dotimes (it (abs n))
-      (let ((d (signum n)))
+      (let ((d (cl-signum n)))
         (forward-line d)
         (if (eobp) (forward-line -1))
         (forward-button d))))

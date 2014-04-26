@@ -83,6 +83,7 @@
 ;; 
 
 ;;; Change Log:
+;; 0.10  - 2014/04/26 - New help menu!.
 ;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
 ;; 0.10  - 2014/04/25 - Links to package homepages.
 ;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
@@ -180,8 +181,7 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
 ;;   "Face used on the version column."
 ;;   :group 'paradox)
 (defface paradox-archive-face
-  '((((background light)) :foreground "Grey60")
-    (((background dark)) :foreground "Grey40"))
+  '((t :inherit paradox-comment-face))
   "Face used on the archive column."
   :group 'paradox)
 (defface paradox-star-face
@@ -203,6 +203,16 @@ If `paradox-lines-per-entry' > 1, the face
   "Face used on the description column when `paradox-lines-per-entry' > 1.
 If `paradox-lines-per-entry' = 1, the face
 `paradox-description-face' is used instead."
+  :group 'paradox)
+
+(defface paradox-comment-face
+  '((((background light)) :foreground "Grey50")
+    (((background dark)) :foreground "Grey50"))
+  "Face used on faded out stuff."
+  :group 'paradox)
+(defface paradox-highlight-face
+  '((t :weight bold))
+  "Face used on highlighted stuff."
   :group 'paradox)
 
 (defvar paradox--star-count nil)
@@ -492,20 +502,35 @@ shown."
   (cl-position (format "\\`%s\\'" (regexp-quote regexp)) tabulated-list-format
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
+(defvar paradox--key-descriptors
+  '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
+    ("star," "visit homepage")
+    ("filter by:" "upgrades" "regexp" "keyword")))
+
 (defvar paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
 (define-key paradox-menu-mode-map "n" #'paradox-next-entry)
 (define-key paradox-menu-mode-map "f" #'paradox--filter-map)
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
+(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map [return] #'push-button)
-
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
 (define-key paradox--filter-map "f" #'package-menu-filter)
 (define-key paradox--filter-map "r" #'occur)
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defun paradox-menu-quick-help ()
+  "Show short key binding help for `paradox-menu-mode'.
+The full list of keys can be viewed with \\[describe-mode]."
+  (interactive)
+  (message
+   (mapconcat
+    'paradox--prettify-key-descriptor
+    paradox--key-descriptors
+    "\n")))
 
 (defun paradox-previous-entry (&optional n)
   "Move to previous entry, which might not be the previous line."
@@ -744,6 +769,17 @@ No questions asked."
         (paradox--github-action
          "user/starred?per_page=100" nil
          'paradox--full-name-reader)))
+
+(defun paradox--prettify-key-descriptor (desc)
+  (if (listp desc)
+      (if (listp (cdr desc))
+          (mapconcat 'paradox--key-descriptors desc "    ")
+        (let ((place (cdr desc))
+              (out (car desc)))
+          (setq out (propertize out 'face 'paradox-comment-face))
+          (add-text-properties place (1+ place) '(face paradox-highlight-face) out)
+          out))
+    (paradox--key-descriptors (cons desc 0))))
 
 (defun paradox--full-name-reader ()
   "Return all \"full_name\" properties in the buffer. Much faster than `json-read'."

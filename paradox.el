@@ -123,6 +123,9 @@ Please include your emacs and paradox versions."
   :prefix "paradox-"
   :group 'emacs
   :package-version '(paradox . "0.1"))
+(defun paradox--compat-p ()
+  "Non-nil if we need to enable pre-24.4 compatibility features."
+  (version< emacs-version "24.3.50"))
 
 (defcustom paradox-github-token nil
   "Access token to use for github actions.
@@ -222,6 +225,37 @@ If `paradox-lines-per-entry' = 1, the face
   "https://raw.github.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
+(defvar paradox-menu-mode-map package-menu-mode-map)
+(define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
+(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
+(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
+(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
+(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
+(define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
+(define-key paradox-menu-mode-map "\r" #'push-button)
+(define-key paradox-menu-mode-map "F" 'package-menu-filter)
+(define-key paradox--filter-map "k" #'package-menu-filter)
+(define-key paradox--filter-map "f" #'package-menu-filter)
+(define-key paradox--filter-map "r" #'occur)
+(define-key paradox--filter-map "o" #'occur)
+(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defvar paradox--key-descriptors
+  '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
+    ("star," "visit homepage")
+    ("filter by:" "upgrades" "regexp" "keyword")))
+
+(defun paradox-menu-quick-help ()
+  "Show short key binding help for `paradox-menu-mode'.
+The full list of keys can be viewed with \\[describe-mode]."
+  (interactive)
+  (message
+   (mapconcat
+    'paradox--prettify-key-descriptor
+    paradox--key-descriptors
+    "\n")))
+
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)
     ("obsolete" . 0) ("deleted" . 0)
@@ -279,10 +313,6 @@ mode-line."
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
   (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
-
-(defun paradox--compat-p ()
-  "Non-nil if we need to enable pre-24.4 compatibility features."
-  (version< emacs-version "24.3.50"))
 
 (defvar paradox--backups nil)
 
@@ -423,20 +453,30 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                              'paradox-description-face-multiline
                            'paradox-description-face))])))
 
+(unless (paradox--compat-p)
+(defun paradox-menu-visit-homepage (pkg)
+  "Visit the homepage of package named PKG.
+PKG is a symbol. Interactively it is the package under point."
+  (interactive '(nil))
+  (when (or (markerp pkg) (null pkg))
+    (if (derived-mode-p 'package-menu-mode)
+        (setq pkg (package-desc-name (tabulated-list-get-id)))
+      (error "Not in Package Menu.")))
+  (paradox--visit-symbol-homepage pkg))
 (defun paradox--package-homepage (pkg)
-  (let* ((extras (and pkg (package-desc-extras pkg)))
+  "PKG can be the package-name symbol or a package-desc object."
+  (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
+         (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
+         (extras   (package-desc-extras object))
          (homepage (cdr (assoc :url extras))))
-    homepage))
+    (or homepage
+        (and (setq extras (cdr (assoc name paradox--package-repo-list)))
+             (format "https://github.com/%s" extras))))))
 
 (defun paradox--incf (status)
   (cl-incf (paradox--cas status))
   (unless (string= status "obsolete")
     (cl-incf (paradox--cas "total"))))
-
-(defun paradox--improve-entry (entry)
-  (setcdr entry (list 
-                 (vconcat (list (paradox--entry-star-count entry))
-                          (cadr entry)))))
 
 (defun paradox--entry-star-count (entry)
   (paradox--package-star-count
@@ -502,35 +542,17 @@ shown."
   (cl-position (format "\\`%s\\'" (regexp-quote regexp)) tabulated-list-format
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
-(defvar paradox--key-descriptors
-  '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
-    ("star," "visit homepage")
-    ("filter by:" "upgrades" "regexp" "keyword")))
-
-(defvar paradox-menu-mode-map package-menu-mode-map)
-(define-prefix-command 'paradox--filter-map)
-(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
-(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
-(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
-(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
-(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
-(define-key paradox-menu-mode-map [return] #'push-button)
-(define-key paradox-menu-mode-map "F" 'package-menu-filter)
-(define-key paradox--filter-map "k" #'package-menu-filter)
-(define-key paradox--filter-map "f" #'package-menu-filter)
-(define-key paradox--filter-map "r" #'occur)
-(define-key paradox--filter-map "o" #'occur)
-(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
-
-(defun paradox-menu-quick-help ()
-  "Show short key binding help for `paradox-menu-mode'.
-The full list of keys can be viewed with \\[describe-mode]."
-  (interactive)
-  (message
-   (mapconcat
-    'paradox--prettify-key-descriptor
-    paradox--key-descriptors
-    "\n")))
+(defun paradox--visit-symbol-homepage (pkg)
+  "Visit homepage of package named PKG.
+Don't use this function directly.
+Use `paradox-menu-visit-homepage' or
+`paradox-menu-visit-homepage-compat' instead."
+  (let ((url (paradox--package-homepage pkg)))
+    (if (stringp url)
+        (browse-url url)
+      (message "Package %s has no homepage."
+               (propertize (symbol-name pkg)
+                           'face 'font-lock-keyword-face)))))
 
 (defun paradox-previous-entry (&optional n)
   "Move to previous entry, which might not be the previous line."

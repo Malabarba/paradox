@@ -42,7 +42,7 @@ identifier (NAME . VERSION-LIST)."
          (doc (or (nth 2 pkg) ""))
          (face (or (cdr (assoc-string status paradox-status-face-alist))
                    'font-lock-warning-face))
-         (url (paradox--package-homepage-compat package))
+         (url (paradox--package-homepage package))
          (name (symbol-name package))
          (name-length (length name))
          (button-length (length paradox-homepage-button-string)))
@@ -143,7 +143,7 @@ property is respected."
       (put-text-property opoint (point) 'tabulated-list-column-name name)
       next-x)))
 
-(defun paradox--package-homepage-compat (pkg)
+(defun paradox--package-homepage (pkg)
   "PKG is just the symbol that identifies the package."
   (cdr (assoc :url (elt (cdr (assoc pkg package-archive-contents)) 4))))
 
@@ -198,6 +198,16 @@ a symbol and VERSION-LIST is a version list."
     ;; Print the result.
     (setq tabulated-list-entries (mapcar 'package-menu--print-info info-list))
     (tabulated-list-print remember-pos)))
+
+(defun paradox-menu-visit-homepage (pkg)
+  "Visit the homepage of package PKG.
+PKG is a symbol. Interactively it is the package under point."
+  (interactive '(nil))
+  (when (or (markerp pkg) (null pkg))
+    (if (derived-mode-p 'package-menu-mode)
+        (setq pkg (car (tabulated-list-get-id)))
+      (error "Not in Package Menu.")))
+  (paradox--visit-symbol-homepage pkg))
 
 (provide 'paradox-compat)
 ;;; paradox-compat.el ends here.

@@ -66,8 +66,7 @@ identifier (NAME . VERSION-LIST)."
                                     'help-echo (format "Visit %s" url)
                                     'button t
                                     'follow-link t
-                                    'action
-                                    `(lambda (&rest ignore) (interactive) (browse-url ,url))))
+                                    'action 'paradox-menu-visit-homepage))
                      ""))
                   (propertize (package-version-join version)
                               'font-lock-face face)

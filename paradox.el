@@ -378,7 +378,7 @@ status is STATUS. "
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defcustom paradox-homepage-button-string "url"
+(defcustom paradox-homepage-button-string "h"
   "String used to for the link that takes you to a package's homepage."
   :type 'string
   :group 'paradox
@@ -435,8 +435,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                                'help-echo (format "Visit %s" url)
                                'button t
                                'follow-link t
-                               'action
-                               `(lambda (&rest ignore) (interactive) (browse-url ,url))))
+                               'action 'paradox-menu-visit-homepage))
                 ""))
             ,(propertize (package-version-join
                           (package-desc-version pkg-desc))
@@ -566,7 +565,7 @@ Use `paradox-menu-visit-homepage' or
   (interactive "p")
   (dotimes (it (abs n))
       (let ((d (cl-signum n)))
-        (forward-line d)
+        (forward-line (if (> n 0) 1 0))
         (if (eobp) (forward-line -1))
         (forward-button d))))
 

@@ -1,4 +1,4 @@
-;;; paradox.el --- Display Package Ratings on the *Packages* buffer.
+;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable.
 
 ;; Copyright (C) 2014 Artur Malabarba <bruce.connor.am@gmail.com>
 

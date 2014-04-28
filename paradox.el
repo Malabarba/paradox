@@ -810,13 +810,13 @@ No questions asked."
 (defun paradox--prettify-key-descriptor (desc)
   (if (listp desc)
       (if (listp (cdr desc))
-          (mapconcat 'paradox--key-descriptors desc "    ")
+          (mapconcat 'paradox--prettify-key-descriptor desc "    ")
         (let ((place (cdr desc))
               (out (car desc)))
           (setq out (propertize out 'face 'paradox-comment-face))
           (add-text-properties place (1+ place) '(face paradox-highlight-face) out)
           out))
-    (paradox--key-descriptors (cons desc 0))))
+    (paradox--prettify-key-descriptor (cons desc 0))))
 
 (defun paradox--full-name-reader ()
   "Return all \"full_name\" properties in the buffer. Much faster than `json-read'."

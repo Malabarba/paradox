@@ -12,13 +12,10 @@
 
 ;;; Commentary:
 ;; 
-;; Project for modernizing Emacs' Package Menu. With package ratings,
-;; usage statistics, customizability, and more.
-;; 
-;; Usage
-;; ===
-;; 
-;; To install it, call M-x `package-install' RET paradox.
+;; Paradox can be installed from Melpa with M-x `package-install' RET
+;; paradox.  
+;; It can also be installed manually in the usual way, just be mindful of
+;; the dependencies.
 ;; 
 ;; To use it, simply call M-x `paradox-list-packages' (instead of the
 ;; regular `list-packages').  
@@ -32,15 +29,37 @@
 ;; 
 ;; ## Current Features ##
 ;; 
+;; ### Several Improvements ###
+;; 
+;; Paradox implements many small improvements to the package menu
+;; itself. They all work out of the box and are completely customizable!  
+;; *(Also, hit `h' to see all keys.)*
+;; 
+;; * Visit the package's homepage with `v' (or just use the provided buttons).
+;; * Shortcuts for package filtering:
+;;     * <f r> filters by regexp (`occur');
+;;     * <f u> display only packages with upgrades;
+;;     * <f k> filters by keyword (emacs 24.4 only).
+;; * `hl-line-mode' enabled by default.
+;; * Display useful information on the mode-line and cleanup a bunch of
+;;   useless stuff.
+;; * **Customization!** Just call M-x `paradox-customize' to see what you can
+;;   do.
+;;     * Customize column widths.
+;;     * Customize faces (`paradox-star-face', `paradox-status-face-alist' and `paradox-archive-face').
+;;     * Customize local variables.
+;; 
 ;; ### Package Ratings ###
 ;; 
-;; The first feature you should know about is our integration with
-;; **GitHub Stars**, which works as *rough package rating* system.  
+;; Paradox also integrates with
+;; **GitHub Stars**, which works as **rough** package rating system.  
 ;; That is, Paradox package menu will:
 ;; 
 ;; 1. Display the number of GitHub Stars each package has (assuming it's
 ;;    in a github repo, of course);
-;; 2. Automatically star packages you install, and unstar packages you delete;
+;; 2. Possibly automatically star packages you install, and unstar
+;;    packages you delete (you will be asked the first time whether you
+;;    want this);
 ;; 3. Let you star and unstar packages by hitting the `s' key;
 ;; 4. Let you star all packages you have installed with M-x `paradox-star-all-installed-packages'.
 ;; 
@@ -48,24 +67,21 @@
 ;; require a github account (Paradox will help you generate a token the
 ;; first time you call `paradox-list-packages').
 ;;   
-;; ### Several Improvements ###
+;; ## How Star Displaying Works ##
 ;; 
-;; Other features include many small improvements to the package menu
-;; itself and also work out of the box.
+;; We generate a map of <Package> Name -> Repository< from>
+;; [Melpa](https://github.com/milkypostman/melpa.git)'s `recipe'
+;; directory, some repos may correspond to more than one package. 
+;; This map is used count the stars a given package has.
+;; _This doesn't mean you need Melpa to see the star counts, the numbers
+;; will be displayed regardless of what archives you use._
 ;; 
-;; * Shortcuts for package filtering:
-;;     * <f r> filters by regexp (`occur');
-;;     * <f u> display only packages with upgrades;
-;;     * <f k> filters by keyword (emacs 24.4 only).
-;; * `hl-line-mode' enabled by default.
-;; * Display useful information on the mode-line and cleanup a bunch of
-;;   useless stuff (customizable).
-;; * Customization! Just call M-x `paradox-customize' to see what you can
-;;   do.
-;;     * Customize column widths.
-;;     * Customize faces (`paradox-star-face',
-;;       `paradox-status-face-alist' and `paradox-archive-face').
-;;     * Customize local variables.
+;; Currently, packages that are not hosted on GitHub are listed with a
+;; blank star count, which is clearly different from 0-star packages
+;; (which are displayed with a 0, obviously).  
+;; If you know of an alternative that could be used for these packages,
+;; [open an issue](https://github.com/Bruce-Connor/paradox/issues/new)
+;; here, I'd love to hear.
 
 ;;; License:
 ;;

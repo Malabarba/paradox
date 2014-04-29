@@ -886,19 +886,20 @@ Return value is always a list.
 (defun paradox--check-github-token ()
   (if (stringp paradox-github-token)
       t
-    (if (or paradox-github-token
-            (not (y-or-n-p "Would you like to set up GitHub integration?
-This will allow you to star/unstar packages from the Package Menu. ")))
-        (customize-save-variable 'paradox-github-token t)
-      (describe-variable 'paradox-github-token)
-      (when (get-buffer "*Help*")
-        (switch-to-buffer "*Help*")
-        (delete-other-windows))
-      (if (y-or-n-p "Follow the instructions on the `paradox-github-token' variable.
+    (if paradox-github-token
+        t
+      (if (not (y-or-n-p "Would you like to set up GitHub integration?
+This will allow you to star/unstar packages from the Package Menu. "))
+          (customize-save-variable 'paradox-github-token t)
+        (describe-variable 'paradox-github-token)
+        (when (get-buffer "*Help*")
+          (switch-to-buffer "*Help*")
+          (delete-other-windows))
+        (if (y-or-n-p "Follow the instructions on the `paradox-github-token' variable.
 May I take you to the token generation page? ")
-          (browse-url "https://github.com/settings/tokens/new"))
-      (message "Once you're finished, simply call `paradox-list-packages' again.")
-      nil)))
+            (browse-url "https://github.com/settings/tokens/new"))
+        (message "Once you're finished, simply call `paradox-list-packages' again.")
+        nil))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

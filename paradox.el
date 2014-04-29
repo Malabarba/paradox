@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.10
+;; Version: 0.11
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
@@ -122,7 +122,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.10" "Version of the paradox.el package.")
+(defconst paradox-version "0.11" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -243,6 +243,9 @@ If `paradox-lines-per-entry' = 1, the face
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "SP" #'paradox-sort-by-package)
+(define-key paradox-menu-mode-map "S*" #'paradox-sort-by-star)
+(define-key paradox-menu-mode-map "SS" #'paradox-sort-by-status)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
 (define-key paradox-menu-mode-map "n" #'paradox-next-entry)
 (define-key paradox-menu-mode-map "f" #'paradox--filter-map)
@@ -256,6 +259,26 @@ If `paradox-lines-per-entry' = 1, the face
 (define-key paradox--filter-map "r" #'occur)
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+(defun paradox-sort-by-package (invert)
+  "Sort Package Menu by the Package column."
+  (interactive "P")
+  (tabulated-list--sort-by-column-name "Package"))
+
+(defun paradox-sort-by-star (invert)
+  "Sort Package Menu by the Star column."
+  (interactive "P")
+  (tabulated-list--sort-by-column-name ""))
+
+(defun paradox-sort-by-status (invert)
+  "Sort Package Menu by the Status column."
+  (interactive "P")
+  (tabulated-list--sort-by-column-name "Status"))
+
+(defun paradox-sort-by-archive (invert)
+  "Sort Package Menu by the Archive column."
+  (interactive "P")
+  (tabulated-list--sort-by-column-name "Archive"))
 
 (defvar paradox--key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")

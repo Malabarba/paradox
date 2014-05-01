@@ -4,6 +4,8 @@ Paradox
 Project for modernizing Emacs' Package Menu. With package ratings,
 usage statistics, customizability, and more.
 
+Here are some visual comparisons:
+
 #### Regular Package Menu ####
 ![Regular Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/before.png)
 

@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.10
+;; Version: 0.11
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0"))
 ;; Prefix: paradox 
@@ -99,7 +99,8 @@
 ;; 
 
 ;;; Change Log:
-;; 0.10  - 2014/04/26 - New help menu!.
+;; 0.11  - 2014/05/01 - Sorting commands and keys (under "S").
+;; 0.10  - 2014/04/26 - New help menu!
 ;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
 ;; 0.10  - 2014/04/25 - Links to package homepages.
 ;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
@@ -122,7 +123,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.10" "Version of the paradox.el package.")
+(defconst paradox-version "0.11" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -142,6 +143,33 @@ Please include your emacs and paradox versions."
 (defun paradox--compat-p ()
   "Non-nil if we need to enable pre-24.4 compatibility features."
   (version< emacs-version "24.3.50"))
+
+(defcustom paradox-column-width-package  18
+  "Width of the \"Package\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-version  9
+  "Width of the \"Version\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-status  10
+  "Width of the \"Status\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defcustom paradox-column-width-star 4
+  "Width of the \"Star\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "0.1"))
+
+(defvar paradox--column-name-star
+  (if (char-displayable-p ?★) "★" "*"))
 
 (defcustom paradox-github-token nil
   "Access token to use for github actions.
@@ -225,12 +253,12 @@ If `paradox-lines-per-entry' = 1, the face
   :group 'paradox)
 
 (defface paradox-comment-face
-  '((((background light)) :foreground "Grey50")
-    (((background dark)) :foreground "Grey50"))
+  '((((background light)) :foreground "Grey30")
+    (((background dark)) :foreground "Grey60"))
   "Face used on faded out stuff."
   :group 'paradox)
 (defface paradox-highlight-face
-  '((t :weight bold))
+  '((t :weight bold :inherit font-lock-variable-name-face))
   "Face used on highlighted stuff."
   :group 'paradox)
 
@@ -257,20 +285,39 @@ If `paradox-lines-per-entry' = 1, the face
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
 
+(defun paradox--define-sort (name &optional key)
+  "Define function and key for sorting."  
+  (let ((symb (intern (format "paradox-sort-by-%s" (downcase name))))
+        (key (or key (substring name 0 1))))
+    (eval
+     `(progn
+        (defun ,symb
+            (invert)
+          ,(format "Sort Package Menu by the %s column." name)
+          (interactive "P")
+          (when invert
+            (setq tabulated-list-sort-key (cons ,name nil)))
+          (tabulated-list--sort-by-column-name ,name))
+        (define-key paradox-menu-mode-map ,(concat "S" (upcase key)) ',symb)
+        (define-key paradox-menu-mode-map ,(concat "S" (downcase key)) ',symb)))))
+
+(paradox--define-sort "Package")
+(paradox--define-sort "Status")
+(paradox--define-sort paradox--column-name-star "*")
+
 (defvar paradox--key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
-    ("filter by:" "upgrades" "regexp" "keyword")))
+    ("filter by" "+" "upgrades" "regexp" "keyword")
+    ("Sort by" "+" "Package name" "Status" "*(star)")))
 
 (defun paradox-menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
   (message
-   (mapconcat
-    'paradox--prettify-key-descriptor
-    paradox--key-descriptors
-    "\n")))
+   (mapconcat 'paradox--prettify-key-descriptor
+              paradox--key-descriptors "\n")))
 
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)
@@ -515,7 +562,7 @@ PKG is a symbol. Interactively it is the package under point."
 (defvar paradox--column-index-star nil)
 
 (defun paradox--star-predicate (A B)
-  (< (string-to-number (elt (cadr A) paradox--column-index-star))
+  (> (string-to-number (elt (cadr A) paradox--column-index-star))
      (string-to-number (elt (cadr B) paradox--column-index-star))))
 
 (defvar paradox--current-filter nil)
@@ -604,33 +651,6 @@ Use `paradox-menu-visit-homepage' or
   ;;         (concat paradox--current-filter ",")))
   (setq paradox--current-filter keyword)
   (define-key package-menu-mode-map "q" 'quit-window))
-
-(defcustom paradox-column-width-package  18
-  "Width of the \"Package\" column."
-  :type 'integer
-  :group 'paradox
-  :package-version '(paradox . "0.1"))
-
-(defcustom paradox-column-width-version  9
-  "Width of the \"Version\" column."
-  :type 'integer
-  :group 'paradox
-  :package-version '(paradox . "0.1"))
-
-(defcustom paradox-column-width-status  10
-  "Width of the \"Status\" column."
-  :type 'integer
-  :group 'paradox
-  :package-version '(paradox . "0.1"))
-
-(defcustom paradox-column-width-star 4
-  "Width of the \"Star\" column."
-  :type 'integer
-  :group 'paradox
-  :package-version '(paradox . "0.1"))
-
-(defvar paradox--column-name-star
-  (if (char-displayable-p ?★) "★" "*"))
 
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
@@ -810,7 +830,7 @@ No questions asked."
 (defun paradox--prettify-key-descriptor (desc)
   (if (listp desc)
       (if (listp (cdr desc))
-          (mapconcat 'paradox--prettify-key-descriptor desc "    ")
+          (mapconcat 'paradox--prettify-key-descriptor desc "   ")
         (let ((place (cdr desc))
               (out (car desc)))
           (setq out (propertize out 'face 'paradox-comment-face))

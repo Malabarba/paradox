@@ -4,11 +4,14 @@ Paradox
 Project for modernizing Emacs' Package Menu. With package ratings,
 usage statistics, customizability, and more.
 
-### Before ###
+#### Regular Package Menu ####
 ![Regular Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/before.png)
 
-### After ###
-![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/after.png)  
+#### Paradox ####
+![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/after.png)
+
+#### Paradox (multi-line) ####
+![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/multi-line.png)  
 *These screenshots use smart-mode-line, but a similar effect is obtained with the regular mode-line.*
 
 Usage

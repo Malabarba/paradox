@@ -99,6 +99,8 @@
 ;; 
 
 ;;; Change Log:
+;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
+;; 1.0   - 2014/05/04 - j and k describe the next and previous entries.
 ;; 0.11  - 2014/05/01 - Sorting commands and keys (under "S").
 ;; 0.10  - 2014/04/26 - New help menu!
 ;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
@@ -271,8 +273,11 @@ If `paradox-lines-per-entry' = 1, the face
 
 (defvar paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
 (define-key paradox-menu-mode-map "n" #'paradox-next-entry)
+(define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
+(define-key paradox-menu-mode-map "j" #'paradox-next-describe)
 (define-key paradox-menu-mode-map "f" #'paradox--filter-map)
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
@@ -305,6 +310,17 @@ If `paradox-lines-per-entry' = 1, the face
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
 
+(defun paradox-next-describe (n)
+  "Describe the next package."
+  (interactive "p")
+  (paradox-next-entry n)
+  (call-interactively 'package-menu-describe-package))
+
+(defun paradox-previous-describe (n)
+  "Describe the previous package."
+  (interactive "p")
+  (paradox-previous-entry n)
+  (call-interactively 'package-menu-describe-package))
 (defvar paradox--key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
@@ -318,6 +334,15 @@ The full list of keys can be viewed with \\[describe-mode]."
   (message
    (mapconcat 'paradox--prettify-key-descriptor
               paradox--key-descriptors "\n")))
+(defun paradox-quit-and-close (kill)
+  "Bury this buffer and close the window."
+  (interactive "P")
+  (if paradox--current-filter
+      (package-show-package-list)
+    (let ((log (get-buffer-window paradox--commit-list-buffer)))
+      (when (window-live-p log)
+        (quit-window kill log))
+      (quit-window kill))))
 
 (defvar paradox--package-count
   '(("total" . 0) ("built-in" . 0)

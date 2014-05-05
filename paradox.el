@@ -818,7 +818,7 @@ nil) on the Packages buffer."
    (unless paradox--user-starred-list
      (paradox--refresh-user-starred-list))
    ;; Get package name
-   (let ((pkg (intern (car (elt (tabulated-list-get-entry) 0))))
+   (let ((pkg (paradox--get-or-return-package nil))
          will-delete repo)
      (unless pkg (error "Couldn't find package-name for this entry."))
      ;; get repo for this package

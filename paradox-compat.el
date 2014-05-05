@@ -198,15 +198,12 @@ a symbol and VERSION-LIST is a version list."
     (setq tabulated-list-entries (mapcar 'package-menu--print-info info-list))
     (tabulated-list-print remember-pos)))
 
-(defun paradox-menu-visit-homepage (pkg)
-  "Visit the homepage of package PKG.
-PKG is a symbol. Interactively it is the package under point."
-  (interactive '(nil))
-  (when (or (markerp pkg) (null pkg))
-    (if (derived-mode-p 'package-menu-mode)
-        (setq pkg (car (tabulated-list-get-id)))
-      (error "Not in Package Menu.")))
-  (paradox--visit-symbol-homepage pkg))
+(defun paradox--get-or-return-package (pkg)
+  (if (or (markerp pkg) (null pkg))
+      (if (derived-mode-p 'package-menu-mode)
+          (car (tabulated-list-get-id))
+        (error "Not in Package Menu."))
+    pkg))
 
 (provide 'paradox-compat)
 ;;; paradox-compat.el ends here.

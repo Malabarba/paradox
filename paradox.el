@@ -4,9 +4,9 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.11
+;; Version: 1.0
 ;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0"))
+;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox 
 ;; Separator: -
 
@@ -125,7 +125,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "0.11" "Version of the paradox.el package.")
+(defconst paradox-version "1.0" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -282,7 +282,7 @@ If `paradox-lines-per-entry' = 1, the face
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
-(define-key paradox-menu-mode-map "\r" #'push-button)
+(define-key paradox-menu-mode-map "\r" #'paradox-push-button)
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
 (define-key paradox--filter-map "f" #'package-menu-filter)
@@ -321,9 +321,18 @@ If `paradox-lines-per-entry' = 1, the face
   (interactive "p")
   (paradox-previous-entry n)
   (call-interactively 'package-menu-describe-package))
+
+(defun paradox-push-button ()
+  "Push button under point, or describe package."
+  (interactive)
+  (if (get-text-property (point) 'action)
+      (call-interactively 'push-button)
+    (call-interactively 'package-menu-describe-package)))
+
 (defvar paradox--key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
+    ("list commits")
     ("filter by" "+" "upgrades" "regexp" "keyword")
     ("Sort by" "+" "Package name" "Status" "*(star)")))
 
@@ -331,9 +340,9 @@ If `paradox-lines-per-entry' = 1, the face
   "Show short key binding help for `paradox-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
-  (message
-   (mapconcat 'paradox--prettify-key-descriptor
-              paradox--key-descriptors "\n")))
+  (message (mapconcat 'paradox--prettify-key-descriptor
+                      paradox--key-descriptors "\n")))
+
 (defun paradox-quit-and-close (kill)
   "Bury this buffer and close the window."
   (interactive "P")
@@ -491,6 +500,8 @@ This button takes you to the package's homepage."
   :group 'paradox
   :package-version '(paradox . "0.10"))
 
+(defvar-local paradox--repo nil)
+
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
@@ -540,25 +551,34 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                              'paradox-description-face-multiline
                            'paradox-description-face))])))
 
-(unless (paradox--compat-p)
 (defun paradox-menu-visit-homepage (pkg)
   "Visit the homepage of package named PKG.
 PKG is a symbol. Interactively it is the package under point."
   (interactive '(nil))
-  (when (or (markerp pkg) (null pkg))
-    (if (derived-mode-p 'package-menu-mode)
-        (setq pkg (package-desc-name (tabulated-list-get-id)))
-      (error "Not in Package Menu.")))
-  (paradox--visit-symbol-homepage pkg))
-(defun paradox--package-homepage (pkg)
-  "PKG can be the package-name symbol or a package-desc object."
-  (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
-         (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
-         (extras   (package-desc-extras object))
-         (homepage (cdr (assoc :url extras))))
-    (or homepage
-        (and (setq extras (cdr (assoc name paradox--package-repo-list)))
-             (format "https://github.com/%s" extras))))))
+  (let ((url (paradox--package-homepage
+              (paradox--get-or-return-package pkg))))
+    (if (stringp url)
+        (browse-url url)
+      (message "Package %s has no homepage."
+               (propertize (symbol-name pkg)
+                           'face 'font-lock-keyword-face)))))
+
+(unless (paradox--compat-p)
+  (defun paradox--package-homepage (pkg)
+    "PKG can be the package-name symbol or a package-desc object."
+    (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
+           (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
+           (extras   (package-desc-extras object))
+           (homepage (cdr (assoc :url extras))))
+      (or homepage
+          (and (setq extras (cdr (assoc name paradox--package-repo-list)))
+               (format "https://github.com/%s" extras)))))
+  (defun paradox--get-or-return-package (pkg)
+    (if (or (markerp pkg) (null pkg))
+        (if (derived-mode-p 'package-menu-mode)
+            (package-desc-name (tabulated-list-get-id))
+          (error "Not in Package Menu."))
+      pkg)))
 
 (defun paradox--incf (status)
   (cl-incf (paradox--cas status))
@@ -612,10 +632,7 @@ shown."
     (setcar (aref tabulated-list-format idx)
             (if keywords
                 (concat "Package[" paradox--current-filter "]")
-              "Package")))  
-  (if keywords
-      (define-key package-menu-mode-map "q" 'package-show-package-list)
-    (define-key package-menu-mode-map "q" 'quit-window))
+              "Package")))
   (tabulated-list-print remember-pos)
   (tabulated-list-init-header)
   (paradox--update-mode-line)
@@ -629,18 +646,6 @@ shown."
   (cl-position (format "\\`%s\\'" (regexp-quote regexp)) tabulated-list-format
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
-(defun paradox--visit-symbol-homepage (pkg)
-  "Visit homepage of package named PKG.
-Don't use this function directly.
-Use `paradox-menu-visit-homepage' or
-`paradox-menu-visit-homepage-compat' instead."
-  (let ((url (paradox--package-homepage pkg)))
-    (if (stringp url)
-        (browse-url url)
-      (message "Package %s has no homepage."
-               (propertize (symbol-name pkg)
-                           'face 'font-lock-keyword-face)))))
-
 (defun paradox-previous-entry (&optional n)
   "Move to previous entry, which might not be the previous line."
   (interactive "p")
@@ -652,10 +657,10 @@ Use `paradox-menu-visit-homepage' or
   "Move to next entry, which might not be the next line."
   (interactive "p")
   (dotimes (it (abs n))
-      (let ((d (cl-signum n)))
-        (forward-line (if (> n 0) 1 0))
-        (if (eobp) (forward-line -1))
-        (forward-button d))))
+    (let ((d (cl-signum n)))
+      (forward-line (if (> n 0) 1 0))
+      (if (eobp) (forward-line -1))
+      (forward-button d))))
 
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."
@@ -664,18 +669,7 @@ Use `paradox-menu-visit-homepage' or
       (message "No packages have upgrades.")
     (package-show-package-list
      (mapcar 'car paradox--upgradeable-packages))
-    (if keywords
-        (define-key package-menu-mode-map "q" 'package-show-package-list)
-      (define-key package-menu-mode-map "q" 'quit-window))
-    (paradox--add-filter "Upgrade")))
-
-(defun paradox--add-filter (keyword)
-  "Append KEYWORD to `paradox--current-filter', and rebind \"q\"."
-  ;; (unless (= 0 (length paradox--current-filter))
-  ;;   (setq paradox--current-filter 
-  ;;         (concat paradox--current-filter ",")))
-  (setq paradox--current-filter keyword)
-  (define-key package-menu-mode-map "q" 'quit-window))
+    (setq paradox--current-filter "Upgrade")))
 
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
@@ -877,7 +871,7 @@ No questions asked."
                           (if (stringp delete) delete (if delete "DELETE" "PUT"))
                           (null no-result)))
 
-(defun paradox--github-action (action &optional method reader)
+(defun paradox--github-action (action &optional method reader max-pages)
   "Contact the github api performing ACTION with METHOD.
 Default METHOD is \"GET\".
 
@@ -885,7 +879,7 @@ Action can be anything such as \"user/starred?per_page=100\". If
 it's not a full url, it will be prepended with
 \"https://api.github.com/\".
 
-This function does nothing if `paradox-github-token' isn't set.
+The api action might not work if `paradox-github-token' isn't set.
 This function also handles the pagination used in github results,
 results of each page are appended.
 
@@ -900,18 +894,21 @@ Return value is always a list.
     special exception, if READER is t, it is equivalent to a
     function that returns (t)."
   ;; Make sure the token's configured.
-  (unless (stringp paradox-github-token) (keyboard-quit))
   (unless (string-match "\\`https://" action)
     (setq action (concat "https://api.github.com/" action)))
   ;; Make the request
   (message "Contacting %s" action)
-  (let (next)
+  (let ((pages (if (boundp 'pages) (1+ pages) 1)) next)
     (append
      (with-temp-buffer
        (save-excursion
          (shell-command
-          (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
-                  (or method "GET") paradox-github-token action) t))
+          (if (stringp paradox-github-token) 
+              (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
+                      (or method "GET") paradox-github-token action)
+            
+            (format "curl -s -i -d \"\" -X %s \"%s\" "
+                    (or method "GET") action)) t))
        (when reader
          (unless (search-forward "\nStatus: " nil t)
            (message "%s" (buffer-string))
@@ -925,8 +922,10 @@ Return value is always a list.
                (setq next (match-string-no-properties 1)))
              (search-forward-regexp "^?$")
              (skip-chars-forward "[:blank:]\n")
+             (delete-region (point-min) (point))
              (unless (eobp) (if (eq reader t) t (funcall reader)))))))
-     (when next (paradox--github-action next method reader)))))
+     (when (and next (or (null max-pages) (< pages max-pages)))
+       (paradox--github-action next method reader)))))
 
 (defun paradox--check-github-token ()
   (if (stringp paradox-github-token)

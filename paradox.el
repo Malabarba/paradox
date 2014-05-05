@@ -99,6 +99,7 @@
 ;; 
 
 ;;; Change Log:
+;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
 ;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
 ;; 1.0   - 2014/05/04 - j and k describe the next and previous entries.
 ;; 0.11  - 2014/05/01 - Sorting commands and keys (under "S").
@@ -282,6 +283,7 @@ If `paradox-lines-per-entry' = 1, the face
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
+(define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
 (define-key paradox-menu-mode-map "\r" #'paradox-push-button)
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
@@ -550,6 +552,23 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                          (if (> paradox-lines-per-entry 1)
                              'paradox-description-face-multiline
                            'paradox-description-face))])))
+
+(defvar paradox--commit-list-buffer "*Package Commit List*")
+
+(defun paradox-menu-view-commit-list (pkg)
+  "Visit the commit list of package named PKG.
+PKG is a symbol. Interactively it is the package under point."
+  (interactive '(nil))
+  (let ((repo (cdr (assoc (paradox--get-or-return-package pkg)
+                          paradox--package-repo-list))))
+    (if repo
+        (with-selected-window 
+            (display-buffer (get-buffer-create paradox--commit-list-buffer))
+          (paradox-commit-list-mode)
+          (setq paradox--repo repo)
+          (paradox--commit-list-update-entires)
+          (tabulated-list-print))
+      (message "Package %s is not a GitHub repo." pkg))))
 
 (defun paradox-menu-visit-homepage (pkg)
   "Visit the homepage of package named PKG.
@@ -944,6 +963,85 @@ May I take you to the token generation page? ")
             (browse-url "https://github.com/settings/tokens/new"))
         (message "Once you're finished, simply call `paradox-list-packages' again.")
         nil))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Paradox Commit List Mode
+(defvar paradox--repo-commit-feed-format
+  "https://github.com/%s/commits/master.atom")
+
+(defun paradox--commit-tabulated-list (repo)
+  (require 'json)
+  (let ((feed (paradox--github-action (format "repos/%s/commits?per_page=100" repo)
+                                      "GET" 'json-read 1)))
+    (apply 'append (mapcar 'paradox--commit-print-info feed))))
+
+(defun paradox--commit-print-info (x)
+  (let* ((commit (cdr (assoc 'commit x)))
+         (date  (cdr (assoc 'date (cdr (assoc 'committer commit)))))
+         (title (split-string (cdr (assoc 'message commit)) "[\n\r][ \t]*" t))
+         (url   (cdr (assoc 'url commit)))
+         (cc    (cdr (assoc 'comment_count commit))))
+    (cons 
+     (list (cons (car title) x)
+           (vector
+            (propertize (format-time-string "%x" (date-to-time date))
+                        'button t
+                        'follow-link t
+                        'action 'paradox-commit-list-visit-commit
+                        'face 'link)
+            (concat (if (> cc 0)
+                        (propertize (format "(%s comments) " cc)
+                                    'face 'font-lock-function-name-face)
+                      "")
+                    (or (car-safe title) ""))))
+     (when (cdr title)
+       (mapcar (lambda (m) (list (cons m x)
+                            (vector "" m))) (cdr title))))))
+
+(defun paradox--commit-list-update-entires ()
+  (setq tabulated-list-entries
+        (paradox--commit-tabulated-list paradox--repo)))
+
+(defun paradox-commit-list-visit-commit (&optional ignore)
+  "Visit this commit on GitHub."
+  (interactive)
+  (when (derived-mode-p 'paradox-commit-list-mode)
+    (browse-url
+     (cdr (assoc 'html_url (tabulated-list-get-id))))))
+
+(defun paradox-previous-commit (&optional n)
+  "Move to previous commit, which might not be the previous line."
+  (interactive "p")
+  (paradox-next-commit (- n)))
+
+(defun paradox-next-commit (&optional n)
+  "Move to next commit, which might not be the next line."
+  (interactive "p")
+  (dotimes (it (abs n))
+    (let ((d (cl-signum n)))
+      (forward-line d)
+      (while (looking-at "  +")
+        (forward-line d)))))
+
+(define-derived-mode paradox-commit-list-mode
+  tabulated-list-mode "Paradox Commit List"
+  "Major mode for browsing a list of commits.
+Letters do not insert themselves; instead, they are commands.
+\\<paradox-commit-list-mode-map>
+\\{paradox-commit-list-mode-map}"
+  (hl-line-mode 1)
+  (setq tabulated-list-format
+        `[("Date" ,(length (format-time-string "%x" (current-time))) nil)
+          ("Message" 0 nil)])
+  (setq tabulated-list-padding 1)
+  (setq tabulated-list-sort-key nil)
+  (add-hook 'tabulated-list-revert-hook 'paradox--commit-list-update-entires)
+  (tabulated-list-init-header))
+
+(define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)
+(define-key paradox-commit-list-mode-map "p" #'paradox-previous-commit)
+(define-key paradox-commit-list-mode-map "n" #'paradox-next-commit)
 
 (provide 'paradox)
 ;;; paradox.el ends here.

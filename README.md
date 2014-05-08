@@ -43,6 +43,7 @@ itself. They all work out of the box and are completely customizable!
 *(Also, hit `h` to see all keys.)*
 
 * Visit the package's homepage with `v` (or just use the provided buttons).
+* View a list of recent commits with `l`.
 * Shortcuts for package filtering:
     * `f r` filters by regexp (`occur`);
     * `f u` display only packages with upgrades;

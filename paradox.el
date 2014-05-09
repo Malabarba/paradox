@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.0.1
+;; Version: 1.0.2
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox 
@@ -99,6 +99,7 @@
 ;; 
 
 ;;; Change Log:
+;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
 ;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
 ;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
 ;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
@@ -127,7 +128,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.0.1" "Version of the paradox.el package.")
+(defconst paradox-version "1.0.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -914,7 +915,7 @@ Return value is always a list.
     special exception, if READER is t, it is equivalent to a
     function that returns (t)."
   ;; Make sure the token's configured.
-  (unless (string-match "\\`https://" action)
+  (unless (string-match "\\`https?://" action)
     (setq action (concat "https://api.github.com/" action)))
   ;; Make the request
   (message "Contacting %s" action)
@@ -930,7 +931,7 @@ Return value is always a list.
             (format "curl -s -i -d \"\" -X %s \"%s\" "
                     (or method "GET") action)) t))
        (when reader
-         (unless (search-forward "\nStatus: " nil t)
+         (unless (search-forward " " nil t)
            (message "%s" (buffer-string))
            (error ""))
          ;; 204 means OK, but no content.
@@ -968,9 +969,6 @@ May I take you to the token generation page? ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Paradox Commit List Mode
-(defvar paradox--repo-commit-feed-format
-  "https://github.com/%s/commits/master.atom")
-
 (defun paradox--commit-tabulated-list (repo)
   (require 'json)
   (let ((feed (paradox--github-action (format "repos/%s/commits?per_page=100" repo)

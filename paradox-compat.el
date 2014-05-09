@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.10
+;; Version: 1.0.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (json "1.4"))
 ;; Prefix: paradox 
@@ -144,7 +144,8 @@ property is respected."
 
 (defun paradox--package-homepage (pkg)
   "PKG is just the symbol that identifies the package."
-  (cdr (assoc :url (elt (cdr (assoc pkg package-archive-contents)) 4))))
+  (let ((extras (elt (cdr-safe (assoc pkg package-archive-contents)) 4)))
+    (and (listp extras) (cdr-safe (assoc :url extras)))))
 
 (defmacro package--push-compat (package desc status listname)
   "Convenience macro for `package-menu--generate'.

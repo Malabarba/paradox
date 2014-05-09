@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.0
+;; Version: 1.0.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox 
@@ -99,6 +99,7 @@
 ;; 
 
 ;;; Change Log:
+;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
 ;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
 ;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
 ;; 1.0   - 2014/05/04 - j and k describe the next and previous entries.
@@ -126,7 +127,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.0" "Version of the paradox.el package.")
+(defconst paradox-version "1.0.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -588,7 +589,7 @@ PKG is a symbol. Interactively it is the package under point."
     (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
            (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
            (extras   (package-desc-extras object))
-           (homepage (cdr (assoc :url extras))))
+           (homepage (and (listp extras) (cdr-safe (assoc :url extras)))))
       (or homepage
           (and (setq extras (cdr (assoc name paradox--package-repo-list)))
                (format "https://github.com/%s" extras)))))

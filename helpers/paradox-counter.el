@@ -37,6 +37,11 @@
   "Directory with melpa package recipes."
   :type 'directory
   :group 'paradox)
+(defcustom paradox-download-count-url
+  "http://melpa.milkbox.net/download_counts.json"
+  ""
+  :type 'string
+  :group 'paradox)
 
 (defcustom paradox-recipes-directory
   (when (file-directory-p (concat paradox-melpa-directory "recipes/"))
@@ -58,6 +63,8 @@
   :group 'paradox-counter
   :package-version '(paradox-counter . "0.1"))
 
+(defvar paradox--download-count nil)
+
 ;;;###autoload
 (defun paradox-generate-star-count (&optional recipes-dir)
   "Get the number of stars for each github repo and return.
@@ -67,6 +74,8 @@ Also saves result to `package-star-count'"
     (setq recipes-dir paradox-recipes-directory))
   (setq paradox--star-count nil)
   (setq paradox--package-repo-list nil)
+  (setq paradox--download-count
+        (paradox--github-action paradox-download-count-url nil 'json-read))
   (with-temp-buffer
     (let* ((i 0)
            (files (directory-files recipes-dir t "\\`[^\\.]"))
@@ -92,7 +101,8 @@ Also saves result to `package-star-count'"
   "Save lists in \"data\" file."
   (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
-    (pp paradox--package-repo-list (current-buffer))))
+    (pp paradox--package-repo-list (current-buffer))
+    (pp paradox--download-count (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
   (let (res)

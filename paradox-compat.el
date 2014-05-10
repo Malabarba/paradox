@@ -48,35 +48,37 @@ identifier (NAME . VERSION-LIST)."
          (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
     (list (cons package version)
-          (vector (concat 
-                   (propertize name
-                               'face 'paradox-name-face
-                               'button t
-                               'follow-link t
-                               'package-symbol package
-                               'help-echo (format "Package: %s" name)
-                               'action 'package-menu-describe-package)
-                   (if (and paradox-use-homepage-buttons url
-                            (< (+ name-length button-length) paradox-column-width-package))
-                       (concat
-                        (make-string (- paradox-column-width-package name-length button-length) ?\s)
-                        (propertize paradox-homepage-button-string
-                                    'face 'paradox-homepage-button-face
-                                    'mouse-face 'custom-button-mouse
-                                    'help-echo (format "Visit %s" url)
-                                    'button t
-                                    'follow-link t
-                                    'action 'paradox-menu-visit-homepage))
-                     ""))
-                  (propertize (package-version-join version)
-                              'font-lock-face face)
-                  (propertize status 'font-lock-face face)
-                  (paradox--package-star-count package)
-                  (propertize (concat desc-prefix doc desc-suffix)
-                              'font-lock-face
-                              (if (> paradox-lines-per-entry 1)
-                                  'paradox-description-face-multiline
-                                'paradox-description-face))))))
+          (vconcat
+           (append (list (concat 
+                          (propertize name
+                                      'face 'paradox-name-face
+                                      'button t
+                                      'follow-link t
+                                      'package-symbol package
+                                      'help-echo (format "Package: %s" name)
+                                      'action 'package-menu-describe-package)
+                          (if (and paradox-use-homepage-buttons url
+                                   (< (+ name-length button-length) paradox-column-width-package))
+                              (concat
+                               (make-string (- paradox-column-width-package name-length button-length) ?\s)
+                               (propertize paradox-homepage-button-string
+                                           'face 'paradox-homepage-button-face
+                                           'mouse-face 'custom-button-mouse
+                                           'help-echo (format "Visit %s" url)
+                                           'button t
+                                           'follow-link t
+                                           'action 'paradox-menu-visit-homepage))
+                            ""))
+                         (propertize (package-version-join version)
+                                     'font-lock-face face)
+                         (propertize status 'font-lock-face face))
+                   (paradox--count-print package)
+                   (list 
+                    (propertize (concat desc-prefix doc desc-suffix)
+                                'font-lock-face
+                                (if (> paradox-lines-per-entry 1)
+                                    'paradox-description-face-multiline
+                                  'paradox-description-face))))))))
 
 (defun paradox--print-entry-compat (id cols)
   "Printer used by `paradox-menu-mode'.

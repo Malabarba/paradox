@@ -63,8 +63,6 @@
   :group 'paradox-counter
   :package-version '(paradox-counter . "0.1"))
 
-(defvar paradox--download-count nil)
-
 ;;;###autoload
 (defun paradox-generate-star-count (&optional recipes-dir)
   "Get the number of stars for each github repo and return.

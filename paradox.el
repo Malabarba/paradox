@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.0.2
+;; Version: 1.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox 
@@ -99,6 +99,7 @@
 ;; 
 
 ;;; Change Log:
+;; 1.1   - 2014/05/10 - Added Download column.
 ;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
 ;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
 ;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
@@ -128,7 +129,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.0.2" "Version of the paradox.el package.")
+(defconst paradox-version "1.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -175,6 +176,15 @@ Please include your emacs and paradox versions."
 
 (defvar paradox--column-name-star
   (if (char-displayable-p ?★) "★" "*"))
+
+(defcustom paradox-column-width-download 4
+  "Width of the \"Download Count\" column."
+  :type 'integer
+  :group 'paradox
+  :package-version '(paradox . "1.1"))
+
+(defvar paradox--column-name-download
+  (if (char-displayable-p ?↓) "↓" "DC"))
 
 (defcustom paradox-github-token nil
   "Access token to use for github actions.
@@ -244,6 +254,10 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   '((t :weight bold :inherit paradox-star-face))
   "Face used on the star column, for packages you have starred."
   :group 'paradox)
+(defface paradox-download-face
+  '((t :inherit font-lock-keyword-face))
+  "Face used on the Downloads column."
+  :group 'paradox)
 (defface paradox-description-face
   '((t :inherit default))
   "Face used on the description column.
@@ -268,6 +282,7 @@ If `paradox-lines-per-entry' = 1, the face
   :group 'paradox)
 
 (defvar paradox--star-count nil)
+(defvar paradox--download-count nil)
 (defvar paradox--package-repo-list nil)
 
 (defvar paradox--star-count-url
@@ -367,15 +382,19 @@ The full list of keys can be viewed with \\[describe-mode]."
 (defmacro paradox--cas (string)
   `(cdr (assoc-string ,string paradox--package-count)))
 
+(defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
+  "Address of the raw data file.")
+
 ;;;###autoload
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
   (with-current-buffer 
       (url-retrieve-synchronously paradox--star-count-url)
-    (when (search-forward "\n\n") 
+    (when (search-forward "\n\n" nil t) 
       (setq paradox--star-count (read (current-buffer)))
-      (setq paradox--package-repo-list (read (current-buffer))))
+      (setq paradox--package-repo-list (read (current-buffer)))
+      (setq paradox--download-count (ignore-errors (read (current-buffer)))))
     (kill-buffer))
   (when (stringp paradox-github-token)
     (paradox--refresh-user-starred-list)))
@@ -547,13 +566,29 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
             ,@(if (cdr package-archives)
                   (list (propertize (or (package-desc-archive pkg-desc) "")
                                     'font-lock-face 'paradox-archive-face)))
-            ,(paradox--package-star-count (package-desc-name pkg-desc))
+            ,@(paradox--count-print (package-desc-name pkg-desc))
             ,(propertize ;; (package-desc-summary pkg-desc)
                          (concat desc-prefix (package-desc-summary pkg-desc) desc-suffix) ;└╰
                          'font-lock-face
                          (if (> paradox-lines-per-entry 1)
                              'paradox-description-face-multiline
                            'paradox-description-face))])))
+
+(defun paradox--count-print (pkg)
+  (append 
+   (when (and paradox-display-star-count (listp paradox--star-count))
+     (list (paradox--package-star-count pkg)))
+   (when (and paradox-display-download-count (listp paradox--download-count))
+     (list (paradox--package-download-count pkg)))))
+
+(defun paradox--package-download-count (pkg)
+  (let ((c (cdr-safe (assoc pkg paradox--download-count))))
+    (propertize
+     (if (numberp c)
+         (if (> c 999) (format "%sK" (truncate c 1000)) (format "%s" c))
+       " ")
+     'face 'paradox-download-face
+     'value (or c 0))))
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
 
@@ -626,10 +661,14 @@ PKG is a symbol. Interactively it is the package under point."
        'paradox-star-face))))
 
 (defvar paradox--column-index-star nil)
+(defvar paradox--column-index-download nil)
 
 (defun paradox--star-predicate (A B)
   (> (string-to-number (elt (cadr A) paradox--column-index-star))
      (string-to-number (elt (cadr B) paradox--column-index-star))))
+(defun paradox--download-predicate (A B)
+  (> (get-text-property 0 'value (elt (cadr A) paradox--column-index-download))
+     (get-text-property 0 'value (elt (cadr B) paradox--column-index-download))))
 
 (defvar paradox--current-filter nil)
 (make-variable-buffer-local 'paradox--current-filter)
@@ -707,10 +746,12 @@ Letters do not insert themselves; instead, they are commands.
           ("Version" ,paradox-column-width-version nil)
           ("Status" ,paradox-column-width-status package-menu--status-predicate)
           ,@(paradox--archive-format)
-          (,paradox--column-name-star ,paradox-column-width-star paradox--star-predicate :right-align t)
+          ,@(paradox--count-format)
           ("Description" 0 nil)])
   (setq paradox--column-index-star 
         (paradox--column-index paradox--column-name-star))
+  (setq paradox--column-index-download
+        (paradox--column-index paradox--column-name-download))
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
@@ -724,6 +765,29 @@ Letters do not insert themselves; instead, they are commands.
   ;; we "patch" it like this.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
+
+(defcustom paradox-display-star-count t
+  "If non-nil, adds a \"Star\" column to the Package Menu."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "1.1"))
+
+(defcustom paradox-display-download-count t
+  "If non-nil, adds a \"Download\" column to the Package Menu."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "1.1"))
+
+(defun paradox--count-format ()
+  (remove
+   nil
+   (list
+    (when paradox-display-star-count
+      (list paradox--column-name-star paradox-column-width-star 
+            'paradox--star-predicate :right-align t))
+    (when paradox-display-download-count
+      (list paradox--column-name-download paradox-column-width-download
+            'paradox--download-predicate :right-align t)))))
 
 (defun paradox--archive-format ()
   (when (and (cdr package-archives) 

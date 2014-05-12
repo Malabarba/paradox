@@ -271,7 +271,7 @@ If `paradox-lines-per-entry' = 1, the face
 (defvar paradox--package-repo-list nil)
 
 (defvar paradox--star-count-url
-  "https://raw.github.com/Bruce-Connor/paradox/data/data"
+  "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
 (defvar paradox-menu-mode-map package-menu-mode-map)

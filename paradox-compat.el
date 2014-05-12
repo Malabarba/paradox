@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 0.5
+;; Version: 1.0.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (json "1.4"))
 ;; Prefix: paradox 
@@ -31,7 +31,6 @@
 ;; (require 'json)
 ;; (require 'cl)
 
-
 (defun paradox--print-info-compat (pkg)
   "Return a package entry suitable for `tabulated-list-entries' (package-1.0 version).
 PKG has the form ((PACKAGE . VERSION) STATUS DOC).
@@ -42,19 +41,111 @@ identifier (NAME . VERSION-LIST)."
          (status  (nth 1 pkg))
          (doc (or (nth 2 pkg) ""))
          (face (or (cdr (assoc-string status paradox-status-face-alist))
-                   'font-lock-warning-face))) ; obsolete.
+                   'font-lock-warning-face))
+         (url (paradox--package-homepage package))
+         (name (symbol-name package))
+         (name-length (length name))
+         (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
     (list (cons package version)
-          (vector (list (symbol-name package)
-                        'face 'paradox-name-face
-                        'follow-link t
-                        'package-symbol package
-                        'action 'package-menu-describe-package)
+          (vector (concat 
+                   (propertize name
+                               'face 'paradox-name-face
+                               'button t
+                               'follow-link t
+                               'package-symbol package
+                               'help-echo (format "Package: %s" name)
+                               'action 'package-menu-describe-package)
+                   (if (and paradox-use-homepage-buttons url
+                            (< (+ name-length button-length) paradox-column-width-package))
+                       (concat
+                        (make-string (- paradox-column-width-package name-length button-length) ?\s)
+                        (propertize paradox-homepage-button-string
+                                    'face 'paradox-homepage-button-face
+                                    'mouse-face 'custom-button-mouse
+                                    'help-echo (format "Visit %s" url)
+                                    'button t
+                                    'follow-link t
+                                    'action 'paradox-menu-visit-homepage))
+                     ""))
                   (propertize (package-version-join version)
                               'font-lock-face face)
                   (propertize status 'font-lock-face face)
                   (paradox--package-star-count package)
-                  (propertize doc 'font-lock-face face)))))
+                  (propertize (concat desc-prefix doc desc-suffix)
+                              'font-lock-face
+                              (if (> paradox-lines-per-entry 1)
+                                  'paradox-description-face-multiline
+                                'paradox-description-face))))))
+
+(defun paradox--print-entry-compat (id cols)
+  "Printer used by `paradox-menu-mode'.
+Just like default printer, except columns are printed with
+`paradox--print-col-compat'."
+  (let ((beg   (point))
+	(x     (max tabulated-list-padding 0))
+	(ncols (length tabulated-list-format))
+	(inhibit-read-only t))
+    (if (> tabulated-list-padding 0)
+	(insert (make-string x ?\s)))
+    (dotimes (n ncols)
+      (setq x (paradox--print-col-compat n (aref cols n) x)))
+    (insert ?\n)
+    (put-text-property beg (point) 'tabulated-list-id id)
+    (put-text-property beg (point) 'tabulated-list-entry cols)))
+
+(defun paradox--print-col-compat (n col-desc x)
+  "Insert a specified Tabulated List entry at point.
+N is the column number, COL-DESC is a column descriptor \(see
+`tabulated-list-entries'), and X is the column number at point.
+Return the column number after insertion.
+
+This is like `tabulated-list-print-col', except the help-echo
+property is respected."
+  ;; TODO: don't truncate to `width' if the next column is align-right
+  ;; and has some space left.
+  (let* ((format    (aref tabulated-list-format n))
+	 (name      (nth 0 format))
+	 (width     (nth 1 format))
+	 (props     (nthcdr 3 format))
+	 (pad-right (or (plist-get props :pad-right) 1))
+         (right-align (plist-get props :right-align))
+	 (label     (if (stringp col-desc) col-desc (car col-desc)))
+         (label-width (string-width label))
+	 (help-echo (concat (car format) ": " label))
+	 (opoint (point))
+	 (not-last-col (< (1+ n) (length tabulated-list-format))))
+    ;; Truncate labels if necessary (except last column).
+    (and not-last-col
+	 (> label-width width)
+	 (setq label (truncate-string-to-width label width nil nil t)
+               label-width width))
+    (setq label (bidi-string-mark-left-to-right label))
+    (when (and right-align (> width label-width))
+      (let ((shift (- width label-width)))
+        (insert (propertize (make-string shift ?\s)
+                            'display `(space :align-to ,(+ x shift))))
+        (setq width (- width shift))
+        (setq x (+ x shift))))
+    (if (stringp col-desc)
+	(insert (if (get-text-property 0 'help-echo label)
+		    label
+		  (propertize label 'help-echo help-echo)))
+      (apply 'insert-text-button label (cdr col-desc)))
+    (let ((next-x (+ x pad-right width)))
+      ;; No need to append any spaces if this is the last column.
+      (when not-last-col
+        (when (> pad-right 0) (insert (make-string pad-right ?\s)))
+        (insert (propertize
+                 (make-string (- next-x x label-width pad-right) ?\s)
+                 'display `(space :align-to ,next-x))))
+      (put-text-property opoint (point) 'tabulated-list-column-name name)
+      next-x)))
+
+(defun paradox--package-homepage (pkg)
+  "PKG is just the symbol that identifies the package."
+  (let ((extras (elt (cdr-safe (assoc pkg package-archive-contents)) 4)))
+    (and (listp extras) (cdr-safe (assoc :url extras)))))
 
 (defmacro package--push-compat (package desc status listname)
   "Convenience macro for `package-menu--generate'.
@@ -107,6 +198,13 @@ a symbol and VERSION-LIST is a version list."
     ;; Print the result.
     (setq tabulated-list-entries (mapcar 'package-menu--print-info info-list))
     (tabulated-list-print remember-pos)))
+
+(defun paradox--get-or-return-package (pkg)
+  (if (or (markerp pkg) (null pkg))
+      (if (derived-mode-p 'package-menu-mode)
+          (car (tabulated-list-get-id))
+        (error "Not in Package Menu."))
+    pkg))
 
 (provide 'paradox-compat)
 ;;; paradox-compat.el ends here.

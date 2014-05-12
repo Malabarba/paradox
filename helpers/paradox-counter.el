@@ -72,6 +72,7 @@ Also saves result to `package-star-count'"
     (setq recipes-dir paradox-recipes-directory))
   (setq paradox--star-count nil)
   (setq paradox--package-repo-list nil)
+  (require 'json)
   (setq paradox--download-count
         (paradox--github-action paradox-download-count-url nil 'json-read))
   (with-temp-buffer

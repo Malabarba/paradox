@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.1
+;; Version: 1.2
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox 
@@ -99,6 +99,7 @@
 ;; 
 
 ;;; Change Log:
+;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
 ;; 1.1   - 2014/05/10 - Added Download column.
 ;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
 ;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
@@ -129,7 +130,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.1" "Version of the paradox.el package.")
+(defconst paradox-version "1.2" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your emacs and paradox versions."
@@ -230,6 +231,10 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
+(defface paradox-mode-line-face
+  '((t :inherit mode-line-buffer-id :weight normal :foreground "Black"))
+  "Face used on the package's name."
+  :group 'paradox)
 (defface paradox-name-face
   '((t :inherit link))
   "Face used on the package's name."
@@ -407,8 +412,10 @@ The full list of keys can be viewed with \\[describe-mode]."
 (defvaralias 'paradox-hide-buffer-name 'paradox-hide-buffer-identification)
 
 (defun paradox--build-buffer-id (st n)
-  (list st (list :propertize (int-to-string n)
-                 'face 'mode-line-buffer-id)))
+  `((:propertize ,st
+                 face paradox-mode-line-face) 
+    (:propertize ,(int-to-string n)
+                 face mode-line-buffer-id)))
 
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)
@@ -800,10 +807,9 @@ Letters do not insert themselves; instead, they are commands.
 
 (defcustom paradox-local-variables
   '(mode-line-mule-info
-    mode-line-client mode-line-modified
+    mode-line-client
     mode-line-remote mode-line-position
-    column-number-mode size-indication-mode
-    (mode-line-front-space . " "))
+    column-number-mode size-indication-mode)
   "Variables which will take special values on the Packages buffer.
 This is a list, where each element is either SYMBOL or (SYMBOL . VALUE).
 
@@ -821,22 +827,50 @@ nil) on the Packages buffer."
 
 (defun paradox--update-mode-line ()
   (mapc #'paradox--set-local-value paradox-local-variables)
+  (let ((total-lines (int-to-string (line-number-at-pos (point-max)))))
+    (paradox--update-mode-line-front-space total-lines)
+    (paradox--update-mode-line-buffer-identification total-lines))
+  (set-face-foreground
+   'paradox-mode-line-face
+   (-when-let (fg (or (face-foreground 'mode-line-buffer-id nil t) 
+                      (face-foreground 'default nil t)))
+     (if (> (color-distance "white" fg)
+            (color-distance "black" fg))
+         "black" "white"))))
+
+(defun paradox--update-mode-line-buffer-identification (total-lines)
   (setq mode-line-buffer-identification
         (list
-         `(line-number-mode
-           ("(" (:propertize "%4l" face mode-line-buffer-id) "/"
-            ,(int-to-string (line-number-at-pos (point-max))) ")"))
          (list 'paradox-display-buffer-name
                (propertized-buffer-identification
                 (format "%%%sb" (length (buffer-name)))))
-         '(paradox--current-filter ("[" paradox--current-filter "]"))
+         '(paradox--current-filter (:propertize ("[" paradox--current-filter "]") face paradox-mode-line-face))
          '(paradox--upgradeable-packages-any?
-           (" " (:eval (paradox--build-buffer-id "Upgrade:" paradox--upgradeable-packages-number))))         
+           (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))         
          '(package-menu--new-package-list
-           (" " (:eval (paradox--build-buffer-id "New:" (paradox--cas "new")))))
-         " " (paradox--build-buffer-id "Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
+           (:eval (paradox--build-buffer-id " New:" (paradox--cas "new"))))
+         (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
          `(paradox--current-filter
-           "" (" " ,(paradox--build-buffer-id "Total:" (length package-archive-contents)))))))
+           "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
+
+(defun paradox--update-mode-line-front-space (total-lines)
+  (if (memq 'sml/post-id-separator mode-line-format)
+      (progn
+        (add-to-list (make-local-variable 'mode-line-front-space)
+                     (propertize " (" 'face 'sml/col-number))
+        (setq column-number-mode line-number-mode)
+        (set (make-local-variable 'sml/numbers-separator) "")
+        (set (make-local-variable 'sml/col-number-format)
+             (format "/%s)" total-lines))
+        (set (make-local-variable 'sml/line-number-format)
+             (format "%%%sl" (length total-lines)))
+        (make-local-variable 'sml/position-construct)
+        (sml/compile-position-construct))
+    (set (make-local-variable 'mode-line-front-space)
+         `(line-number-mode
+           ("(" (:propertize ,(format "%%%sl" (length total-lines)) face mode-line-buffer-id) "/"
+            ,total-lines ")")))
+    (set (make-local-variable 'mode-line-modified) nil)))
 
 (defun paradox--set-local-value (x)
   (let ((sym (or (car-safe x) x)))

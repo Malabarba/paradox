@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
 ;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
 ;; 1.1   - 2014/05/10 - Added Download column.
 ;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
@@ -1139,6 +1140,37 @@ Letters do not insert themselves; instead, they are commands.
 (define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)
 (define-key paradox-commit-list-mode-map "p" #'paradox-previous-commit)
 (define-key paradox-commit-list-mode-map "n" #'paradox-next-commit)
+
+;;;###autoload
+(defun paradox-require (feature &optional filename noerror package refresh)
+  "A replacement for `require' which also installs the feature if it is absent.
+If FEATURE is present, `require' it and return t.
+
+If FEATURE is not present, install PACKAGE with `package-install'.
+If PACKAGE is nil, assume FEATURE is the package name.
+After installation, `require' FEATURE. 
+
+FILENAME is passed to `require'.
+
+If NOERROR is non-nil, don't complain if the feature couldn't be
+installed, just return nil.
+
+By default, the current package database (stored in
+`package-archive-contents') is only updated if it is empty.
+Passing a non-nil REFRESH argument forces this update."
+  (or (require feature filename t)  
+      (assert (symbolp package))
+      (require 'package)
+      (let ((package (or package
+                         (if (stringp feature)
+                             (intern feature)
+                           feature))))
+        (unless (and package-archive-contents (null refresh))
+          (package-refresh-contents))
+        (and (condition-case e
+                 (package-install 'oi)
+               (error (if noerror nil (error (cadr e)))))
+             (require feature filename noerror)))))
 
 (provide 'paradox)
 ;;; paradox.el ends here.

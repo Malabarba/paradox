@@ -1224,16 +1224,15 @@ By default, the current package database (stored in
 `package-archive-contents') is only updated if it is empty.
 Passing a non-nil REFRESH argument forces this update."
   (or (require feature filename t)
-      (assert (symbolp package))
-      (require 'package)
       (let ((package (or package
                          (if (stringp feature)
                              (intern feature)
                            feature))))
+        (require 'package)
         (unless (and package-archive-contents (null refresh))
           (package-refresh-contents))
         (and (condition-case e
-                 (package-install 'oi)
+                 (package-install package)
                (error (if noerror nil (error (cadr e)))))
              (require feature filename noerror)))))
 
@@ -1241,6 +1240,3 @@ Passing a non-nil REFRESH argument forces this update."
 
 ;;; paradox.el ends here.
 
-(provide 'paradox)
-
-;;; paradox.el ends here

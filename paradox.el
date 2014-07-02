@@ -7,34 +7,34 @@
 ;; Version: 1.2
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
-;; Prefix: paradox 
+;; Prefix: paradox
 ;; Separator: -
 
 ;;; Commentary:
-;; 
+;;
 ;; Paradox can be installed from Melpa with M-x `package-install' RET
-;; paradox.  
+;; paradox.
 ;; It can also be installed manually in the usual way, just be mindful of
 ;; the dependencies.
-;; 
+;;
 ;; To use it, simply call M-x `paradox-list-packages' (instead of the
-;; regular `list-packages').  
+;; regular `list-packages').
 ;; This will give you most features out of the box. If you want to be
 ;; able to star packages as well, just configure the
 ;; `paradox-github-token' variable then call `paradox-list-packages'
 ;; again.
-;; 
+;;
 ;; If you'd like to stop using Paradox, you may call `paradox-disable'
 ;; and go back to using the regular `list-packages'.
-;; 
+;;
 ;; ## Current Features ##
-;; 
+;;
 ;; ### Several Improvements ###
-;; 
+;;
 ;; Paradox implements many small improvements to the package menu
-;; itself. They all work out of the box and are completely customizable!  
+;; itself. They all work out of the box and are completely customizable!
 ;; *(Also, hit `h' to see all keys.)*
-;; 
+;;
 ;; * Visit the package's homepage with `v' (or just use the provided buttons).
 ;; * Shortcuts for package filtering:
 ;;     * <f r> filters by regexp (`occur');
@@ -48,13 +48,13 @@
 ;;     * Customize column widths.
 ;;     * Customize faces (`paradox-star-face', `paradox-status-face-alist' and `paradox-archive-face').
 ;;     * Customize local variables.
-;; 
+;;
 ;; ### Package Ratings ###
-;; 
+;;
 ;; Paradox also integrates with
-;; **GitHub Stars**, which works as **rough** package rating system.  
+;; **GitHub Stars**, which works as **rough** package rating system.
 ;; That is, Paradox package menu will:
-;; 
+;;
 ;; 1. Display the number of GitHub Stars each package has (assuming it's
 ;;    in a github repo, of course);
 ;; 2. Possibly automatically star packages you install, and unstar
@@ -62,23 +62,23 @@
 ;;    want this);
 ;; 3. Let you star and unstar packages by hitting the `s' key;
 ;; 4. Let you star all packages you have installed with M-x `paradox-star-all-installed-packages'.
-;; 
+;;
 ;; Item **1.** will work out of the box, the other items obviously
 ;; require a github account (Paradox will help you generate a token the
 ;; first time you call `paradox-list-packages').
-;;   
+;;
 ;; ## How Star Displaying Works ##
-;; 
-;; We generate a map of <Package> Name -> Repository< from>
+;;
+;; We generate a map of Package Name -> Repository from
 ;; [Melpa](https://github.com/milkypostman/melpa.git)'s `recipe'
-;; directory, some repos may correspond to more than one package. 
+;; directory, some repos may correspond to more than one package.
 ;; This map is used count the stars a given package has.
 ;; _This doesn't mean you need Melpa to see the star counts, the numbers
 ;; will be displayed regardless of what archives you use._
-;; 
+;;
 ;; Currently, packages that are not hosted on GitHub are listed with a
 ;; blank star count, which is clearly different from 0-star packages
-;; (which are displayed with a 0, obviously).  
+;; (which are displayed with a 0, obviously).
 ;; If you know of an alternative that could be used for these packages,
 ;; [open an issue](https://github.com/Bruce-Connor/paradox/issues/new)
 ;; here, I'd love to hear.
@@ -96,7 +96,7 @@
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+;;
 
 ;;; Change Log:
 ;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
@@ -214,7 +214,7 @@ token grants (very) limited access to your account."
   :package-version '(paradox . "0.2"))
 
 (defcustom paradox-automatically-star 'unconfigured
-  "When you install new packages, should they be automatically starred? 
+  "When you install new packages, should they be automatically starred?
 NOTE: This variable has no effect if `paradox-github-token' isn't set.
 
 Paradox is capable of automatically starring packages when you
@@ -315,7 +315,7 @@ If `paradox-lines-per-entry' = 1, the face
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
 
 (defun paradox--define-sort (name &optional key)
-  "Define function and key for sorting."  
+  "Define function and key for sorting."
   (let ((symb (intern (format "paradox-sort-by-%s" (downcase name))))
         (key (or key (substring name 0 1))))
     (eval
@@ -394,9 +394,9 @@ The full list of keys can be viewed with \\[describe-mode]."
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (with-current-buffer 
+  (with-current-buffer
       (url-retrieve-synchronously paradox--star-count-url)
-    (when (search-forward "\n\n" nil t) 
+    (when (search-forward "\n\n" nil t)
       (setq paradox--star-count (read (current-buffer)))
       (setq paradox--package-repo-list (read (current-buffer)))
       (setq paradox--download-count (ignore-errors (read (current-buffer)))))
@@ -413,7 +413,7 @@ The full list of keys can be viewed with \\[describe-mode]."
 
 (defun paradox--build-buffer-id (st n)
   `((:propertize ,st
-                 face paradox-mode-line-face) 
+                 face paradox-mode-line-face)
     (:propertize ,(int-to-string n)
                  face mode-line-buffer-id)))
 
@@ -546,7 +546,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
          (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
     (list pkg-desc
-          `[,(concat 
+          `[,(concat
               (propertize name
                           'face 'paradox-name-face
                           'button t
@@ -582,7 +582,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                            'paradox-description-face))])))
 
 (defun paradox--count-print (pkg)
-  (append 
+  (append
    (when (and paradox-display-star-count (listp paradox--star-count))
      (list (paradox--package-star-count pkg)))
    (when (and paradox-display-download-count (listp paradox--download-count))
@@ -606,7 +606,7 @@ PKG is a symbol. Interactively it is the package under point."
   (let ((repo (cdr (assoc (paradox--get-or-return-package pkg)
                           paradox--package-repo-list))))
     (if repo
-        (with-selected-window 
+        (with-selected-window
             (display-buffer (get-buffer-create paradox--commit-list-buffer))
           (paradox-commit-list-mode)
           (setq paradox--repo repo)
@@ -660,7 +660,7 @@ PKG is a symbol. Interactively it is the package under point."
 (defun paradox--package-star-count (package)
   (let ((count (cdr (assoc package paradox--star-count)))
         (repo (cdr-safe (assoc package paradox--package-repo-list))))
-    (propertize  
+    (propertize
      (format "%s" (or count ""))
      'face
      (if (and repo (assoc-string repo paradox--user-starred-list))
@@ -743,7 +743,7 @@ shown."
 Letters do not insert themselves; instead, they are commands.
 \\<paradox-menu-mode-map>
 \\{paradox-menu-mode-map}"
-  (hl-line-mode 1)  
+  (hl-line-mode 1)
   (paradox--update-mode-line)
   (when (paradox--compat-p)
     (require 'paradox-compat)
@@ -755,7 +755,7 @@ Letters do not insert themselves; instead, they are commands.
           ,@(paradox--archive-format)
           ,@(paradox--count-format)
           ("Description" 0 nil)])
-  (setq paradox--column-index-star 
+  (setq paradox--column-index-star
         (paradox--column-index paradox--column-name-star))
   (setq paradox--column-index-download
         (paradox--column-index paradox--column-name-download))
@@ -790,16 +790,16 @@ Letters do not insert themselves; instead, they are commands.
    nil
    (list
     (when paradox-display-star-count
-      (list paradox--column-name-star paradox-column-width-star 
+      (list paradox--column-name-star paradox-column-width-star
             'paradox--star-predicate :right-align t))
     (when paradox-display-download-count
       (list paradox--column-name-download paradox-column-width-download
             'paradox--download-predicate :right-align t)))))
 
 (defun paradox--archive-format ()
-  (when (and (cdr package-archives) 
+  (when (and (cdr package-archives)
              (null (paradox--compat-p)))
-    (list (list "Archive" 
+    (list (list "Archive"
                 (apply 'max (mapcar 'length (mapcar 'car package-archives)))
                 'package-menu--archive-predicate))))
 
@@ -832,7 +832,7 @@ nil) on the Packages buffer."
     (paradox--update-mode-line-buffer-identification total-lines))
   (set-face-foreground
    'paradox-mode-line-face
-   (-when-let (fg (or (face-foreground 'mode-line-buffer-id nil t) 
+   (-when-let (fg (or (face-foreground 'mode-line-buffer-id nil t)
                       (face-foreground 'default nil t)))
      (if (> (color-distance "white" fg)
             (color-distance "black" fg))
@@ -846,7 +846,7 @@ nil) on the Packages buffer."
                 (format "%%%sb" (length (buffer-name)))))
          '(paradox--current-filter (:propertize ("[" paradox--current-filter "]") face paradox-mode-line-face))
          '(paradox--upgradeable-packages-any?
-           (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))         
+           (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))
          '(package-menu--new-package-list
            (:eval (paradox--build-buffer-id " New:" (paradox--cas "new"))))
          (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
@@ -877,7 +877,7 @@ nil) on the Packages buffer."
     (when (boundp sym)
       (set (make-local-variable sym) (cdr-safe x)))))
 
-(defadvice package-menu-execute 
+(defadvice package-menu-execute
     (around paradox-around-package-menu-execute-advice ())
   "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
   (when (and (stringp paradox-github-token)
@@ -898,8 +898,8 @@ nil) on the Packages buffer."
 
 (defun paradox--repo-alist ()
   (cl-remove-duplicates
-   (remove nil 
-           (--map (cdr-safe (assoc (car it) paradox--package-repo-list)) 
+   (remove nil
+           (--map (cdr-safe (assoc (car it) paradox--package-repo-list))
                   package-alist))))
 
 
@@ -949,7 +949,7 @@ No questions asked."
 (defun paradox--star-repo (repo &optional delete query)
   (when (or (not query)
             (y-or-n-p (format "Really %sstar %s? "
-                              (if delete "un" "") repo)))  
+                              (if delete "un" "") repo)))
     (paradox--github-action-star repo delete)
     (message "%starred %s." (if delete "Uns" "S") repo)
     (if delete
@@ -1022,10 +1022,10 @@ Return value is always a list.
      (with-temp-buffer
        (save-excursion
          (shell-command
-          (if (stringp paradox-github-token) 
+          (if (stringp paradox-github-token)
               (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
                       (or method "GET") paradox-github-token action)
-            
+
             (format "curl -s -i -d \"\" -X %s \"%s\" "
                     (or method "GET") action)) t))
        (when reader
@@ -1079,7 +1079,7 @@ May I take you to the token generation page? ")
          (title (split-string (cdr (assoc 'message commit)) "[\n\r][ \t]*" t))
          (url   (cdr (assoc 'url commit)))
          (cc    (cdr (assoc 'comment_count commit))))
-    (cons 
+    (cons
      (list (cons (car title) x)
            (vector
             (propertize (format-time-string "%x" (date-to-time date))

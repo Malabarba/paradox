@@ -481,24 +481,24 @@ for packages.
   (-override-definition #'truncate-string-to-width #'-truncate-string-to-width)
   (-override-definition #'package-menu-mode #'menu-mode))
 
-(defvar paradox--backups nil)
+(defvar -backups nil)
 
-(defun paradox-disable ()
+(defun disable ()
   "Disable paradox, and go back to regular package-menu."
   (interactive)
   (ad-disable-advice 'package-menu-execute 'around
                     'paradox-around-package-menu-execute-advice)
-  (dolist (it paradox--backups)
+  (dolist (it -backups)
     (message "Restoring %s to %s" (car it) (eval (cdr it)))
     (fset (car it) (eval (cdr it))))
-  (setq paradox--backups nil))
+  (setq -backups nil))
 
-(defun paradox--override-definition (sym newdef)
+(defun -override-definition (sym newdef)
   "Temporarily override SYM's function definition with NEWDEF.
 The original definition is saved to paradox--SYM-backup."
   (let ((backup-name (intern (format "paradox--%s-backup" sym)))
         (def (symbol-function sym)))
-    (unless (assoc sym paradox--backups)
+    (unless (assoc sym -backups)
       (message "Overriding %s with %s" sym newdef)
       (eval (list 'defvar backup-name nil))
       (add-to-list 'paradox--backups (cons sym backup-name))
@@ -506,11 +506,11 @@ The original definition is saved to paradox--SYM-backup."
       (fset sym newdef))))
 
 ;;; Right now this is trivial, but we leave it as function so it's easy to improve.
-(defun paradox--active-p ()
+(defun -active-p ()
   "Non-nil if paradox has been activated."
-  (null (null paradox--backups)))
+  (null (null -backups)))
 
-(defun paradox--truncate-string-to-width (&rest args)
+(defun -truncate-string-to-width (&rest args)
   "Like `truncate-string-to-width', but uses \"…\" on package buffer.
 All arguments STR, END-COLUMN, START-COLUMN, PADDING, and
 ELLIPSIS are passed to `truncate-string-to-width'.
@@ -519,22 +519,22 @@ ELLIPSIS are passed to `truncate-string-to-width'.
   (when (and (eq major-mode 'paradox-menu-mode)
              (eq t (nth 4 args)))
     (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
-  (apply paradox--truncate-string-to-width-backup args))
+  (apply -truncate-string-to-width-backup args))
 
-(defvar paradox--upgradeable-packages nil)
-(defvar paradox--upgradeable-packages-number nil)
-(defvar paradox--upgradeable-packages-any? nil)
+(defvar -upgradeable-packages nil)
+(defvar -upgradeable-packages-number nil)
+(defvar -upgradeable-packages-any? nil)
 
-(defun paradox-refresh-upgradeable-packages ()
+(defun refresh-upgradeable-packages ()
   "Refresh the list of upgradeable packages."
   (interactive)
-  (setq paradox--upgradeable-packages (package-menu--find-upgrades))
-  (setq paradox--upgradeable-packages-number
-        (length paradox--upgradeable-packages))
-  (setq paradox--upgradeable-packages-any?
-        (> paradox--upgradeable-packages-number 0)))
+  (setq -upgradeable-packages (package-menu--find-upgrades))
+  (setq -upgradeable-packages-number
+        (length -upgradeable-packages))
+  (setq -upgradeable-packages-any?
+        (> -upgradeable-packages-number 0)))
 
-(defcustom paradox-status-face-alist
+(defcustom status-face-alist
   '(("built-in"  . font-lock-builtin-face)
     ("available" . default)
     ("new"       . bold)
@@ -551,13 +551,13 @@ status is STATUS."
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defcustom paradox-homepage-button-string "h"
+(defcustom homepage-button-string "h"
   "String used to for the link that takes you to a package's homepage."
   :type 'string
   :group 'paradox
   :package-version '(paradox . "0.10"))
 
-(defcustom paradox-use-homepage-buttons t
+(defcustom use-homepage-buttons t
   "If non-nil a button will be added after the name of each package.
 This button takes you to the package's homepage."
   :type 'boolean
@@ -567,7 +567,7 @@ This button takes you to the package's homepage."
 (defvar desc-suffix nil)
 (defvar desc-prefix nil)
 
-(defcustom paradox-lines-per-entry 1
+(defcustom lines-per-entry 1
   "Number of lines used to display each entry in the Package Menu.
 1 Gives you the regular package menu.
 2 Displays the description on a separate line below the entry.
@@ -576,21 +576,21 @@ This button takes you to the package's homepage."
   :group 'paradox
   :package-version '(paradox . "0.10"))
 
-(defvar-local paradox--repo nil)
+(defvar-local -repo nil)
 
-(defun paradox--print-info (pkg)
+(defun -print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
 Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
   (let* ((pkg-desc (car pkg))
          (status  (cdr pkg))
-         (face (or (cdr (assoc-string status paradox-status-face-alist))
+         (face (or (cdr (assoc-string status status-face-alist))
                    'font-lock-warning-face))
-         (url (paradox--package-homepage pkg-desc))
+         (url (-package-homepage pkg-desc))
          (name (symbol-name (package-desc-name pkg-desc)))
          (name-length (length name))
-         (button-length (length paradox-homepage-button-string)))
-    (paradox--incf status)
+         (button-length (length homepage-button-string)))
+    (-incf status)
     (list pkg-desc
           `[,(concat
               (propertize name
@@ -627,17 +627,17 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                              'paradox-description-face-multiline
                            'paradox-description-face))])))
 
-(defun paradox--count-print (pkg)
+(defun -count-print (pkg)
   "Return counts of PKG as a package-desc list."
   (append
-   (when (and paradox-display-star-count (listp paradox--star-count))
-     (list (paradox--package-star-count pkg)))
-   (when (and paradox-display-download-count (listp paradox--download-count))
-     (list (paradox--package-download-count pkg)))))
+   (when (and display-star-count (listp -star-count))
+     (list (-package-star-count pkg)))
+   (when (and display-download-count (listp -download-count))
+     (list (-package-download-count pkg)))))
 
-(defun paradox--package-download-count (pkg)
+(defun -package-download-count (pkg)
   "Return propertized string with the download count of PKG."
-  (let ((c (cdr-safe (assoc pkg paradox--download-count))))
+  (let ((c (cdr-safe (assoc pkg -download-count))))
     (propertize
      (if (numberp c)
          (if (> c 999) (format "%sK" (truncate c 1000)) (format "%s" c))
@@ -645,96 +645,96 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
      'face 'paradox-download-face
      'value (or c 0))))
 
-(defun paradox-menu-view-commit-list (pkg)
+(defun menu-view-commit-list (pkg)
   "Visit the commit list of package named PKG.
 PKG is a symbol. Interactively it is the package under point."
   (interactive '(nil))
-  (let ((repo (cdr (assoc (paradox--get-or-return-package pkg)
-                          paradox--package-repo-list))))
+  (let ((repo (cdr (assoc (-get-or-return-package pkg)
+                          -package-repo-list))))
     (if repo
         (with-selected-window
-            (display-buffer (get-buffer-create paradox--commit-list-buffer))
-          (paradox-commit-list-mode)
-          (setq paradox--repo repo)
-          (paradox--commit-list-update-entries)
+            (display-buffer (get-buffer-create -commit-list-buffer))
+          (commit-list-mode)
+          (setq -repo repo)
+          (-commit-list-update-entries)
           (tabulated-list-print))
       (message "Package %s is not a GitHub repo." pkg))))
 
-(defun paradox-menu-visit-homepage (pkg)
+(defun menu-visit-homepage (pkg)
   "Visit the homepage of package named PKG.
 PKG is a symbol. Interactively it is the package under point."
   (interactive '(nil))
-  (let ((url (paradox--package-homepage
-              (paradox--get-or-return-package pkg))))
+  (let ((url (-package-homepage
+              (-get-or-return-package pkg))))
     (if (stringp url)
         (browse-url url)
       (message "Package %s has no homepage."
                (propertize (symbol-name pkg)
                            'face 'font-lock-keyword-face)))))
 
-(unless (paradox--compat-p)
-  (defun paradox--package-homepage (pkg)
+(unless (-compat-p)
+  (defun -package-homepage (pkg)
     "PKG can be the package-name symbol or a package-desc object."
     (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
            (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
            (extras   (package-desc-extras object))
            (homepage (and (listp extras) (cdr-safe (assoc :url extras)))))
       (or homepage
-          (and (setq extras (cdr (assoc name paradox--package-repo-list)))
+          (and (setq extras (cdr (assoc name -package-repo-list)))
                (format "https://github.com/%s" extras)))))
-  (defun paradox--get-or-return-package (pkg)
+  (defun -get-or-return-package (pkg)
     (if (or (markerp pkg) (null pkg))
         (if (derived-mode-p 'package-menu-mode)
             (package-desc-name (tabulated-list-get-id))
           (error "Not in Package Menu"))
       pkg)))
 
-(defun paradox--incf (status)
+(defun -incf (status)
   "Increment the count for STATUS on `paradox--package-count'.
 Also increments the count for \"total\"."
-  (paradox--inc-count status)
+  (-inc-count status)
   (unless (string= status "obsolete")
-    (paradox--inc-count "total")))
+    (-inc-count "total")))
 
-(defun paradox--inc-count (string)
+(defun -inc-count (string)
   "Increment the cdr of (assoc-string STRING paradox--package-count)."
-  (let ((cons (assoc-string string paradox--package-count)))
+  (let ((cons (assoc-string string -package-count)))
     (setcdr cons (1+ (cdr cons)))))
 
-(defun paradox--entry-star-count (entry)
+(defun -entry-star-count (entry)
   "Get the star count of the package in ENTRY."
-  (paradox--package-star-count
+  (-package-star-count
    ;; The package symbol should be in the ID field, but that's not mandatory,
    (or (ignore-errors (elt (car entry) 1))
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
-(defvar paradox--user-starred-list nil)
+(defvar -user-starred-list nil)
 
-(defun paradox--package-star-count (package)
+(defun -package-star-count (package)
   "Get the star count of PACKAGE."
-  (let ((count (cdr (assoc package paradox--star-count)))
-        (repo (cdr-safe (assoc package paradox--package-repo-list))))
+  (let ((count (cdr (assoc package -star-count)))
+        (repo (cdr-safe (assoc package -package-repo-list))))
     (propertize
      (format "%s" (or count ""))
      'face
-     (if (and repo (assoc-string repo paradox--user-starred-list))
+     (if (and repo (assoc-string repo -user-starred-list))
          'paradox-starred-face
        'paradox-star-face))))
 
-(defvar paradox--column-index-star nil)
-(defvar paradox--column-index-download nil)
+(defvar -column-index-star nil)
+(defvar -column-index-download nil)
 
-(defun paradox--star-predicate (A B)
+(defun -star-predicate (A B)
   "Non-nil t if star count of A is larget than B."
-  (> (string-to-number (elt (cadr A) paradox--column-index-star))
-     (string-to-number (elt (cadr B) paradox--column-index-star))))
-(defun paradox--download-predicate (A B)
+  (> (string-to-number (elt (cadr A) -column-index-star))
+     (string-to-number (elt (cadr B) -column-index-star))))
+(defun -download-predicate (A B)
   "Non-nil t if download count of A is larget than B."
-  (> (get-text-property 0 'value (elt (cadr A) paradox--column-index-download))
-     (get-text-property 0 'value (elt (cadr B) paradox--column-index-download))))
+  (> (get-text-property 0 'value (elt (cadr A) -column-index-download))
+     (get-text-property 0 'value (elt (cadr B) -column-index-download))))
 
-(defun paradox--generate-menu (remember-pos packages &optional keywords)
+(defun -generate-menu (remember-pos packages &optional keywords)
   "Populate the Package Menu, without hacking into the header-format.
 If REMEMBER-POS is non-nil, keep point on the same entry.
 PACKAGES should be t, which means to display all known packages,
@@ -742,41 +742,41 @@ or a list of package names (symbols) to display.
 
 With KEYWORDS given, only packages with those keywords are
 shown."
-  (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
-  (let ((desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
-        (desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
-    (paradox-menu--refresh packages keywords))
-  (setq paradox--current-filter
+  (mapc (lambda (x) (setf (cdr x) 0)) -package-count)
+  (let ((desc-prefix (if (> lines-per-entry 1) " \n      " ""))
+        (desc-suffix (make-string (max 0 (- lines-per-entry 2)) ?\n)))
+    (menu--refresh packages keywords))
+  (setq -current-filter
         (if keywords (mapconcat 'identity keywords ",")
           nil))
-  (let ((idx (paradox--column-index "Package")))
+  (let ((idx (-column-index "Package")))
     (setcar (aref tabulated-list-format idx)
             (if keywords
-                (concat "Package[" paradox--current-filter "]")
+                (concat "Package[" -current-filter "]")
               "Package")))
   (tabulated-list-print remember-pos)
   (tabulated-list-init-header)
-  (paradox--update-mode-line)
-  (paradox-refresh-upgradeable-packages))
+  (-update-mode-line)
+  (refresh-upgradeable-packages))
 
-(if (paradox--compat-p)
+(if (-compat-p)
     (require 'paradox-compat)
-  (defalias 'paradox-menu--refresh 'package-menu--refresh))
+  (defalias 'menu--refresh 'package-menu--refresh))
 
-(defun paradox--column-index (regexp)
+(defun -column-index (regexp)
   "Find the index of the column that matches REGEXP."
   (cl-position (format "\\`%s\\'" (regexp-quote regexp)) tabulated-list-format
             :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
-(defun paradox-previous-entry (&optional n)
+(defun previous-entry (&optional n)
   "Move to previous entry, which might not be the previous line.
 With prefix N, move to the N-th previous entry."
   (interactive "p")
-  (paradox-next-entry (- n))
+  (next-entry (- n))
   (forward-line 0)
   (forward-button 1))
 
-(defun paradox-next-entry (&optional n)
+(defun next-entry (&optional n)
   "Move to next entry, which might not be the next line.
 With prefix N, move to the N-th next entry."
   (interactive "p")
@@ -786,25 +786,25 @@ With prefix N, move to the N-th next entry."
       (if (eobp) (forward-line -1))
       (forward-button d))))
 
-(defun paradox-filter-upgrades ()
+(defun filter-upgrades ()
   "Show only upgradable packages."
   (interactive)
-  (if (null paradox--upgradeable-packages)
+  (if (null -upgradeable-packages)
       (message "No packages have upgrades.")
     (package-show-package-list
-     (mapcar 'car paradox--upgradeable-packages))
-    (setq paradox--current-filter "Upgrade")))
+     (mapcar 'car -upgradeable-packages))
+    (setq -current-filter "Upgrade")))
 
-(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
+(define-derived-mode menu-mode tabulated-list-mode "Paradox Menu"
   "Major mode for browsing a list of packages.
 Letters do not insert themselves; instead, they are commands.
 \\<paradox-menu-mode-map>
 \\{paradox-menu-mode-map}"
   (hl-line-mode 1)
-  (paradox--update-mode-line)
-  (when (paradox--compat-p)
+  (-update-mode-line)
+  (when (-compat-p)
     (require 'paradox-compat)
-    (setq tabulated-list-printer 'paradox--print-entry-compat))
+    (setq tabulated-list-printer #'-print-entry-compat))
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)
           ("Version" ,paradox-column-width-version nil)
@@ -812,16 +812,16 @@ Letters do not insert themselves; instead, they are commands.
           ,@(paradox--archive-format)
           ,@(paradox--count-format)
           ("Description" 0 nil)])
-  (setq paradox--column-index-star
-        (paradox--column-index paradox--column-name-star))
-  (setq paradox--column-index-download
-        (paradox--column-index paradox--column-name-download))
+  (setq -column-index-star
+        (-column-index -column-name-star))
+  (setq -column-index-download
+        (-column-index -column-name-download))
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
   ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
+  (add-hook 'tabulated-list-revert-hook #'refresh-upgradeable-packages nil t)
+  (add-hook 'tabulated-list-revert-hook #'-refresh-star-count nil t)
+  (add-hook 'tabulated-list-revert-hook #'-update-mode-line nil t)
   (tabulated-list-init-header)
   ;; We need package-menu-mode to be our parent, otherwise some
   ;; commands throw errors. But we can't actually derive from it,
@@ -830,17 +830,17 @@ Letters do not insert themselves; instead, they are commands.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
 
-(defun paradox--count-format ()
+(defun -count-format ()
   "List of star/download counts to be used as part of the entry."
   (remove
    nil
    (list
-    (when paradox-display-star-count
-      (list paradox--column-name-star paradox-column-width-star
-            'paradox--star-predicate :right-align t))
-    (when paradox-display-download-count
-      (list paradox--column-name-download paradox-column-width-download
-            'paradox--download-predicate :right-align t)))))
+    (when display-star-count
+      (list -column-name-star column-width-star
+            #'-star-predicate :right-align t))
+    (when display-download-count
+      (list -column-name-download column-width-download
+            #'-download-predicate :right-align t)))))
 
 (defun paradox--archive-format ()
   "List containing archive to be used as part of the entry."

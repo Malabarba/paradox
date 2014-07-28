@@ -131,15 +131,15 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.2.1" "Version of the paradox.el package.")
-(defun paradox-bug-report ()
+(defconst version "1.2.1" "Version of the paradox.el package.")
+(defun bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your Emacs and paradox versions."
   (interactive)
   (message "Your paradox-version is: %s, and your emacs version is: %s.\nPlease include this in your report!"
-           paradox-version emacs-version)
+           version emacs-version)
   (browse-url "https://github.com/Bruce-Connor/paradox/issues/new"))
-(defun paradox-customize ()
+(defun customize ()
   "Open the customization menu in the `paradox' group."
   (interactive)
   (customize-group 'paradox t))
@@ -148,47 +148,47 @@ Please include your Emacs and paradox versions."
   :prefix "paradox-"
   :group 'emacs
   :package-version '(paradox . "0.1"))
-(defun paradox--compat-p ()
+(defun -compat-p ()
   "Non-nil if we need to enable pre-24.4 compatibility features."
   (version< emacs-version "24.3.50"))
 
-(defcustom paradox-column-width-package  18
+(defcustom column-width-package  18
   "Width of the \"Package\" column."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
-(defcustom paradox-column-width-version  9
+(defcustom column-width-version  9
   "Width of the \"Version\" column."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
-(defcustom paradox-column-width-status  10
+(defcustom column-width-status  10
   "Width of the \"Status\" column."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
-(defcustom paradox-column-width-star 4
+(defcustom column-width-star 4
   "Width of the \"Star\" column."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
-(defvar paradox--column-name-star
+(defvar -column-name-star
   (if (char-displayable-p ?★) "★" "*"))
 
-(defcustom paradox-column-width-download 4
+(defcustom column-width-download 4
   "Width of the \"Download Count\" column."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "1.1"))
 
-(defvar paradox--column-name-download
+(defvar -column-name-download
   (if (char-displayable-p ?↓) "↓" "DC"))
 
-(defcustom paradox-github-token nil
+(defcustom github-token nil
   "Access token to use for github actions.
 Currently, that means (un)starring repos.
 
@@ -214,7 +214,7 @@ token grants (very) limited access to your account."
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defcustom paradox-automatically-star 'unconfigured
+(defcustom automatically-star 'unconfigured
   "When you install new packages, should they be automatically starred?
 NOTE: This variable has no effect if `paradox-github-token' isn't set.
 
@@ -232,123 +232,123 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defcustom paradox-display-star-count t
+(defcustom display-star-count t
   "If non-nil, adds a \"Star\" column to the Package Menu."
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "1.1"))
 
-(defcustom paradox-display-download-count t
+(defcustom display-download-count t
   "If non-nil, adds a \"Download\" column to the Package Menu."
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "1.1"))
 
-(defface paradox-mode-line-face
+(defface mode-line-face
   '((t :inherit mode-line-buffer-id :weight normal :foreground "Black"))
   "Face used on the package's name."
   :group 'paradox)
-(defface paradox-name-face
+(defface name-face
   '((t :inherit link))
   "Face used on the package's name."
   :group 'paradox)
-(defface paradox-homepage-button-face
+(defface homepage-button-face
   '((t :underline t :inherit font-lock-comment-face))
   "Face used on the homepage button."
   :group 'paradox)
-;; (defface paradox-version-face
+;; (defface version-face
 ;;   '((t :inherit default))
 ;;   "Face used on the version column."
 ;;   :group 'paradox)
-(defface paradox-archive-face
+(defface archive-face
   '((t :inherit paradox-comment-face))
   "Face used on the archive column."
   :group 'paradox)
-(defface paradox-star-face
+(defface star-face
   '((t :inherit font-lock-string-face))
   "Face used on the star column, for packages you haven't starred."
   :group 'paradox)
-(defface paradox-starred-face
+(defface starred-face
   '((t :weight bold :inherit paradox-star-face))
   "Face used on the star column, for packages you have starred."
   :group 'paradox)
-(defface paradox-download-face
+(defface download-face
   '((t :inherit font-lock-keyword-face))
   "Face used on the Downloads column."
   :group 'paradox)
-(defface paradox-description-face
+(defface description-face
   '((t :inherit default))
   "Face used on the description column.
 If `paradox-lines-per-entry' > 1, the face
 `paradox-description-face-multiline' is used instead."
   :group 'paradox)
-(defface paradox-description-face-multiline
+(defface description-face-multiline
   '((t :inherit font-lock-doc-face))
   "Face used on the description column when `paradox-lines-per-entry' > 1.
 If `paradox-lines-per-entry' = 1, the face
 `paradox-description-face' is used instead."
   :group 'paradox)
 
-(defface paradox-comment-face
+(defface comment-face
   '((((background light)) :foreground "Grey30")
     (((background dark)) :foreground "Grey60"))
   "Face used on faded out stuff."
   :group 'paradox)
-(defface paradox-highlight-face
+(defface highlight-face
   '((t :weight bold :inherit font-lock-variable-name-face))
   "Face used on highlighted stuff."
   :group 'paradox)
 
-(defvar paradox--star-count nil)
-(defvar paradox--download-count nil)
-(defvar paradox--package-repo-list nil)
+(defvar -star-count nil)
+(defvar -download-count nil)
+(defvar -package-repo-list nil)
 
-(defvar paradox--star-count-url
+(defvar -star-count-url
   "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
-(defvar paradox--package-count
+(defvar -package-count
   '(("total" . 0) ("built-in" . 0)
     ("obsolete" . 0) ("deleted" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 
-(defvar-local paradox--current-filter nil)
+(defvar-local -current-filter nil)
 
-(defvar paradox--commit-list-buffer "*Package Commit List*")
+(defvar -commit-list-buffer "*Package Commit List*")
 
-(defvar paradox--truncate-string-to-width-backup)
+(defvar -truncate-string-to-width-backup)
 
-(defmacro paradox--cas (string)
+(defmacro -cas (string)
   "Same as (cdr (assoc-string ,STRING paradox--package-count))."
   `(cdr (assoc-string ,string paradox--package-count)))
 
-(defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
+(defvar -data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
   "Address of the raw data file.")
 
-(defvar paradox-menu-mode-map package-menu-mode-map)
-(defvar paradox--filter-map)
+(defvar menu-mode-map package-menu-mode-map)
+(defvar -filter-map)
 (define-prefix-command 'paradox--filter-map)
-(define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
-(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
-(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
-(define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
-(define-key paradox-menu-mode-map "j" #'paradox-next-describe)
-(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
-(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
-(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
-(define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
-(define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
-(define-key paradox-menu-mode-map "\r" #'paradox-push-button)
-(define-key paradox-menu-mode-map "F" 'package-menu-filter)
-(define-key paradox--filter-map "k" #'package-menu-filter)
-(define-key paradox--filter-map "f" #'package-menu-filter)
-(define-key paradox--filter-map "r" #'occur)
-(define-key paradox--filter-map "o" #'occur)
-(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+(define-key menu-mode-map "q" #'quit-and-close)
+(define-key menu-mode-map "p" #'previous-entry)
+(define-key menu-mode-map "n" #'next-entry)
+(define-key menu-mode-map "k" #'previous-describe)
+(define-key menu-mode-map "j" #'next-describe)
+(define-key menu-mode-map "f" #'paradox--filter-map)
+(define-key menu-mode-map "s" #'menu-mark-star-unstar)
+(define-key menu-mode-map "h" #'menu-quick-help)
+(define-key menu-mode-map "v" #'menu-visit-homepage)
+(define-key menu-mode-map "l" #'menu-view-commit-list)
+(define-key menu-mode-map "\r" #'push-button)
+(define-key menu-mode-map "F" 'package-menu-filter)
+(define-key -filter-map "k" #'package-menu-filter)
+(define-key -filter-map "f" #'package-menu-filter)
+(define-key -filter-map "r" #'occur)
+(define-key -filter-map "o" #'occur)
+(define-key -filter-map "u" #'filter-upgrades)
 
-(defun paradox--define-sort (name &optional key)
+(defun -define-sort (name &optional key)
   "Define sorting function paradox-sort-by-NAME and bind it to KEY."
   (let ((symb (intern (format "paradox-sort-by-%s" (downcase name))))
         (key (or key (substring name 0 1))))
@@ -364,78 +364,78 @@ If `paradox-lines-per-entry' = 1, the face
         (define-key paradox-menu-mode-map ,(concat "S" (upcase key)) ',symb)
         (define-key paradox-menu-mode-map ,(concat "S" (downcase key)) ',symb)))))
 
-(paradox--define-sort "Package")
-(paradox--define-sort "Status")
-(paradox--define-sort paradox--column-name-star "*")
+(-define-sort "Package")
+(-define-sort "Status")
+(-define-sort -column-name-star "*")
 
-(defun paradox-next-describe (n)
+(defun next-describe (n)
   "Move to the next package and describe it.
 With prefix N, move to the N-th next package instead."
   (interactive "p")
-  (paradox-next-entry n)
+  (next-entry n)
   (call-interactively 'package-menu-describe-package))
 
-(defun paradox-previous-describe (n)
+(defun previous-describe (n)
   "Move to the previous package and describe it.
 With prefix N, move to the N-th previous package instead."
   (interactive "p")
-  (paradox-previous-entry n)
+  (previous-entry n)
   (call-interactively 'package-menu-describe-package))
 
-(defun paradox-push-button ()
+(defun push-button ()
   "Push button under point, or describe package."
   (interactive)
   (if (get-text-property (point) 'action)
       (call-interactively 'push-button)
     (call-interactively 'package-menu-describe-package)))
 
-(defvar paradox--key-descriptors
+(defvar -key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
     ("list commits")
     ("filter by" "+" "upgrades" "regexp" "keyword")
     ("Sort by" "+" "Package name" "Status" "*(star)")))
 
-(defun paradox-menu-quick-help ()
+(defun menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
-  (message (mapconcat 'paradox--prettify-key-descriptor
-                      paradox--key-descriptors "\n")))
+  (message (mapconcat #'-prettify-key-descriptor
+                      -key-descriptors "\n")))
 
-(defun paradox-quit-and-close (kill)
+(defun quit-and-close (kill)
   "Bury this buffer and close the window.
 With prefix KILL, kill the buffer instead of burying."
   (interactive "P")
-  (if paradox--current-filter
+  (if -current-filter
       (package-show-package-list)
-    (let ((log (get-buffer-window paradox--commit-list-buffer)))
+    (let ((log (get-buffer-window -commit-list-buffer)))
       (when (window-live-p log)
         (quit-window kill log))
       (quit-window kill))))
 
 ;;;###autoload
-(defun paradox--refresh-star-count ()
+(defun -refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
   (with-current-buffer
-      (url-retrieve-synchronously paradox--star-count-url)
+      (url-retrieve-synchronously -star-count-url)
     (when (search-forward "\n\n" nil t)
-      (setq paradox--star-count (read (current-buffer)))
-      (setq paradox--package-repo-list (read (current-buffer)))
-      (setq paradox--download-count (ignore-errors (read (current-buffer)))))
+      (setq -star-count (read (current-buffer)))
+      (setq -package-repo-list (read (current-buffer)))
+      (setq -download-count (ignore-errors (read (current-buffer)))))
     (kill-buffer))
-  (when (stringp paradox-github-token)
-    (paradox--refresh-user-starred-list)))
+  (when (stringp github-token)
+    (-refresh-user-starred-list)))
 
-(defcustom paradox-hide-buffer-identification t
+(defcustom hide-buffer-identification t
   "If non-nil, the name of the buffer will not be displayed in the mode-line."
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "0.5"))
-(defvaralias 'paradox-hide-buffer-name 'paradox-hide-buffer-identification)
+(defvaralias 'hide-buffer-name 'hide-buffer-identification)
 
-(defun paradox--build-buffer-id (st n)
+(defun -build-buffer-id (st n)
   "Return a list that propertizes ST and N for the mode-line."
   `((:propertize ,st
                  face paradox-mode-line-face)
@@ -443,7 +443,7 @@ With prefix KILL, kill the buffer instead of burying."
                  face mode-line-buffer-id)))
 
 ;;;###autoload
-(defun paradox-list-packages (no-fetch)
+(defun list-packages (no-fetch)
   "Improved version of `package-list-packages'. The heart of paradox.
 Function is equivalent to `package-list-packages' (including the
 prefix NO-FETCH), but the resulting Package Menu is improved in
@@ -461,23 +461,23 @@ for packages.
 
 4. Adds useful information in the mode-line."
   (interactive "P")
-  (when (paradox--check-github-token)
-    (paradox-enable)
-    (unless no-fetch (paradox--refresh-star-count))
+  (when (-check-github-token)
+    (enable)
+    (unless no-fetch (-refresh-star-count))
     (package-list-packages no-fetch)))
 
-(defun paradox-enable ()
+(defun enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
   (ad-activate 'package-menu-execute)
-  (if (paradox--compat-p)
+  (if (-compat-p)
       (progn
         (require 'paradox-compat)
-        (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat))
-    (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
-  (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
-  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
-  (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
+        (-override-definition #'package-menu--print-info #'-print-info-compat))
+    (-override-definition #'package-menu--print-info #'-print-info))
+  (-override-definition #'package-menu--generate #'-generate-menu)
+  (-override-definition #'truncate-string-to-width #'-truncate-string-to-width)
+  (-override-definition #'package-menu-mode #'menu-mode))
 
 (defvar paradox--backups nil)
 

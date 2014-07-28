@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.2
+;; Version: 1.2.1
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list "1.0") (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox
@@ -131,7 +131,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.2" "Version of the paradox.el package.")
+(defconst paradox-version "1.2.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your Emacs and paradox versions."
@@ -232,6 +232,18 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
+(defcustom paradox-display-star-count t
+  "If non-nil, adds a \"Star\" column to the Package Menu."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "1.1"))
+
+(defcustom paradox-display-download-count t
+  "If non-nil, adds a \"Download\" column to the Package Menu."
+  :type 'boolean
+  :group 'paradox
+  :package-version '(paradox . "1.1"))
+
 (defface paradox-mode-line-face
   '((t :inherit mode-line-buffer-id :weight normal :foreground "Black"))
   "Face used on the package's name."
@@ -295,7 +307,28 @@ If `paradox-lines-per-entry' = 1, the face
   "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
   "Address of the raw star-count file.")
 
+(defvar paradox--package-count
+  '(("total" . 0) ("built-in" . 0)
+    ("obsolete" . 0) ("deleted" . 0)
+    ("available" . 0) ("new" . 0)
+    ("held" . 0) ("disabled" . 0)
+    ("installed" . 0) ("unsigned" . 0)))
+
+(defvar-local paradox--current-filter nil)
+
+(defvar paradox--commit-list-buffer "*Package Commit List*")
+
+(defvar paradox--truncate-string-to-width-backup)
+
+(defmacro paradox--cas (string)
+  "Same as (cdr (assoc-string ,STRING paradox--package-count))."
+  `(cdr (assoc-string ,string paradox--package-count)))
+
+(defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
+  "Address of the raw data file.")
+
 (defvar paradox-menu-mode-map package-menu-mode-map)
+(defvar paradox--filter-map)
 (define-prefix-command 'paradox--filter-map)
 (define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
@@ -380,20 +413,6 @@ With prefix KILL, kill the buffer instead of burying."
       (when (window-live-p log)
         (quit-window kill log))
       (quit-window kill))))
-
-(defvar paradox--package-count
-  '(("total" . 0) ("built-in" . 0)
-    ("obsolete" . 0) ("deleted" . 0)
-    ("available" . 0) ("new" . 0)
-    ("held" . 0) ("disabled" . 0)
-    ("installed" . 0) ("unsigned" . 0)))
-
-(defmacro paradox--cas (string)
-  "Same as (cdr (assoc-string ,STRING paradox--package-count))."
-  `(cdr (assoc-string ,string paradox--package-count)))
-
-(defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
-  "Address of the raw data file.")
 
 ;;;###autoload
 (defun paradox--refresh-star-count ()
@@ -623,8 +642,6 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
      'face 'paradox-download-face
      'value (or c 0))))
 
-(defvar paradox--commit-list-buffer "*Package Commit List*")
-
 (defun paradox-menu-view-commit-list (pkg)
   "Visit the commit list of package named PKG.
 PKG is a symbol. Interactively it is the package under point."
@@ -670,10 +687,16 @@ PKG is a symbol. Interactively it is the package under point."
       pkg)))
 
 (defun paradox--incf (status)
-  "Increment the count of packages in STATUS."
-  (cl-incf (paradox--cas status))
+  "Increment the count for STATUS on `paradox--package-count'.
+Also increments the count for \"total\"."
+  (paradox--inc-count status)
   (unless (string= status "obsolete")
-    (cl-incf (paradox--cas "total"))))
+    (paradox--inc-count "total")))
+
+(defun paradox--inc-count (string)
+  "Increment the cdr of (assoc-string STRING paradox--package-count)."
+  (let ((cons (assoc-string string paradox--package-count)))
+    (setcdr cons (1+ (cdr cons)))))
 
 (defun paradox--entry-star-count (entry)
   "Get the star count of the package in ENTRY."
@@ -707,9 +730,6 @@ PKG is a symbol. Interactively it is the package under point."
   "Non-nil t if download count of A is larget than B."
   (> (get-text-property 0 'value (elt (cadr A) paradox--column-index-download))
      (get-text-property 0 'value (elt (cadr B) paradox--column-index-download))))
-
-(defvar paradox--current-filter nil)
-(make-variable-buffer-local 'paradox--current-filter)
 
 (defun paradox--generate-menu (remember-pos packages &optional keywords)
   "Populate the Package Menu, without hacking into the header-format.
@@ -806,18 +826,6 @@ Letters do not insert themselves; instead, they are commands.
   ;; we "patch" it like this.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
-
-(defcustom paradox-display-star-count t
-  "If non-nil, adds a \"Star\" column to the Package Menu."
-  :type 'boolean
-  :group 'paradox
-  :package-version '(paradox . "1.1"))
-
-(defcustom paradox-display-download-count t
-  "If non-nil, adds a \"Download\" column to the Package Menu."
-  :type 'boolean
-  :group 'paradox
-  :package-version '(paradox . "1.1"))
 
 (defun paradox--count-format ()
   "List of star/download counts to be used as part of the entry."

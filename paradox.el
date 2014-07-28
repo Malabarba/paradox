@@ -131,6 +131,12 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
+
+(eval-when-compile (require 'names))
+
+;;;###autoload
+(define-namespace paradox-
+
 (defconst version "1.2.1" "Version of the paradox.el package.")
 (defun bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
@@ -414,7 +420,7 @@ With prefix KILL, kill the buffer instead of burying."
         (quit-window kill log))
       (quit-window kill))))
 
-;;;###autoload
+:autoload
 (defun -refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
@@ -442,7 +448,7 @@ With prefix KILL, kill the buffer instead of burying."
     (:propertize ,(int-to-string n)
                  face mode-line-buffer-id)))
 
-;;;###autoload
+:autoload
 (defun list-packages (no-fetch)
   "Improved version of `package-list-packages'. The heart of paradox.
 Function is equivalent to `package-list-packages' (including the
@@ -474,8 +480,8 @@ for packages.
   (ad-activate 'package-menu-execute)
   (if (-compat-p)
       (progn
-        (require 'paradox-compat)
-        (-override-definition #'package-menu--print-info #'-print-info-compat))
+        (::require 'paradox-compat)
+        (-override-definition #'package-menu--print-info #'paradox--print-info-compat))
     (-override-definition #'package-menu--print-info #'-print-info))
   (-override-definition #'package-menu--generate #'-generate-menu)
   (-override-definition #'truncate-string-to-width #'-truncate-string-to-width)
@@ -621,7 +627,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                                     'font-lock-face 'paradox-archive-face)))
             ,@(paradox--count-print (package-desc-name pkg-desc))
             ,(propertize ;; (package-desc-summary pkg-desc)
-                         (concat desc-prefix (package-desc-summary pkg-desc) desc-suffix) ;└╰
+                         (concat paradox-desc-prefix (package-desc-summary pkg-desc) paradox-desc-suffix) ;└╰
                          'font-lock-face
                          (if (> paradox-lines-per-entry 1)
                              'paradox-description-face-multiline
@@ -760,7 +766,7 @@ shown."
   (refresh-upgradeable-packages))
 
 (if (-compat-p)
-    (require 'paradox-compat)
+    (::require 'paradox-compat)
   (defalias 'menu--refresh 'package-menu--refresh))
 
 (defun -column-index (regexp)
@@ -803,7 +809,7 @@ Letters do not insert themselves; instead, they are commands.
   (hl-line-mode 1)
   (-update-mode-line)
   (when (-compat-p)
-    (require 'paradox-compat)
+    (::require 'paradox-compat)
     (setq tabulated-list-printer #'-print-entry-compat))
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)
@@ -842,17 +848,17 @@ Letters do not insert themselves; instead, they are commands.
       (list -column-name-download column-width-download
             #'-download-predicate :right-align t)))))
 
-(defun paradox--archive-format ()
+(defun -archive-format ()
   "List containing archive to be used as part of the entry."
   (when (and (cdr package-archives)
-             (null (paradox--compat-p)))
+             (null (-compat-p)))
     (list (list "Archive"
                 (apply 'max (mapcar 'length (mapcar 'car package-archives)))
                 'package-menu--archive-predicate))))
 
-(add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
+(add-hook 'paradox-menu-mode-hook #'refresh-upgradeable-packages)
 
-(defcustom paradox-local-variables
+(defcustom local-variables
   '(mode-line-mule-info
     mode-line-client
     mode-line-remote mode-line-position
@@ -866,18 +872,18 @@ nil) on the Packages buffer."
   :group 'paradox
   :package-version '(paradox . "0.1"))
 
-(defcustom paradox-display-buffer-name nil
+(defcustom display-buffer-name nil
   "If nil, *Packages* buffer name won't be displayed in the mode-line."
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
-(defun paradox--update-mode-line ()
+(defun -update-mode-line ()
   "Update `mode-line-format'."
-  (mapc #'paradox--set-local-value paradox-local-variables)
+  (mapc #'-set-local-value local-variables)
   (let ((total-lines (int-to-string (line-number-at-pos (point-max)))))
-    (paradox--update-mode-line-front-space total-lines)
-    (paradox--update-mode-line-buffer-identification total-lines))
+    (-update-mode-line-front-space total-lines)
+    (-update-mode-line-buffer-identification total-lines))
   (set-face-foreground
    'paradox-mode-line-face
    (-when-let (fg (or (face-foreground 'mode-line-buffer-id nil t)
@@ -886,7 +892,7 @@ nil) on the Packages buffer."
             (color-distance "black" fg))
          "black" "white"))))
 
-(defun paradox--update-mode-line-buffer-identification (total-lines)
+(defun -update-mode-line-buffer-identification (total-lines)
   "Update `mode-line-buffer-identification'.
 TOTAL-LINES is currently unused."
   (setq mode-line-buffer-identification
@@ -899,11 +905,11 @@ TOTAL-LINES is currently unused."
            (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))
          '(package-menu--new-package-list
            (:eval (paradox--build-buffer-id " New:" (paradox--cas "new"))))
-         (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
+         (-build-buffer-id " Installed:" (+ (-cas "installed") (-cas "unsigned")))
          `(paradox--current-filter
            "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
 
-(defun paradox--update-mode-line-front-space (total-lines)
+(defun -update-mode-line-front-space (total-lines)
   "Update `mode-line-front-space'.
 TOTAL-LINES is the number of lines in the buffer."
   (if (memq 'sml/post-id-separator mode-line-format)
@@ -924,7 +930,7 @@ TOTAL-LINES is the number of lines in the buffer."
             ,total-lines ")")))
     (set (make-local-variable 'mode-line-modified) nil)))
 
-(defun paradox--set-local-value (x)
+(defun -set-local-value (x)
   "Locally set value of (car X) to (cdr X)."
   (let ((sym (or (car-safe x) x)))
     (when (boundp sym)
@@ -933,23 +939,23 @@ TOTAL-LINES is the number of lines in the buffer."
 (defadvice package-menu-execute
     (around paradox-around-package-menu-execute-advice ())
   "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
-  (when (and (stringp paradox-github-token)
-             (eq paradox-automatically-star 'unconfigured))
+  (when (and (stringp github-token)
+             (eq automatically-star 'unconfigured))
     (customize-save-variable
      'paradox-automatically-star
      (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
-  (if (and (stringp paradox-github-token) paradox-automatically-star)
-      (let ((before (paradox--repo-alist)) after)
+  (if (and (stringp github-token) automatically-star)
+      (let ((before (-repo-alist)) after)
         ad-do-it
-        (setq after (paradox--repo-alist))
-        (mapc #'paradox--star-repo
+        (setq after (-repo-alist))
+        (mapc #'-star-repo
               (-difference (-difference after before) paradox--user-starred-list))
-        (mapc #'paradox--unstar-repo
+        (mapc #'-unstar-repo
               (-intersection (-difference before after) paradox--user-starred-list))
         (package-menu--generate t t))
     ad-do-it))
 
-(defun paradox--repo-alist ()
+(defun -repo-alist ()
   "List of known repos."
   (cl-remove-duplicates
    (remove nil
@@ -958,52 +964,52 @@ TOTAL-LINES is the number of lines in the buffer."
 
 
 ;;; Github api stuff
-(defmacro paradox--enforce-github-token (&rest forms)
+(defmacro -enforce-github-token (&rest forms)
   "If a token is defined, perform FORMS, otherwise ignore forms ask for it be defined."
   `(if (stringp paradox-github-token)
        (progn ,@forms)
      (setq paradox-github-token nil)
      (paradox--check-github-token)))
 
-(defun paradox-menu-mark-star-unstar (&optional n)
+(defun menu-mark-star-unstar (&optional n)
   "Star or unstar a package and move to the next line.
 With prefix N, mark N packages."
   (interactive "p")
-  (paradox--enforce-github-token
-   (unless paradox--user-starred-list
-     (paradox--refresh-user-starred-list))
+  (-enforce-github-token
+   (unless -user-starred-list
+     (-refresh-user-starred-list))
    ;; Get package name
-   (let ((pkg (paradox--get-or-return-package nil))
+   (let ((pkg (-get-or-return-package nil))
          will-delete repo)
      (unless pkg (error "Couldn't find package-name for this entry"))
      ;; get repo for this package
-     (setq repo (cdr-safe (assoc pkg paradox--package-repo-list)))
+     (setq repo (cdr-safe (assoc pkg -package-repo-list)))
      ;; (Un)Star repo
      (if (not repo)
          (message "This package is not a GitHub repo.")
-       (setq will-delete (member repo paradox--user-starred-list))
-       (paradox--star-repo repo will-delete)
-       (cl-incf (cdr (assoc pkg paradox--star-count))
+       (setq will-delete (member repo -user-starred-list))
+       (-star-repo repo will-delete)
+       (cl-incf (cdr (assoc pkg -star-count))
              (if will-delete -1 1))
-       (tabulated-list-set-col paradox--column-name-star
-                               (paradox--package-star-count pkg)))))
+       (tabulated-list-set-col -column-name-star
+                               (-package-star-count pkg)))))
   (forward-line 1))
 
-(defun paradox-star-all-installed-packages ()
+(defun star-all-installed-packages ()
   "Star all of your currently installed packages.
 No questions asked."
   (interactive)
-  (paradox--enforce-github-token
-   (mapc (lambda (x) (paradox--star-package-safe (car-safe x))) package-alist)))
+  (-enforce-github-token
+   (mapc (lambda (x) (-star-package-safe (car-safe x))) package-alist)))
 
-(defun paradox--star-package-safe (pkg &optional delete query)
+(defun -star-package-safe (pkg &optional delete query)
   "Star PKG without throwing errors, unless DELETE is non-nil, then unstar.
 If QUERY is non-nil, ask the user first."
-  (let ((repo (cdr-safe (assoc pkg paradox--package-repo-list))))
-    (when (and repo (not (assoc repo paradox--user-starred-list)))
-      (paradox--star-repo repo delete query))))
+  (let ((repo (cdr-safe (assoc pkg -package-repo-list))))
+    (when (and repo (not (assoc repo -user-starred-list)))
+      (-star-repo repo delete query))))
 
-(defun paradox--star-repo (repo &optional delete query)
+(defun -star-repo (repo &optional delete query)
   "Star REPO, unless DELETE is non-nil, then unstar.
 If QUERY is non-nil, ask the user first.
 
@@ -1011,37 +1017,37 @@ Throws error if repo is malformed."
   (when (or (not query)
             (y-or-n-p (format "Really %sstar %s? "
                               (if delete "un" "") repo)))
-    (paradox--github-action-star repo delete)
+    (-github-action-star repo delete)
     (message "%starred %s." (if delete "Uns" "S") repo)
     (if delete
-        (setq paradox--user-starred-list
-              (remove repo paradox--user-starred-list))
+        (setq -user-starred-list
+              (remove repo -user-starred-list))
       (add-to-list 'paradox--user-starred-list repo))))
-(defun paradox--unstar-repo (repo &optional delete query)
+(defun -unstar-repo (repo &optional delete query)
   "Unstar REPO.
 Calls (paradox--star-repo REPO (not DELETE) QUERY)."
-  (paradox--star-repo repo (not delete) query))
+  (-star-repo repo (not delete) query))
 
-(defun paradox--refresh-user-starred-list ()
+(defun -refresh-user-starred-list ()
   "Fetch the user's list of starred repos."
-  (setq paradox--user-starred-list
-        (paradox--github-action
+  (setq -user-starred-list
+        (-github-action
          "user/starred?per_page=100" nil
          'paradox--full-name-reader)))
 
-(defun paradox--prettify-key-descriptor (desc)
+(defun -prettify-key-descriptor (desc)
   "Prettify DESC to be displayed as a help menu."
   (if (listp desc)
       (if (listp (cdr desc))
-          (mapconcat 'paradox--prettify-key-descriptor desc "   ")
+          (mapconcat #'-prettify-key-descriptor desc "   ")
         (let ((place (cdr desc))
               (out (car desc)))
           (setq out (propertize out 'face 'paradox-comment-face))
           (add-text-properties place (1+ place) '(face paradox-highlight-face) out)
           out))
-    (paradox--prettify-key-descriptor (cons desc 0))))
+    (-prettify-key-descriptor (cons desc 0))))
 
-(defun paradox--full-name-reader ()
+(defun -full-name-reader ()
   "Return all \"full_name\" properties in the buffer. Much faster than `json-read'."
   (let (out)
     (while (search-forward-regexp
@@ -1050,14 +1056,14 @@ Calls (paradox--star-repo REPO (not DELETE) QUERY)."
     (goto-char (point-max))
     out))
 
-(defun paradox--github-action-star (repo &optional delete no-result)
+(defun -github-action-star (repo &optional delete no-result)
   "Call `paradox--github-action' with \"user/starred/REPO\" as the action.
 DELETE and NO-RESULT are passed on."
-  (paradox--github-action (concat "user/starred/" repo)
+  (-github-action (concat "user/starred/" repo)
                           (if (stringp delete) delete (if delete "DELETE" "PUT"))
                           (null no-result)))
 
-(defun paradox--github-action (action &optional method reader max-pages)
+(defun -github-action (action &optional method reader max-pages)
   "Contact the github api performing ACTION with METHOD.
 Default METHOD is \"GET\".
 
@@ -1090,9 +1096,9 @@ Return value is always a list.
      (with-temp-buffer
        (save-excursion
          (shell-command
-          (if (stringp paradox-github-token)
+          (if (stringp github-token)
               (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
-                      (or method "GET") paradox-github-token action)
+                      (or method "GET") github-token action)
 
             (format "curl -s -i -d \"\" -X %s \"%s\" "
                     (or method "GET") action)) t))
@@ -1112,15 +1118,15 @@ Return value is always a list.
              (delete-region (point-min) (point))
              (unless (eobp) (if (eq reader t) t (funcall reader)))))))
      (when (and next (or (null max-pages) (< pages max-pages)))
-       (paradox--github-action next method reader)))))
+       (-github-action next method reader)))))
 
-(defun paradox--check-github-token ()
+(defun -check-github-token ()
   "Check that the user has either set or refused the github token.
 If neither has happened, ask the user now whether he'd like to
 configure or refuse the token."
   (if (stringp
-       paradox-github-token) t
-    (if paradox-github-token
+       github-token) t
+    (if github-token
         t
       (if (not (y-or-n-p "Would you like to set up GitHub integration?
 This will allow you to star/unstar packages from the Package Menu. "))
@@ -1138,14 +1144,14 @@ May I take you to the token generation page? ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Paradox Commit List Mode
-(defun paradox--commit-tabulated-list (repo)
+(defun -commit-tabulated-list (repo)
   "Return the tabulated list for REPO's commit list."
-  (require 'json)
-  (let ((feed (paradox--github-action (format "repos/%s/commits?per_page=100" repo)
+  (::require 'json)
+  (let ((feed (-github-action (format "repos/%s/commits?per_page=100" repo)
                                       "GET" 'json-read 1)))
-    (apply 'append (mapcar 'paradox--commit-print-info feed))))
+    (apply 'append (mapcar #'-commit-print-info feed))))
 
-(defun paradox--commit-print-info (x)
+(defun -commit-print-info (x)
   "Parse json in X into a tabulated list entry."
   (let* ((commit (cdr (assoc 'commit x)))
          (date  (cdr (assoc 'date (cdr (assoc 'committer commit)))))
@@ -1158,7 +1164,7 @@ May I take you to the token generation page? ")
             (propertize (format-time-string "%x" (date-to-time date))
                         'button t
                         'follow-link t
-                        'action 'paradox-commit-list-visit-commit
+                        'action #'commit-list-visit-commit
                         'face 'link)
             (concat (if (> cc 0)
                         (propertize (format "(%s comments) " cc)
@@ -1169,26 +1175,26 @@ May I take you to the token generation page? ")
        (mapcar (lambda (m) (list (cons m x)
                             (vector "" m))) (cdr title))))))
 
-(defun paradox--commit-list-update-entries ()
+(defun -commit-list-update-entries ()
   "Update entries of current commit-list."
   (setq tabulated-list-entries
-        (paradox--commit-tabulated-list paradox--repo)))
+        (-commit-tabulated-list -repo)))
 
-(defun paradox-commit-list-visit-commit (&optional ignore)
+(defun commit-list-visit-commit (&optional ignore)
   "Visit this commit on GitHub.
 IGNORE is ignored."
   (interactive)
-  (when (derived-mode-p 'paradox-commit-list-mode)
+  (when (derived-mode-p #'commit-list-mode)
     (browse-url
      (cdr (assoc 'html_url (tabulated-list-get-id))))))
 
-(defun paradox-previous-commit (&optional n)
+(defun previous-commit (&optional n)
   "Move to previous commit, which might not be the previous line.
 With prefix N, move to the N-th previous commit."
   (interactive "p")
-  (paradox-next-commit (- n)))
+  (next-commit (- n)))
 
-(defun paradox-next-commit (&optional n)
+(defun next-commit (&optional n)
   "Move to next commit, which might not be the next line.
 With prefix N, move to the N-th next commit."
   (interactive "p")
@@ -1198,7 +1204,7 @@ With prefix N, move to the N-th next commit."
       (while (looking-at "  +")
         (forward-line d)))))
 
-(define-derived-mode paradox-commit-list-mode
+(define-derived-mode commit-list-mode
   tabulated-list-mode "Paradox Commit List"
   "Major mode for browsing a list of commits.
 Letters do not insert themselves; instead, they are commands.
@@ -1210,15 +1216,15 @@ Letters do not insert themselves; instead, they are commands.
           ("Message" 0 nil)])
   (setq tabulated-list-padding 1)
   (setq tabulated-list-sort-key nil)
-  (add-hook 'tabulated-list-revert-hook 'paradox--commit-list-update-entries)
+  (add-hook 'tabulated-list-revert-hook #'-commit-list-update-entries)
   (tabulated-list-init-header))
 
-(define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)
-(define-key paradox-commit-list-mode-map "p" #'paradox-previous-commit)
-(define-key paradox-commit-list-mode-map "n" #'paradox-next-commit)
+(define-key commit-list-mode-map "" #'commit-list-visit-commit)
+(define-key commit-list-mode-map "p" #'previous-commit)
+(define-key commit-list-mode-map "n" #'next-commit)
 
-;;;###autoload
-(defun paradox-require (feature &optional filename noerror package refresh)
+:autoload
+(defun require (feature &optional filename noerror package refresh)
   "A replacement for `require' which also installs the feature if it is absent.
 - If FEATURE is present, `require' it and return t.
 
@@ -1234,20 +1240,21 @@ installed, just return nil.
 By default, the current package database (stored in
 `package-archive-contents') is only updated if it is empty.
 Passing a non-nil REFRESH argument forces this update."
-  (or (require feature filename t)
+  (or (::require feature filename t)
       (let ((package (or package
                          (if (stringp feature)
                              (intern feature)
                            feature))))
-        (require 'package)
+        (::require 'package)
         (unless (and package-archive-contents (null refresh))
           (package-refresh-contents))
         (and (condition-case e
                  (package-install package)
                (error (if noerror nil (error (cadr e)))))
-             (require feature filename noerror)))))
+             (::require feature filename noerror)))))
+
+)
 
 (provide 'paradox)
 
 ;;; paradox.el ends here.
-

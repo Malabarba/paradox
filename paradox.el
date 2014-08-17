@@ -238,11 +238,11 @@ On the Package Menu, you can always manually star packages with \\[paradox-menu-
   :group 'paradox
   :package-version '(paradox . "1.1"))
 
-(defcustom paradox-display-download-count t
+(defcustom paradox-display-download-count nil
   "If non-nil, adds a \"Download\" column to the Package Menu."
   :type 'boolean
   :group 'paradox
-  :package-version '(paradox . "1.1"))
+  :package-version '(paradox . "1.2.3"))
 
 (defface paradox-mode-line-face
   '((t :inherit mode-line-buffer-id :weight normal :foreground "Black"))

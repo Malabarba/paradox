@@ -428,13 +428,6 @@ With prefix KILL, kill the buffer instead of burying."
   (when (stringp paradox-github-token)
     (paradox--refresh-user-starred-list)))
 
-(defcustom paradox-hide-buffer-identification t
-  "If non-nil, the name of the buffer will not be displayed in the mode-line."
-  :type 'boolean
-  :group 'paradox
-  :package-version '(paradox . "0.5"))
-(defvaralias 'paradox-hide-buffer-name 'paradox-hide-buffer-identification)
-
 (defun paradox--build-buffer-id (st n)
   "Return a list that propertizes ST and N for the mode-line."
   `((:propertize ,st

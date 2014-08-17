@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.2.2
+;; Version: 1.2.3
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (tabulated-list) (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
 ;; Prefix: paradox
@@ -131,7 +131,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.2.2" "Version of the paradox.el package.")
+(defconst paradox-version "1.2.3" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your Emacs and paradox versions."
@@ -1142,6 +1142,15 @@ May I take you to the token generation page? ")
                                       "GET" 'json-read 1)))
     (apply 'append (mapcar 'paradox--commit-print-info feed))))
 
+(defcustom paradox-date-format "%Y-%m-%d"
+  "Format used for the date displayed on the commit list.
+See `format-time-string' for more information.
+
+Set it to \"%x\" for a more \"human\" date format."
+  :type 'string
+  :group 'paradox
+  :package-version '(paradox . "1.2.3"))
+
 (defun paradox--commit-print-info (x)
   "Parse json in X into a tabulated list entry."
   (let* ((commit (cdr (assoc 'commit x)))
@@ -1152,7 +1161,7 @@ May I take you to the token generation page? ")
     (cons
      (list (cons (car title) x)
            (vector
-            (propertize (format-time-string "%x" (date-to-time date))
+            (propertize (format-time-string paradox-date-format (date-to-time date))
                         'button t
                         'follow-link t
                         'action 'paradox-commit-list-visit-commit
@@ -1203,7 +1212,7 @@ Letters do not insert themselves; instead, they are commands.
 \\{paradox-commit-list-mode-map}"
   (hl-line-mode 1)
   (setq tabulated-list-format
-        `[("Date" ,(length (format-time-string "%x" (current-time))) nil)
+        `[("Date" ,(length (format-time-string paradox-date-format (current-time))) nil)
           ("Message" 0 nil)])
   (setq tabulated-list-padding 1)
   (setq tabulated-list-sort-key nil)

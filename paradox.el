@@ -132,7 +132,7 @@
 (require 'cl-lib)
 (require 'dash)
 
-(eval-when-compile (require 'names))
+(require 'names)
 
 ;;;###autoload
 (define-namespace paradox-

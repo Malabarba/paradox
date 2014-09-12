@@ -6,7 +6,7 @@
 ;; URL: http://github.com/Bruce-Connor/paradox
 ;; Version: 1.2.3
 ;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.1") (tabulated-list) (package "1.0") (dash "2.6.0") (cl-lib "1.0") (json "1.3"))
+;; Package-Requires: ((emacs "24.1") (tabulated-list) (package "1.0") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
 ;; Prefix: paradox
 ;; Separator: -
 

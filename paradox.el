@@ -1153,9 +1153,9 @@ nil means `default'.")
   "Repo of the package in a commit-list buffer.")
 (defvar-local paradox--package-name nil
   "Name of the package in a commit-list buffer.")
-(defvar-local paradox--package-version nil 
+(defvar-local paradox--package-version nil
   "Installed version of the package in a commit-list buffer.")
-(defvar-local paradox--package-tag-commit-alist nil 
+(defvar-local paradox--package-tag-commit-alist nil
   "Alist of (COMMIT-SHA . TAG) for this package's repo.")
 
 (defun paradox-menu-view-commit-list (pkg)
@@ -1180,12 +1180,13 @@ PKG is a symbol. Interactively it is the package under point."
 
 (defun paradox--get-tag-commit-alist (repo)
   "Get REPO's tag list and associate them to commit hashes."
+  (require 'json)
   (mapcar
    (lambda (x)
      (cons
       (cdr (assoc 'sha (cdr (assoc 'commit x))))
       (cdr (assoc 'name x))))
-   (paradox--github-action 
+   (paradox--github-action
     (format "repos/%s/tags?per_page=100" repo)
     "GET" 'json-read paradox-commit-list-query-max-pages)))
 
@@ -1227,7 +1228,7 @@ PKG is a symbol. Interactively it is the package under point."
          (sha   (cdr (assoc 'sha x)))
          (tag   (cdr (assoc-string sha paradox--package-tag-commit-alist))))
     ;; Have we already crossed the installed commit, or is it not even installed?
-    (unless (or paradox--commit-message-face 
+    (unless (or paradox--commit-message-face
                 (equal '(0) paradox--package-version))
       ;; Is this where we cross to old commits?
       (when (paradox--version<= date tag paradox--package-version)

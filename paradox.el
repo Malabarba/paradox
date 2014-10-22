@@ -430,13 +430,24 @@ With prefix KILL, kill the buffer instead of burying."
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (with-current-buffer
-      (url-retrieve-synchronously paradox--star-count-url)
-    (when (search-forward "\n\n" nil t)
-      (setq paradox--star-count (read (current-buffer)))
-      (setq paradox--package-repo-list (read (current-buffer)))
-      (setq paradox--download-count (ignore-errors (read (current-buffer)))))
-    (kill-buffer))
+  (unwind-protect
+      (with-current-buffer
+          (url-retrieve-synchronously paradox--star-count-url)
+        (when (search-forward "\n\n" nil t)
+          (setq paradox--star-count (read (current-buffer)))
+          (setq paradox--package-repo-list (read (current-buffer)))
+          (setq paradox--download-count (read (current-buffer))))
+        (kill-buffer))
+    (unless (and (listp paradox--star-count)
+                 (listp paradox--package-repo-list)
+                 (listp paradox--download-count))
+      (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
+    (unless (listp paradox--download-count)
+      (setq paradox--download-count nil))
+    (unless (listp paradox--package-repo-list)
+      (setq paradox--package-repo-list nil))
+    (unless (listp paradox--star-count)
+      (setq paradox--star-count nil)))
   (when (stringp paradox-github-token)
     (paradox--refresh-user-starred-list)))
 
@@ -1002,6 +1013,7 @@ Throws error if repo is malformed."
         (setq paradox--user-starred-list
               (remove repo paradox--user-starred-list))
       (add-to-list 'paradox--user-starred-list repo))))
+
 (defun paradox--unstar-repo (repo &optional delete query)
   "Unstar REPO.
 Calls (paradox--star-repo REPO (not DELETE) QUERY)."
@@ -1010,9 +1022,10 @@ Calls (paradox--star-repo REPO (not DELETE) QUERY)."
 (defun paradox--refresh-user-starred-list ()
   "Fetch the user's list of starred repos."
   (setq paradox--user-starred-list
-        (paradox--github-action
-         "user/starred?per_page=100" nil
-         'paradox--full-name-reader)))
+        (ignore-errors
+          (paradox--github-action
+           "user/starred?per_page=100" nil
+           'paradox--full-name-reader))))
 
 (defun paradox--prettify-key-descriptor (desc)
   "Prettify DESC to be displayed as a help menu."
@@ -1350,4 +1363,3 @@ Passing a non-nil REFRESH argument forces this update."
 (provide 'paradox)
 
 ;;; paradox.el ends here.
-

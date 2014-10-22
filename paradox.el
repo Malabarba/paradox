@@ -1092,7 +1092,8 @@ Return value is always a list.
              ;; Anything else gets interpreted.
              (when (search-forward-regexp "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
                (setq next (match-string-no-properties 1)))
-             (search-forward-regexp "^?$")
+             (search-forward-regexp "^
+?$")
              (skip-chars-forward "[:blank:]\n")
              (delete-region (point-min) (point))
              (unless (eobp) (if (eq reader t) t (funcall reader)))))))
@@ -1313,7 +1314,8 @@ Letters do not insert themselves; instead, they are commands.
   (add-hook 'tabulated-list-revert-hook 'paradox--commit-list-update-entries)
   (tabulated-list-init-header))
 
-(define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)
+(define-key paradox-commit-list-mode-map "
+" #'paradox-commit-list-visit-commit)
 (define-key paradox-commit-list-mode-map "p" #'paradox-previous-commit)
 (define-key paradox-commit-list-mode-map "n" #'paradox-next-commit)
 

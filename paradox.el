@@ -4,9 +4,9 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.2.3
+;; Version: 1.2.4
 ;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.1") (tabulated-list) (package "1.0") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
+;; Package-Requires: ((emacs "24.1") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
 ;; Prefix: paradox
 ;; Separator: -
 
@@ -131,7 +131,7 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.2.3" "Version of the paradox.el package.")
+(defconst paradox-version "1.2.4" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your Emacs and paradox versions."
@@ -430,13 +430,24 @@ With prefix KILL, kill the buffer instead of burying."
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (with-current-buffer
-      (url-retrieve-synchronously paradox--star-count-url)
-    (when (search-forward "\n\n" nil t)
-      (setq paradox--star-count (read (current-buffer)))
-      (setq paradox--package-repo-list (read (current-buffer)))
-      (setq paradox--download-count (ignore-errors (read (current-buffer)))))
-    (kill-buffer))
+  (unwind-protect
+      (with-current-buffer
+          (url-retrieve-synchronously paradox--star-count-url)
+        (when (search-forward "\n\n" nil t)
+          (setq paradox--star-count (read (current-buffer)))
+          (setq paradox--package-repo-list (read (current-buffer)))
+          (setq paradox--download-count (read (current-buffer))))
+        (kill-buffer))
+    (unless (and (listp paradox--star-count)
+                 (listp paradox--package-repo-list)
+                 (listp paradox--download-count))
+      (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
+    (unless (listp paradox--download-count)
+      (setq paradox--download-count nil))
+    (unless (listp paradox--package-repo-list)
+      (setq paradox--package-repo-list nil))
+    (unless (listp paradox--star-count)
+      (setq paradox--star-count nil)))
   (when (stringp paradox-github-token)
     (paradox--refresh-user-starred-list)))
 
@@ -1005,6 +1016,7 @@ Throws error if repo is malformed."
         (setq paradox--user-starred-list
               (remove repo paradox--user-starred-list))
       (add-to-list 'paradox--user-starred-list repo))))
+
 (defun paradox--unstar-repo (repo &optional delete query)
   "Unstar REPO.
 Calls (paradox--star-repo REPO (not DELETE) QUERY)."
@@ -1013,9 +1025,10 @@ Calls (paradox--star-repo REPO (not DELETE) QUERY)."
 (defun paradox--refresh-user-starred-list ()
   "Fetch the user's list of starred repos."
   (setq paradox--user-starred-list
-        (paradox--github-action
-         "user/starred?per_page=100" nil
-         'paradox--full-name-reader)))
+        (ignore-errors
+          (paradox--github-action
+           "user/starred?per_page=100" nil
+           'paradox--full-name-reader))))
 
 (defun paradox--prettify-key-descriptor (desc)
   "Prettify DESC to be displayed as a help menu."
@@ -1156,9 +1169,9 @@ nil means `default'.")
   "Repo of the package in a commit-list buffer.")
 (defvar-local paradox--package-name nil
   "Name of the package in a commit-list buffer.")
-(defvar-local paradox--package-version nil 
+(defvar-local paradox--package-version nil
   "Installed version of the package in a commit-list buffer.")
-(defvar-local paradox--package-tag-commit-alist nil 
+(defvar-local paradox--package-tag-commit-alist nil
   "Alist of (COMMIT-SHA . TAG) for this package's repo.")
 
 (defun paradox-menu-view-commit-list (pkg)
@@ -1183,12 +1196,13 @@ PKG is a symbol. Interactively it is the package under point."
 
 (defun paradox--get-tag-commit-alist (repo)
   "Get REPO's tag list and associate them to commit hashes."
+  (require 'json)
   (mapcar
    (lambda (x)
      (cons
       (cdr (assoc 'sha (cdr (assoc 'commit x))))
       (cdr (assoc 'name x))))
-   (paradox--github-action 
+   (paradox--github-action
     (format "repos/%s/tags?per_page=100" repo)
     "GET" 'json-read paradox-commit-list-query-max-pages)))
 
@@ -1230,7 +1244,7 @@ PKG is a symbol. Interactively it is the package under point."
          (sha   (cdr (assoc 'sha x)))
          (tag   (cdr (assoc-string sha paradox--package-tag-commit-alist))))
     ;; Have we already crossed the installed commit, or is it not even installed?
-    (unless (or paradox--commit-message-face 
+    (unless (or paradox--commit-message-face
                 (equal '(0) paradox--package-version))
       ;; Is this where we cross to old commits?
       (when (paradox--version<= date tag paradox--package-version)
@@ -1352,4 +1366,3 @@ Passing a non-nil REFRESH argument forces this update."
 (provide 'paradox)
 
 ;;; paradox.el ends here.
-

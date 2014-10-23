@@ -38,7 +38,7 @@
   :type 'directory
   :group 'paradox)
 (defcustom paradox-download-count-url
-  "http://melpa.milkbox.net/download_counts.json"
+  "http://melpa.org/download_counts.json"
   ""
   :type 'string
   :group 'paradox)

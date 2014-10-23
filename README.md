@@ -44,10 +44,14 @@ itself. They all work out of the box and are completely customizable!
 
 * Visit the package's homepage with `v` (or just use the provided buttons).
 * View a list of recent commits with `l`.
+* Use `paradox-require` instead of `require` to automatically install
+  absent packages.
 * Shortcuts for package filtering:
     * `f r` filters by regexp (`occur`);
     * `f u` display only packages with upgrades;
     * `f k` filters by keyword (emacs 24.4 only).
+
+And some more...
 * `hl-line-mode` enabled by default.
 * Display useful information on the mode-line and cleanup a bunch of
   useless stuff.

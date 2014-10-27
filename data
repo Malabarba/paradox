@@ -1233,7 +1233,7 @@
  (eyebrowse . 18)
  (extend-dnd . 1)
  (express . 2)
- (expand-region . 358)
+ (expand-region . 359)
  (exec-path-from-shell . 160)
  (eww-lnum . 10)
  (evm . 0)

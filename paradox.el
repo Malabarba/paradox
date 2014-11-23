@@ -1326,7 +1326,7 @@ Letters do not insert themselves; instead, they are commands.
           ("Message" 0 nil)])
   (setq tabulated-list-padding 1)
   (setq tabulated-list-sort-key nil)
-  (add-hook 'tabulated-list-revert-hook 'paradox--commit-list-update-entries)
+  (add-hook 'tabulated-list-revert-hook 'paradox--commit-list-update-entries nil t)
   (tabulated-list-init-header))
 
 (define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)

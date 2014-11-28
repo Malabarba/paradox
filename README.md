@@ -1,4 +1,4 @@
-Paradox
+Paradox    [![Say Thank You](https://img.shields.io/gratipay/Malabarba.svg)](https://gratipay.com/Malabarba/)
 =======
 
 Project for modernizing Emacs' Package Menu. With package ratings,

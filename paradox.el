@@ -212,16 +212,26 @@ To generate an access token:
 This is similar to how erc or jabber handle authentication in
 emacs, but the following disclaimer always worth reminding.
 
-DISCLAIMER:
+DISCLAIMER
 When you save this variable, DON'T WRITE IT ANYWHERE PUBLIC. This
-token grants (very) limited access to your account."
-  :type 'string
+token grants (very) limited access to your account.
+END DISCLAIMER
+
+Paradox will ask you whether you want github integration the
+first time you start it. If you answer \"no\", it will remember
+your choice via `customize-save-variable'. You can do this
+manually by setting this variable to t. Setting it to nil means
+it hasn't been configured yet."
+  :type '(choice (string :tag "Token")
+                 (const :tag "Disable" t)
+                 (const :tag "Ask me next time" nil))
   :group 'paradox
   :package-version '(paradox . "0.2"))
 
 (defcustom paradox-automatically-star 'unconfigured
   "When you install new packages, should they be automatically starred?
-NOTE: This variable has no effect if `paradox-github-token' isn't set.
+This variable has no effect if `paradox-github-token' isn't set
+to a string.
 
 Paradox is capable of automatically starring packages when you
 install them, and unstarring when you delete them. This only

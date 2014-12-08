@@ -645,11 +645,11 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                                     'font-lock-face 'paradox-archive-face)))
             ,@(paradox--count-print (package-desc-name pkg-desc))
             ,(propertize ;; (package-desc-summary pkg-desc)
-                         (concat desc-prefix (package-desc-summary pkg-desc) desc-suffix) ;└╰
-                         'font-lock-face
-                         (if (> paradox-lines-per-entry 1)
-                             'paradox-description-face-multiline
-                           'paradox-description-face))])))
+              (concat desc-prefix (package-desc-summary pkg-desc) desc-suffix) ;└╰
+              'font-lock-face
+              (if (> paradox-lines-per-entry 1)
+                  'paradox-description-face-multiline
+                'paradox-description-face))])))
 
 (defun paradox--count-print (pkg)
   "Return counts of PKG as a package-desc list."

@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox
-;; Version: 1.2.5
+;; Version: 2.0
 ;; Keywords: package packages mode-line
 ;; Package-Requires: ((emacs "24.1") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
 ;; Prefix: paradox
@@ -126,12 +126,13 @@
 ;; 0.2   - 2014/04/08 - Customizable widths.
 ;; 0.2   - 2014/04/08 - Prettier trunctation.
 ;; 0.1   - 2014/04/03 - Created File.
+
 ;;; Code:
 
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
-(defconst paradox-version "1.2.5" "Version of the paradox.el package.")
+(defconst paradox-version "2.0" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
 Please include your Emacs and paradox versions."

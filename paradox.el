@@ -158,6 +158,8 @@ Please include your Emacs and paradox versions."
   "Non-nil if we need to enable pre-24.4 compatibility features."
   (version< emacs-version "24.3.50"))
 
+
+;;; Customization Variables
 (defcustom paradox-column-width-package  18
   "Width of the \"Package\" column."
   :type 'integer
@@ -337,7 +339,8 @@ If `paradox-lines-per-entry' = 1, the face
     ("held" . 0) ("disabled" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 
-(defvar-local paradox--current-filter nil)
+(defvar paradox--current-filter nil)
+(make-variable-buffer-local 'paradox--current-filter)
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
 
@@ -350,26 +353,42 @@ If `paradox-lines-per-entry' = 1, the face
 (defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
   "Address of the raw data file.")
 
-(defvar paradox-menu-mode-map package-menu-mode-map)
-(defvar paradox--filter-map)
-(define-prefix-command 'paradox--filter-map)
-(define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
-(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
-(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
-(define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
-(define-key paradox-menu-mode-map "j" #'paradox-next-describe)
-(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
-(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
-(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
-(define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
-(define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
-(define-key paradox-menu-mode-map "\r" #'paradox-push-button)
-(define-key paradox-menu-mode-map "F" 'package-menu-filter)
-(define-key paradox--filter-map "k" #'package-menu-filter)
-(define-key paradox--filter-map "f" #'package-menu-filter)
-(define-key paradox--filter-map "r" #'occur)
-(define-key paradox--filter-map "o" #'occur)
-(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+;;; Mode Definition
+(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
+  "Major mode for browsing a list of packages.
+Letters do not insert themselves; instead, they are commands.
+\\<paradox-menu-mode-map>
+\\{paradox-menu-mode-map}"
+  (hl-line-mode 1)
+  (paradox--update-mode-line)
+  (when (paradox--compat-p)
+    (require 'paradox-compat)
+    (setq tabulated-list-printer 'paradox--print-entry-compat))
+  (setq tabulated-list-format
+        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
+          ("Version" ,paradox-column-width-version nil)
+          ("Status" ,paradox-column-width-status package-menu--status-predicate)
+          ,@(paradox--archive-format)
+          ,@(paradox--count-format)
+          ("Description" 0 nil)])
+  (setq paradox--column-index-star
+        (paradox--column-index paradox--column-name-star))
+  (setq paradox--column-index-download
+        (paradox--column-index paradox--column-name-download))
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Status" nil))
+  ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
+  (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
+  (tabulated-list-init-header)
+  ;; We need package-menu-mode to be our parent, otherwise some
+  ;; commands throw errors. But we can't actually derive from it,
+  ;; otherwise its initialization will screw up the header-format. So
+  ;; we "patch" it like this.
+  (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
+  (run-hooks 'package-menu-mode-hook))
 
 (defun paradox--define-sort (name &optional key)
   "Define sorting function paradox-sort-by-NAME and bind it to KEY."
@@ -391,19 +410,69 @@ If `paradox-lines-per-entry' = 1, the face
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
 
-(defun paradox-next-describe (n)
+(defvar paradox--filter-map)
+(set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
+(define-prefix-command 'paradox--filter-map)
+(define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
+(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
+(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
+(define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
+(define-key paradox-menu-mode-map "j" #'paradox-next-describe)
+(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
+(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
+(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
+(define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
+(define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
+(define-key paradox-menu-mode-map "\r" #'paradox-push-button)
+(define-key paradox-menu-mode-map "F" 'package-menu-filter)
+(define-key paradox--filter-map "k" #'package-menu-filter)
+(define-key paradox--filter-map "f" #'package-menu-filter)
+(define-key paradox--filter-map "r" #'occur)
+(define-key paradox--filter-map "o" #'occur)
+(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+
+
+;;; Menu Mode Commands
+(defun paradox-previous-entry (&optional n)
+  "Move to previous entry, which might not be the previous line.
+With prefix N, move to the N-th previous entry."
+  (interactive "p")
+  (paradox-next-entry (- n))
+  (forward-line 0)
+  (forward-button 1))
+
+(defun paradox-next-entry (&optional n)
+  "Move to next entry, which might not be the next line.
+With prefix N, move to the N-th next entry."
+  (interactive "p")
+  (dotimes (it (abs n))
+    (let ((d (cl-signum n)))
+      (forward-line (if (> n 0) 1 0))
+      (if (eobp) (forward-line -1))
+      (forward-button d))))
+
+(defun paradox-next-describe (&optional n)
   "Move to the next package and describe it.
 With prefix N, move to the N-th next package instead."
   (interactive "p")
   (paradox-next-entry n)
   (call-interactively 'package-menu-describe-package))
 
-(defun paradox-previous-describe (n)
+(defun paradox-previous-describe (&optional n)
   "Move to the previous package and describe it.
 With prefix N, move to the N-th previous package instead."
   (interactive "p")
   (paradox-previous-entry n)
   (call-interactively 'package-menu-describe-package))
+
+(defun paradox-filter-upgrades ()
+  "Show only upgradable packages."
+  (interactive)
+  (if (null paradox--upgradeable-packages)
+      (message "No packages have upgrades.")
+    (package-show-package-list
+     (mapcar 'car paradox--upgradeable-packages))
+    (setq paradox--current-filter "Upgrade")))
 
 (defun paradox-push-button ()
   "Push button under point, or describe package."
@@ -437,38 +506,20 @@ With prefix KILL, kill the buffer instead of burying."
         (quit-window kill log))
       (quit-window kill))))
 
-;;;###autoload
-(defun paradox--refresh-star-count ()
-  "Download the star-count file and populate the respective variable."
-  (interactive)
-  (unwind-protect
-      (with-current-buffer
-          (url-retrieve-synchronously paradox--star-count-url)
-        (when (search-forward "\n\n" nil t)
-          (setq paradox--star-count (read (current-buffer)))
-          (setq paradox--package-repo-list (read (current-buffer)))
-          (setq paradox--download-count (read (current-buffer))))
-        (kill-buffer))
-    (unless (and (listp paradox--star-count)
-                 (listp paradox--package-repo-list)
-                 (listp paradox--download-count))
-      (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
-    (unless (listp paradox--download-count)
-      (setq paradox--download-count nil))
-    (unless (listp paradox--package-repo-list)
-      (setq paradox--package-repo-list nil))
-    (unless (listp paradox--star-count)
-      (setq paradox--star-count nil)))
-  (when (stringp paradox-github-token)
-    (paradox--refresh-user-starred-list)))
+(defun paradox-menu-visit-homepage (pkg)
+  "Visit the homepage of package named PKG.
+PKG is a symbol. Interactively it is the package under point."
+  (interactive '(nil))
+  (let ((url (paradox--package-homepage
+              (paradox--get-or-return-package pkg))))
+    (if (stringp url)
+        (browse-url url)
+      (message "Package %s has no homepage."
+               (propertize (symbol-name pkg)
+                           'face 'font-lock-keyword-face)))))
 
-(defun paradox--build-buffer-id (st n)
-  "Return a list that propertizes ST and N for the mode-line."
-  `((:propertize ,st
-                 face paradox-mode-line-face)
-    (:propertize ,(int-to-string n)
-                 face mode-line-buffer-id)))
-
+
+;;; External Commands
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)
   "Improved version of `package-list-packages'. The heart of paradox.
@@ -514,7 +565,7 @@ for packages.
   "Disable paradox, and go back to regular package-menu."
   (interactive)
   (ad-disable-advice 'package-menu-execute 'around
-                    'paradox-around-package-menu-execute-advice)
+                     'paradox-around-package-menu-execute-advice)
   (dolist (it paradox--backups)
     (message "Restoring %s to %s" (car it) (eval (cdr it)))
     (fset (car it) (eval (cdr it))))
@@ -535,32 +586,10 @@ The original definition is saved to paradox--SYM-backup."
 ;;; Right now this is trivial, but we leave it as function so it's easy to improve.
 (defun paradox--active-p ()
   "Non-nil if paradox has been activated."
-  (null (null paradox--backups)))
+  paradox--backups)
 
-(defun paradox--truncate-string-to-width (&rest args)
-  "Like `truncate-string-to-width', but uses \"…\" on package buffer.
-All arguments STR, END-COLUMN, START-COLUMN, PADDING, and
-ELLIPSIS are passed to `truncate-string-to-width'.
-
-\(fn STR END-COLUMN &optional START-COLUMN PADDING ELLIPSIS)"
-  (when (and (eq major-mode 'paradox-menu-mode)
-             (eq t (nth 4 args)))
-    (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
-  (apply paradox--truncate-string-to-width-backup args))
-
-(defvar paradox--upgradeable-packages nil)
-(defvar paradox--upgradeable-packages-number nil)
-(defvar paradox--upgradeable-packages-any? nil)
-
-(defun paradox-refresh-upgradeable-packages ()
-  "Refresh the list of upgradeable packages."
-  (interactive)
-  (setq paradox--upgradeable-packages (package-menu--find-upgrades))
-  (setq paradox--upgradeable-packages-number
-        (length paradox--upgradeable-packages))
-  (setq paradox--upgradeable-packages-any?
-        (> paradox--upgradeable-packages-number 0)))
-
+
+;;; `paradox-menu-mode' configuration
 (defcustom paradox-status-face-alist
   '(("built-in"  . font-lock-builtin-face)
     ("available" . default)
@@ -591,9 +620,6 @@ This button takes you to the package's homepage."
   :group 'paradox
   :package-version '(paradox . "0.10"))
 
-(defvar desc-suffix nil)
-(defvar desc-prefix nil)
-
 (defcustom paradox-lines-per-entry 1
   "Number of lines used to display each entry in the Package Menu.
 1 Gives you the regular package menu.
@@ -602,6 +628,35 @@ This button takes you to the package's homepage."
   :type 'integer
   :group 'paradox
   :package-version '(paradox . "0.10"))
+
+
+;;; Building the packages buffer.
+(defun paradox--truncate-string-to-width (&rest args)
+  "Like `truncate-string-to-width', but uses \"…\" on package buffer.
+All arguments STR, END-COLUMN, START-COLUMN, PADDING, and
+ELLIPSIS are passed to `truncate-string-to-width'.
+
+\(fn STR END-COLUMN &optional START-COLUMN PADDING ELLIPSIS)"
+  (when (and (eq major-mode 'paradox-menu-mode)
+             (eq t (nth 4 args)))
+    (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
+  (apply paradox--truncate-string-to-width-backup args))
+
+(defvar paradox--upgradeable-packages nil)
+(defvar paradox--upgradeable-packages-number nil)
+(defvar paradox--upgradeable-packages-any? nil)
+
+(defun paradox-refresh-upgradeable-packages ()
+  "Refresh the list of upgradeable packages."
+  (interactive)
+  (setq paradox--upgradeable-packages (package-menu--find-upgrades))
+  (setq paradox--upgradeable-packages-number
+        (length paradox--upgradeable-packages))
+  (setq paradox--upgradeable-packages-any?
+        (> paradox--upgradeable-packages-number 0)))
+
+(defvar desc-suffix nil)
+(defvar desc-prefix nil)
 
 (defun paradox--print-info (pkg)
   "Return a package entry suitable for `tabulated-list-entries'.
@@ -669,18 +724,6 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
        " ")
      'face 'paradox-download-face
      'value (or c 0))))
-
-(defun paradox-menu-visit-homepage (pkg)
-  "Visit the homepage of package named PKG.
-PKG is a symbol. Interactively it is the package under point."
-  (interactive '(nil))
-  (let ((url (paradox--package-homepage
-              (paradox--get-or-return-package pkg))))
-    (if (stringp url)
-        (browse-url url)
-      (message "Package %s has no homepage."
-               (propertize (symbol-name pkg)
-                           'face 'font-lock-keyword-face)))))
 
 (unless (paradox--compat-p)
   (defun paradox--package-homepage (pkg)
@@ -776,69 +819,7 @@ shown."
 (defun paradox--column-index (regexp)
   "Find the index of the column that matches REGEXP."
   (cl-position (format "\\`%s\\'" (regexp-quote regexp)) tabulated-list-format
-            :test (lambda (x y) (string-match x (or (car-safe y) "")))))
-
-(defun paradox-previous-entry (&optional n)
-  "Move to previous entry, which might not be the previous line.
-With prefix N, move to the N-th previous entry."
-  (interactive "p")
-  (paradox-next-entry (- n))
-  (forward-line 0)
-  (forward-button 1))
-
-(defun paradox-next-entry (&optional n)
-  "Move to next entry, which might not be the next line.
-With prefix N, move to the N-th next entry."
-  (interactive "p")
-  (dotimes (it (abs n))
-    (let ((d (cl-signum n)))
-      (forward-line (if (> n 0) 1 0))
-      (if (eobp) (forward-line -1))
-      (forward-button d))))
-
-(defun paradox-filter-upgrades ()
-  "Show only upgradable packages."
-  (interactive)
-  (if (null paradox--upgradeable-packages)
-      (message "No packages have upgrades.")
-    (package-show-package-list
-     (mapcar 'car paradox--upgradeable-packages))
-    (setq paradox--current-filter "Upgrade")))
-
-(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
-  "Major mode for browsing a list of packages.
-Letters do not insert themselves; instead, they are commands.
-\\<paradox-menu-mode-map>
-\\{paradox-menu-mode-map}"
-  (hl-line-mode 1)
-  (paradox--update-mode-line)
-  (when (paradox--compat-p)
-    (require 'paradox-compat)
-    (setq tabulated-list-printer 'paradox--print-entry-compat))
-  (setq tabulated-list-format
-        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
-          ("Version" ,paradox-column-width-version nil)
-          ("Status" ,paradox-column-width-status package-menu--status-predicate)
-          ,@(paradox--archive-format)
-          ,@(paradox--count-format)
-          ("Description" 0 nil)])
-  (setq paradox--column-index-star
-        (paradox--column-index paradox--column-name-star))
-  (setq paradox--column-index-download
-        (paradox--column-index paradox--column-name-download))
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key (cons "Status" nil))
-  ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
-  (tabulated-list-init-header)
-  ;; We need package-menu-mode to be our parent, otherwise some
-  ;; commands throw errors. But we can't actually derive from it,
-  ;; otherwise its initialization will screw up the header-format. So
-  ;; we "patch" it like this.
-  (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
-  (run-hooks 'package-menu-mode-hook))
+               :test (lambda (x y) (string-match x (or (car-safe y) "")))))
 
 (defun paradox--count-format ()
   "List of star/download counts to be used as part of the entry."
@@ -862,6 +843,8 @@ Letters do not insert themselves; instead, they are commands.
 
 (add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
 
+
+;;; Mode-line Construction
 (defcustom paradox-local-variables
   '(mode-line-mule-info
     mode-line-client
@@ -881,6 +864,13 @@ nil) on the Packages buffer."
   :type 'boolean
   :group 'paradox
   :package-version '(paradox . "0.2"))
+
+(defun paradox--build-buffer-id (st n)
+  "Return a list that propertizes ST and N for the mode-line."
+  `((:propertize ,st
+                 face paradox-mode-line-face)
+    (:propertize ,(int-to-string n)
+                 face mode-line-buffer-id)))
 
 (defun paradox--update-mode-line ()
   "Update `mode-line-format'."
@@ -953,9 +943,9 @@ TOTAL-LINES is the number of lines in the buffer."
         ad-do-it
         (setq after (paradox--repo-alist))
         (mapc #'paradox--star-repo
-              (-difference (-difference after before) paradox--user-starred-list))
+          (-difference (-difference after before) paradox--user-starred-list))
         (mapc #'paradox--unstar-repo
-              (-intersection (-difference before after) paradox--user-starred-list))
+          (-intersection (-difference before after) paradox--user-starred-list))
         (package-menu--generate t t))
     ad-do-it))
 

@@ -99,8 +99,9 @@
 ;;
 
 ;;; Change Log:
-;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
+;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
 ;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
+;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
 ;; 1.1   - 2014/05/10 - Added Download column.
 ;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
 ;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
@@ -324,6 +325,19 @@ If `paradox-lines-per-entry' = 1, the face
   "Face used for tags on the commit list."
   :group 'paradox-commit-list)
 
+(defcustom paradox-execute-asynchronously 'ask
+  "Whether the install/delete/upgrade should be asynchronous.
+Possible values are:
+  t, which means always;
+  nil, which means never;
+  ask, which means ask each time."
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "Never" nil)
+                 (const :tag "Ask each time" ask))
+  :package-version '(paradox . "2.0"))
+
+
+;;; Internal Variables
 (defvar paradox--star-count nil)
 (defvar paradox--download-count nil)
 (defvar paradox--package-repo-list nil)
@@ -423,6 +437,7 @@ Letters do not insert themselves; instead, they are commands.
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
 (define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
+(define-key paradox-menu-mode-map "x" #'paradox-menu-execute)
 (define-key paradox-menu-mode-map "\r" #'paradox-push-button)
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
@@ -517,6 +532,61 @@ PKG is a symbol. Interactively it is the package under point."
       (message "Package %s has no homepage."
                (propertize (symbol-name pkg)
                            'face 'font-lock-keyword-face)))))
+
+(defun paradox-menu-execute (&optional noquery)
+  "Perform marked Package Menu actions.
+Packages marked for installation are downloaded and installed;
+packages marked for deletion are removed.
+
+Synchronicity of the actions depends on
+`paradox-execute-asynchronously'. Optional argument NOQUERY
+non-nil means do not ask the user to confirm. If asynchronous,
+never ask anyway."
+  (interactive)
+  (unless (derived-mode-p 'paradox-menu-mode)
+    (error "The current buffer is not in Paradox Menu mode"))
+  (if (or (not paradox-execute-asynchronously)
+          (and (eq 'ask paradox-execute-asynchronously)
+               (not (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')"))))
+      (package-menu-execute noquery)
+    (unless (require 'async nil t)
+      (error "For asynchronous execution please install the `async' package"))
+    (let ((buffer (current-buffer))
+          (dir package-user-dir)
+          (archives package-archives)
+          install-list delete-list)
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (cl-case (char-after)
+            (?\s)
+            (?D (push (tabulated-list-get-id) delete-list))
+            (?I (push (tabulated-list-get-id) install-list)))
+          (forward-line)))
+      (if (or delete-list install-list)
+          (async-start
+           `(lambda ()
+              (setq package-user-dir ,dir
+                    package-archives ',archives)
+              (package-initialize)
+              (package-refresh-contents)
+              (mapc #'package-install ',install-list)
+              (let (message-list)
+                (push (concat (cond ((and ',install-list ',delete-list) "Upgrade")
+                                    (',delete-list "Deletion")
+                                    (',install-list "Installation"))
+                              " finished.")
+                      message-list)
+                (dolist (elt ',delete-list)
+                  (condition-case err (package-delete elt)
+                    (error (push (cadr err) message-list))))
+                message-list))
+           `(lambda (x)
+              (message (mapconcat #'identity (nreverse x) "\n"))
+              (when (buffer-live-p ,buffer)
+                (with-current-buffer ,buffer
+                  (package-menu--generate t t)))))
+        (message "No operations specified.")))))
 
 
 ;;; External Commands

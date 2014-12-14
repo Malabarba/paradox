@@ -552,8 +552,6 @@ never ask anyway."
     (unless (require 'async nil t)
       (error "For asynchronous execution please install the `async' package"))
     (let ((buffer (current-buffer))
-          (dir package-user-dir)
-          (archives package-archives)
           install-list delete-list)
       (save-excursion
         (goto-char (point-min))
@@ -566,10 +564,10 @@ never ask anyway."
       (if (or delete-list install-list)
           (async-start
            `(lambda ()
-              (setq package-user-dir ,dir
-                    package-archives ',archives)
+              (setq package-user-dir ,package-user-dir
+                    package-archives ',package-archives
+                    package-archive-contents ',package-archive-contents)
               (package-initialize)
-              (package-refresh-contents)
               (mapc #'package-install ',install-list)
               (let (message-list)
                 (push (concat (cond ((and ',install-list ',delete-list) "Upgrade")
@@ -580,9 +578,14 @@ never ask anyway."
                 (dolist (elt ',delete-list)
                   (condition-case err (package-delete elt)
                     (error (push (cadr err) message-list))))
-                message-list))
+                (list
+                 message-list
+                 package-alist
+                 package-archive-contents)))
            `(lambda (x)
-              (message (mapconcat #'identity (nreverse x) "\n"))
+              (message (mapconcat #'identity (nreverse (pop x)) "\n"))
+              (setq package-alist (pop x)
+                    package-archive-contents (pop x))
               (when (buffer-live-p ,buffer)
                 (with-current-buffer ,buffer
                   (package-menu--generate t t)))))

@@ -538,6 +538,10 @@ PKG is a symbol. Interactively it is the package under point."
 Packages marked for installation are downloaded and installed;
 packages marked for deletion are removed.
 
+Afterwards, if `paradox-automatically-star' is t, automatically
+star new packages, and unstar removed packages. Upgraded packages
+aren't changed.
+
 Synchronicity of the actions depends on
 `paradox-execute-asynchronously'. Optional argument NOQUERY
 non-nil means do not ask the user to confirm. If asynchronous,
@@ -545,13 +549,36 @@ never ask anyway."
   (interactive)
   (unless (derived-mode-p 'paradox-menu-mode)
     (error "The current buffer is not in Paradox Menu mode"))
-  (if (or (not paradox-execute-asynchronously)
-          (and (eq 'ask paradox-execute-asynchronously)
-               (not (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')"))))
-      (package-menu-execute noquery)
+  (when (and (stringp paradox-github-token)
+             (eq paradox-automatically-star 'unconfigured))
+    (customize-save-variable
+     'paradox-automatically-star
+     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
+  (paradox--menu-execute-1))
+
+(defun paradox--menu-execute-1 (&optional noquery)
+  ""
+  (if (and (not noquery)
+           (or (not paradox-execute-asynchronously)
+               (and (eq 'ask paradox-execute-asynchronously)
+                    (not (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')")))))
+      ;; Synchronous execution
+      (progn
+        (if (and (stringp paradox-github-token) paradox-automatically-star)
+            (let ((before-alist (paradox--repo-alist)) after)
+              (package-menu-execute noquery)
+              (setq after (paradox--repo-alist))
+              (mapc #'paradox--star-repo
+                (-difference (-difference after before) paradox--user-starred-list))
+              (mapc #'paradox--unstar-repo
+                (-intersection (-difference before after) paradox--user-starred-list)))
+          (package-menu-execute noquery))
+        (package-menu--generate t t))
+    ;; Async execution
     (unless (require 'async nil t)
       (error "For asynchronous execution please install the `async' package"))
     (let ((buffer (current-buffer))
+          (before-alist (paradox--repo-alist))
           install-list delete-list)
       (save-excursion
         (goto-char (point-min))
@@ -561,35 +588,44 @@ never ask anyway."
             (?D (push (tabulated-list-get-id) delete-list))
             (?I (push (tabulated-list-get-id) install-list)))
           (forward-line)))
-      (if (or delete-list install-list)
-          (async-start
-           `(lambda ()
-              (setq package-user-dir ,package-user-dir
-                    package-archives ',package-archives
-                    package-archive-contents ',package-archive-contents)
-              (package-initialize)
-              (mapc #'package-install ',install-list)
-              (let (message-list)
-                (push (concat (cond ((and ',install-list ',delete-list) "Upgrade")
-                                    (',delete-list "Deletion")
-                                    (',install-list "Installation"))
-                              " finished.")
-                      message-list)
-                (dolist (elt ',delete-list)
-                  (condition-case err (package-delete elt)
-                    (error (push (cadr err) message-list))))
-                (list
-                 message-list
-                 package-alist
-                 package-archive-contents)))
-           `(lambda (x)
-              (message (mapconcat #'identity (nreverse (pop x)) "\n"))
-              (setq package-alist (pop x)
-                    package-archive-contents (pop x))
-              (when (buffer-live-p ,buffer)
-                (with-current-buffer ,buffer
-                  (package-menu--generate t t)))))
-        (message "No operations specified.")))))
+      (unless (or delete-list install-list)
+        (message "No operations specified."))
+      ;; We have to do this with eval, because `async-start' is a
+      ;; macro and it might not have been defined at compile-time.
+      (eval
+       `(async-start
+         (lambda ()
+           (setq package-user-dir ,package-user-dir
+                 package-archives ',package-archives
+                 package-archive-contents ',package-archive-contents)
+           (package-initialize)
+           (mapc #'package-install ',install-list)
+           (let (message-list)
+             (push (concat (cond ((and ',install-list ',delete-list) "Upgrade")
+                                 (',delete-list "Deletion")
+                                 (',install-list "Installation"))
+                           " finished.")
+                   message-list)
+             (dolist (elt ',delete-list)
+               (condition-case err (package-delete elt)
+                 (error (push (cadr err) message-list))))
+             (list
+              message-list
+              package-alist
+              package-archive-contents)))
+         (lambda (x)
+           (let ((message (mapconcat #'identity (nreverse (pop x)) "\n")))
+             (setq package-alist (pop x)
+                   package-archive-contents (pop x))
+             (let ((after (paradox--repo-alist)))
+               (mapc #'paradox--star-repo
+                 (-difference (-difference after ',before-alist) paradox--user-starred-list))
+               (mapc #'paradox--unstar-repo
+                 (-intersection (-difference ',before-alist after) paradox--user-starred-list)))
+             (when (buffer-live-p ,buffer)
+               (with-current-buffer ,buffer
+                 (package-menu--generate t t)))
+             (message message))))))))
 
 
 ;;; External Commands
@@ -842,22 +878,22 @@ Also increments the count for \"total\"."
     (interactive)
     (unwind-protect
         (with-current-buffer
-	    (url-retrieve-synchronously paradox--star-count-url)
-	    (when (search-forward "\n\n" nil t)
-	        (setq paradox--star-count (read (current-buffer)))
-	        (setq paradox--package-repo-list (read (current-buffer)))
-	        (setq paradox--download-count (read (current-buffer))))
-	    (kill-buffer))
+        (url-retrieve-synchronously paradox--star-count-url)
+        (when (search-forward "\n\n" nil t)
+            (setq paradox--star-count (read (current-buffer)))
+            (setq paradox--package-repo-list (read (current-buffer)))
+            (setq paradox--download-count (read (current-buffer))))
+        (kill-buffer))
         (unless (and (listp paradox--star-count)
-		       (listp paradox--package-repo-list)
-		       (listp paradox--download-count))
-	    (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
+               (listp paradox--package-repo-list)
+               (listp paradox--download-count))
+        (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
         (unless (listp paradox--download-count)
-	    (setq paradox--download-count nil))
+        (setq paradox--download-count nil))
         (unless (listp paradox--package-repo-list)
-	    (setq paradox--package-repo-list nil))
+        (setq paradox--package-repo-list nil))
         (unless (listp paradox--star-count)
-	    (setq paradox--star-count nil)))
+        (setq paradox--star-count nil)))
     (when (stringp paradox-github-token)
         (paradox--refresh-user-starred-list)))
 
@@ -1030,21 +1066,7 @@ TOTAL-LINES is the number of lines in the buffer."
 (defadvice package-menu-execute
     (around paradox-around-package-menu-execute-advice ())
   "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
-  (when (and (stringp paradox-github-token)
-             (eq paradox-automatically-star 'unconfigured))
-    (customize-save-variable
-     'paradox-automatically-star
-     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
-  (if (and (stringp paradox-github-token) paradox-automatically-star)
-      (let ((before (paradox--repo-alist)) after)
-        ad-do-it
-        (setq after (paradox--repo-alist))
-        (mapc #'paradox--star-repo
-          (-difference (-difference after before) paradox--user-starred-list))
-        (mapc #'paradox--unstar-repo
-          (-intersection (-difference before after) paradox--user-starred-list))
-        (package-menu--generate t t))
-    ad-do-it))
+  )
 
 (defun paradox--repo-alist ()
   "List of known repos."

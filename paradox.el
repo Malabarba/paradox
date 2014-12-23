@@ -656,9 +656,6 @@ for packages.
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
-  (ad-enable-advice 'package-menu-execute 'around
-                    'paradox-around-package-menu-execute-advice)
-  (ad-activate 'package-menu-execute)
   (if (paradox--compat-p)
       (progn
         (require 'paradox-compat)
@@ -673,8 +670,6 @@ for packages.
 (defun paradox-disable ()
   "Disable paradox, and go back to regular package-menu."
   (interactive)
-  (ad-disable-advice 'package-menu-execute 'around
-                     'paradox-around-package-menu-execute-advice)
   (dolist (it paradox--backups)
     (message "Restoring %s to %s" (car it) (eval (cdr it)))
     (fset (car it) (eval (cdr it))))

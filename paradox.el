@@ -1063,11 +1063,6 @@ TOTAL-LINES is the number of lines in the buffer."
     (when (boundp sym)
       (set (make-local-variable sym) (cdr-safe x)))))
 
-(defadvice package-menu-execute
-    (around paradox-around-package-menu-execute-advice ())
-  "Star/Unstar packages which were installed/deleted during `package-menu-execute'."
-  )
-
 (defun paradox--repo-alist ()
   "List of known repos."
   (cl-remove-duplicates

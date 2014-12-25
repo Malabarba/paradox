@@ -631,7 +631,7 @@ never ask anyway."
 ;;; External Commands
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)
-  "Improved version of `package-list-packages'. The heart of paradox.
+  "Improved version of `package-list-packages'. The heart of Paradox.
 Function is equivalent to `package-list-packages' (including the
 prefix NO-FETCH), but the resulting Package Menu is improved in
 several ways.

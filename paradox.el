@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
 ;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
 ;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
 ;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
@@ -652,6 +653,26 @@ for packages.
     (paradox-enable)
     (unless no-fetch (paradox--refresh-star-count))
     (package-list-packages no-fetch)))
+
+;;;###autoload
+(defun paradox-upgrade-packages (&optional no-fetch)
+  "Upgrade all packages. No questions asked.
+This function is equivalent to `list-packages', followed by a
+`package-menu-mark-upgrades' and a `package-menu-execute'. Except
+the user isn't asked to confirm deletion of packages.
+
+If `paradox-execute-asynchronously' is non-nil, part of this
+operation may be performed in the background.
+
+The NO-FETCH prefix argument is passed to `list-packages'. It
+prevents re-download of information about new versions. It does
+not prevent downloading the actual packages (obviously)."
+  (interactive "P")
+  (save-window-excursion
+    (paradox-list-packages no-fetch)
+    (paradox-filter-upgrades)
+    (package-menu-mark-upgrades)
+    (paradox-menu-execute 'noquery)))
 
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."

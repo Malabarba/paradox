@@ -602,9 +602,10 @@ never ask anyway."
            (package-initialize)
            (mapc #'package-install ',install-list)
            (let (message-list)
-             (push (concat (cond ((and ',install-list ',delete-list) "Upgrade")
-                                 (',delete-list "Deletion")
-                                 (',install-list "Installation"))
+             (push (concat "[Paradox] "
+                           ,(cond ((and install-list delete-list) "Upgrade")
+                                  (delete-list "Deletion")
+                                  (install-list "Installation"))
                            " finished.")
                    message-list)
              (dolist (elt ',delete-list)

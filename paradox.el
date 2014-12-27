@@ -558,7 +558,6 @@ never ask anyway."
   (paradox--menu-execute-1))
 
 (defun paradox--menu-execute-1 (&optional noquery)
-  ""
   (if (and (not noquery)
            (or (not paradox-execute-asynchronously)
                (and (eq 'ask paradox-execute-asynchronously)
@@ -1501,5 +1500,4 @@ Passing a non-nil REFRESH argument forces this update."
              (require feature filename noerror)))))
 
 (provide 'paradox)
-
 ;;; paradox.el ends here.

@@ -600,8 +600,11 @@ never ask anyway."
                  package-archives ',package-archives
                  package-archive-contents ',package-archive-contents)
            (package-initialize)
-           (mapc #'package-install ',install-list)
-           (let (message-list)
+           (let (activated-packages message-list)
+             (defadvice package-activate-1 (before paradox-track-activated (pkg) activate)
+               "Track which packages are being activated in the background."
+               (add-to-list 'activated-packages pkg 'append))
+             (mapc #'package-install ',install-list)
              (push (concat "[Paradox] "
                            ,(cond ((and install-list delete-list) "Upgrade")
                                   (delete-list "Deletion")
@@ -614,11 +617,13 @@ never ask anyway."
              (list
               message-list
               package-alist
-              package-archive-contents)))
+              package-archive-contents
+              activated-packages)))
          (lambda (x)
            (let ((message (mapconcat #'identity (nreverse (pop x)) "\n")))
              (setq package-alist (pop x)
                    package-archive-contents (pop x))
+             (mapc #'package-activate-1 (pop x))
              (let ((after (paradox--repo-alist)))
                (mapc #'paradox--star-repo
                  (-difference (-difference after ',before-alist) paradox--user-starred-list))

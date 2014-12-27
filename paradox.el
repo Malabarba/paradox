@@ -614,12 +614,12 @@ never ask anyway."
                (condition-case err (package-delete elt)
                  (error (push (cadr err) message-list))))
              (list
-              message-list
+              (mapconcat #'identity (nreverse message-list) "\n")
               package-alist
               package-archive-contents
               activated-packages)))
          (lambda (x)
-           (let ((message (mapconcat #'identity (nreverse (pop x)) "\n")))
+           (let ((message (pop x)))
              (setq package-alist (pop x)
                    package-archive-contents (pop x))
              (mapc #'package-activate-1 (pop x))
@@ -631,7 +631,7 @@ never ask anyway."
              (when (buffer-live-p ,buffer)
                (with-current-buffer ,buffer
                  (package-menu--generate t t)))
-             (message message))))))))
+             (message "%s" message))))))))
 
 
 ;;; External Commands

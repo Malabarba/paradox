@@ -563,10 +563,7 @@ never ask anyway."
             (let ((before-alist (paradox--repo-alist)) after)
               (package-menu-execute noquery)
               (setq after (paradox--repo-alist))
-              (mapc #'paradox--star-repo
-                (-difference (-difference after before) paradox--user-starred-list))
-              (mapc #'paradox--unstar-repo
-                (-intersection (-difference before after) paradox--user-starred-list)))
+              (paradox--post-execute-star-unstar before after)
           (package-menu-execute noquery))
         (package-menu--generate t t))
     ;; Async execution
@@ -618,15 +615,19 @@ never ask anyway."
              (setq package-alist (pop x)
                    package-archive-contents (pop x))
              (mapc #'package-activate-1 (pop x))
-             (let ((after (paradox--repo-alist)))
-               (mapc #'paradox--star-repo
-                 (-difference (-difference after ',before-alist) paradox--user-starred-list))
-               (mapc #'paradox--unstar-repo
-                 (-intersection (-difference ',before-alist after) paradox--user-starred-list)))
+             (paradox--post-execute-star-unstar
+              ',before-alist (paradox--repo-alist))
              (when (buffer-live-p ,buffer)
                (with-current-buffer ,buffer
                  (package-menu--generate t t)))
              (message "%s" message))))))))
+
+(defun paradox--post-execute-star-unstar (before after)
+  "Star repos in AFTER absent from BEFORE, unstar vice-versa."
+  (mapc #'paradox--star-repo
+    (-difference (-difference after before) paradox--user-starred-list))
+  (mapc #'paradox--unstar-repo
+    (-intersection (-difference before after) paradox--user-starred-list)))
 
 
 ;;; External Commands

@@ -6,7 +6,7 @@
 ;; URL: http://github.com/Bruce-Connor/paradox
 ;; Version: 2.0
 ;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.1") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
+;; Package-Requires: ((emacs "24.4") (dash "2.6.0") (cl-lib "0.5") (json "1.3"))
 ;; Prefix: paradox
 ;; Separator: -
 
@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 2.0   - 2015/01/05 - Drop 24.3 support.
 ;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
 ;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
 ;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
@@ -156,9 +157,6 @@ Please include your Emacs and paradox versions."
   :prefix "paradox-"
   :group 'paradox
   :package-version '(paradox . "1.2.3"))
-(defun paradox--compat-p ()
-  "Non-nil if we need to enable pre-24.4 compatibility features."
-  (version< emacs-version "24.3.50"))
 
 
 ;;; Customization Variables
@@ -377,9 +375,6 @@ Letters do not insert themselves; instead, they are commands.
 \\{paradox-menu-mode-map}"
   (hl-line-mode 1)
   (paradox--update-mode-line)
-  (when (paradox--compat-p)
-    (require 'paradox-compat)
-    (setq tabulated-list-printer 'paradox--print-entry-compat))
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)
           ("Version" ,paradox-column-width-version nil)
@@ -682,11 +677,7 @@ not prevent downloading the actual packages (obviously)."
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
-  (if (paradox--compat-p)
-      (progn
-        (require 'paradox-compat)
-        (paradox--override-definition 'package-menu--print-info 'paradox--print-info-compat))
-    (paradox--override-definition 'package-menu--print-info 'paradox--print-info))
+  (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
   (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
@@ -855,22 +846,21 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
      'face 'paradox-download-face
      'value (or c 0))))
 
-(unless (paradox--compat-p)
-  (defun paradox--package-homepage (pkg)
-    "PKG can be the package-name symbol or a package-desc object."
-    (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
-           (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
-           (extras   (package-desc-extras object))
-           (homepage (and (listp extras) (cdr-safe (assoc :url extras)))))
-      (or homepage
-          (and (setq extras (cdr (assoc name paradox--package-repo-list)))
-               (format "https://github.com/%s" extras)))))
-  (defun paradox--get-or-return-package (pkg)
-    (if (or (markerp pkg) (null pkg))
-        (if (derived-mode-p 'package-menu-mode)
-            (package-desc-name (tabulated-list-get-id))
-          (error "Not in Package Menu"))
-      pkg)))
+(defun paradox--package-homepage (pkg)
+  "PKG can be the package-name symbol or a package-desc object."
+  (let* ((object   (if (symbolp pkg) (cadr (assoc pkg package-archive-contents)) pkg))
+         (name     (if (symbolp pkg) pkg (package-desc-name pkg)))
+         (extras   (package-desc-extras object))
+         (homepage (and (listp extras) (cdr-safe (assoc :url extras)))))
+    (or homepage
+        (and (setq extras (cdr (assoc name paradox--package-repo-list)))
+             (format "https://github.com/%s" extras)))))
+(defun paradox--get-or-return-package (pkg)
+  (if (or (markerp pkg) (null pkg))
+      (if (derived-mode-p 'package-menu-mode)
+          (package-desc-name (tabulated-list-get-id))
+        (error "Not in Package Menu"))
+    pkg))
 
 (defun paradox--incf (status)
   "Increment the count for STATUS on `paradox--package-count'.
@@ -966,9 +956,7 @@ shown."
   (paradox--update-mode-line)
   (paradox-refresh-upgradeable-packages))
 
-(if (paradox--compat-p)
-    (require 'paradox-compat)
-  (defalias 'paradox-menu--refresh 'package-menu--refresh))
+(defalias 'paradox-menu--refresh 'package-menu--refresh)
 
 (defun paradox--column-index (regexp)
   "Find the index of the column that matches REGEXP."
@@ -989,8 +977,7 @@ shown."
 
 (defun paradox--archive-format ()
   "List containing archive to be used as part of the entry."
-  (when (and (cdr package-archives)
-             (null (paradox--compat-p)))
+  (when (cdr package-archives)
     (list (list "Archive"
                 (apply 'max (mapcar 'length (mapcar 'car package-archives)))
                 'package-menu--archive-predicate))))
@@ -1348,15 +1335,14 @@ PKG is a symbol. Interactively it is the package under point."
 - If it has a Melpa-like version (YYYYMMDD HHMM), return it as a
   time value.
 - If it has a regular version number, return it as a string."
-  (-if-let (desc (and (null (paradox--compat-p))
-                      (cadr (assoc pkg package-alist))))
+  (-if-let (desc (cadr (assoc pkg package-alist)))
       (let ((version (package-desc-version desc)))
         (if (> (car version) 19000000)
             (date-to-time
              (format "%8dT%2d:%2d"
-                     (car version)
-                     (/ (cadr version) 100)
-                     (% (cadr version) 100)))
+               (car version)
+               (/ (cadr version) 100)
+               (% (cadr version) 100)))
           ;; Regular version numbers.
           (mapconcat 'int-to-string version ".")))
     '(0 0)))

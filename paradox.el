@@ -679,6 +679,21 @@ deleted packages, and errors."
                (with-current-buffer ,buffer
                  (package-menu--generate t t)))
              (message "%s" message))))))))
+(defun paradox--format-question (install-list delete-list)
+  "Format a question of whether to perform transaction.
+INSTALL-LIST and DELETE-LIST are a list of packages about to be
+installed and deleted, respectively."
+  (concat
+   (when install-list
+     (let ((len (length install-list)))
+       (format "Install %d package%s" len (if (> len 1) "s" ""))))
+   (when (and install-list (not delete-list))
+     "? ")
+   (when (and install-list delete-list)
+     ", and ")
+   (when delete-list
+     (let ((len (length delete-list)))
+       (format "Delete %d package%s? " len (if (> len 1) "s" ""))))))
 
 (defun paradox--post-execute-star-unstar (before after)
   "Star repos in AFTER absent from BEFORE, unstar vice-versa."

@@ -707,11 +707,8 @@ deleted packages, and errors."
              (lambda (x)
                (setq package-alist (pop x)
                      package-archive-contents (pop x))
-               (let (((alist (pop x))))
-                 (mapc #'package-activate-1 (cdr (assq 'activated alist)))
-                 (run-hook-with-args 'paradox-after-execute-functions alist))
-               (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))
-               (message "%s" message)))))))))
+               (run-hook-with-args 'paradox-after-execute-functions (pop x))
+               (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))))))))))
 
 (defun paradox--format-message (question-p install-list delete-list)
   "Format a message regarding a transaction.

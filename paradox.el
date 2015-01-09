@@ -482,7 +482,7 @@ With prefix N, move to the N-th previous package instead."
   (if (null paradox--upgradeable-packages)
       (message "No packages have upgrades.")
     (package-show-package-list
-     (mapcar 'car paradox--upgradeable-packages))
+     (mapcar #'car paradox--upgradeable-packages))
     (setq paradox--current-filter "Upgrade")))
 
 (defun paradox-push-button ()

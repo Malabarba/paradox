@@ -628,7 +628,7 @@ deleted packages, and errors."
       (package-show-package-list (append install-list delete-list))
       ;; Confirm with the user.
       (when (or noquery
-                (y-or-n-p (paradox--format-question install-list delete-list)))
+                (y-or-n-p (paradox--format-message 'question install-list delete-list)))
         ;; Background or foreground?
         (if (and (not noquery)
                  (or (not paradox-execute-asynchronously)
@@ -668,21 +668,30 @@ deleted packages, and errors."
                (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))
                (message "%s" message)))))))))
 
-(defun paradox--format-question (install-list delete-list)
-  "Format a question of whether to perform transaction.
+(defun paradox--format-message (question-p install-list delete-list)
+  "Format a message regarding a transaction.
+If QUESTION-P is non-nil, format a question suitable for
+`y-or-n-p', otherwise format a report in the past sense.
 INSTALL-LIST and DELETE-LIST are a list of packages about to be
 installed and deleted, respectively."
   (concat
    (when install-list
      (let ((len (length install-list)))
-       (format "Install %d package%s" len (if (> len 1) "s" ""))))
+       (format "Install%s %d package%s"
+         (if question-p "" "ed")
+         len
+         (if (> len 1) "s" ""))))
    (when (and install-list (not delete-list))
-     "? ")
+     (if question-p "? " "."))
    (when (and install-list delete-list)
      ", and ")
    (when delete-list
      (let ((len (length delete-list)))
-       (format "Delete %d package%s? " len (if (> len 1) "s" ""))))))
+       (format "Delete%s %d package%s%s"
+         (if question-p "" "d")
+         len
+         (if (> len 1) "s" "")
+         (if question-p "? " "."))))))
 
 (defun paradox--post-execute-star-unstar (before after)
   "Star repos in AFTER absent from BEFORE, unstar vice-versa."

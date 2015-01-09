@@ -591,6 +591,25 @@ never ask anyway."
      (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
   (paradox--menu-execute-1))
 
+(defmacro paradox--perform-package-transaction (install delete)
+  "Install all packages from INSTALL and delete those from DELETE.
+Return an alist with properties listing installed packages,
+deleted packages, and errors."
+  `(let ((activated-before (length package-activated-list))
+         installed deleted errored)
+     (dolist (pkg ',install)
+       (condition-case err
+           (progn (package-install pkg) (push pkg installed))
+         (error (push err errored))))
+     (dolist (pkg ',delete)
+       (condition-case err
+           (progn (package-delete pkg) (push pkg deleted))
+         (error (push err errored))))
+     (list (cons 'installed (nreverse installed))
+           (cons 'deleted (nreverse deleted))
+           (cons 'activated (reverse (butlast package-activated-list activated-before)))
+           (cons 'error (nreverse errored)))))
+
 (defun paradox--menu-execute-1 (&optional noquery)
   (if (and (not noquery)
            (or (not paradox-execute-asynchronously)

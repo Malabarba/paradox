@@ -550,7 +550,8 @@ occurred during the execution:
   `deleted'   List of deleted packages.
   `activated' List of activated packages.
   `error'     List of errors.
-  `async'     Non-nil if transaction was performed asynchronously.")
+  `async'     Non-nil if transaction was performed asynchronously.
+  `noquery'   The NOQUERY parameter given to `paradox-menu-execute'.")
 (put 'risky-local-variable-p 'paradox-after-execute-functions t)
 
 (defun paradox--refresh-package-buffer (_)
@@ -611,74 +612,62 @@ deleted packages, and errors."
            (cons 'error (nreverse errored)))))
 
 (defun paradox--menu-execute-1 (&optional noquery)
-  (if (and (not noquery)
-           (or (not paradox-execute-asynchronously)
-               (and (eq 'ask paradox-execute-asynchronously)
-                    (not (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')")))))
-      ;; Synchronous execution
-      (progn
-        (if (and (stringp paradox-github-token) paradox-automatically-star)
-            (let ((before-alist (paradox--repo-alist)) after)
-              (package-menu-execute noquery)
-              (setq after (paradox--repo-alist))
-              (paradox--post-execute-star-unstar before after)
-          (package-menu-execute noquery))
-        (package-menu--generate t t))
-    ;; Async execution
-    (unless (require 'async nil t)
-      (error "For asynchronous execution please install the `async' package"))
-    (let ((buffer (current-buffer))
-          (before-alist (paradox--repo-alist))
-          install-list delete-list)
-      (save-excursion
-        (goto-char (point-min))
-        (while (not (eobp))
-          (cl-case (char-after)
-            (?\s)
-            (?D (push (tabulated-list-get-id) delete-list))
-            (?I (push (tabulated-list-get-id) install-list)))
-          (forward-line)))
-      (unless (or delete-list install-list)
-        (message "No operations specified."))
-      ;; We have to do this with eval, because `async-start' is a
-      ;; macro and it might not have been defined at compile-time.
-      (eval
-       `(async-start
-         (lambda ()
-           (setq package-user-dir ,package-user-dir
-                 package-archives ',package-archives
-                 package-archive-contents ',package-archive-contents)
-           (package-initialize)
-           (let (activated-packages message-list)
-             (defadvice package-activate-1 (before paradox-track-activated (pkg) activate)
-               "Track which packages are being activated in the background."
-               (add-to-list 'activated-packages pkg 'append))
-             (mapc #'package-install ',install-list)
-             (push (concat "[Paradox] "
-                           ,(cond ((and install-list delete-list) "Upgrade")
-                                  (delete-list "Deletion")
-                                  (install-list "Installation"))
-                           " finished.")
-                   message-list)
-             (dolist (elt ',delete-list)
-               (condition-case err (package-delete elt)
-                 (error (push (cadr err) message-list))))
-             (list
-              (mapconcat #'identity (nreverse message-list) "\n")
-              package-alist
-              package-archive-contents
-              activated-packages)))
-         (lambda (x)
-           (let ((message (pop x)))
-             (setq package-alist (pop x)
-                   package-archive-contents (pop x))
-             (mapc #'package-activate-1 (pop x))
-             (paradox--post-execute-star-unstar
-              ',before-alist (paradox--repo-alist))
-             (when (buffer-live-p ,buffer)
-               (with-current-buffer ,buffer
-                 (package-menu--generate t t)))
-             (message "%s" message))))))))
+  (let ((before-alist (paradox--repo-alist))
+        install-list delete-list)
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (cl-case (char-after)
+          (?\s)
+          (?D (push (tabulated-list-get-id) delete-list))
+          (?I (push (tabulated-list-get-id) install-list)))
+        (forward-line)))
+    (if (not (or delete-list install-list))
+        (message "No operations specified.")
+      ;; Display the transaction about to be performed.
+      (package-show-package-list (append install-list delete-list))
+      ;; Confirm with the user.
+      (when (or noquery
+                (y-or-n-p (paradox--format-question install-list delete-list)))
+        ;; Background or foreground?
+        (if (and (not noquery)
+                 (or (not paradox-execute-asynchronously)
+                     (and (eq 'ask paradox-execute-asynchronously)
+                          (not (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')")))))
+            ;; Synchronous execution
+            (progn
+              (let ((alist (paradox--perform-package-transaction install-list delete-list)))
+                (run-hook-with-args 'paradox-after-execute-functions
+                                    `((noquery . ,noquery) (async . nil) ,@alist)))
+              (when (and (stringp paradox-github-token) paradox-automatically-star)
+                (paradox--post-execute-star-unstar before-alist (paradox--repo-alist)))
+              (package-menu--generate t t))
+          ;; Async execution
+          (unless (require 'async nil t)
+            (error "For asynchronous execution please install the `async' package"))
+          ;; We have to do this with eval, because `async-start' is a
+          ;; macro and it might not have been defined at compile-time.
+          (eval
+           `(async-start
+             (lambda ()
+               (setq package-user-dir ,package-user-dir
+                     package-archives ',package-archives
+                     package-archive-contents ',package-archive-contents)
+               (package-initialize)
+               (let ((alist ,(paradox--perform-package-transaction install-list delete-list)))
+                 (list package-alist
+                       package-archive-contents
+                       ;; This is the alist that will be passed to the hook.
+                       (cons '(noquery . ,noquery) (cons '(async . t) alist)))))
+             (lambda (x)
+               (setq package-alist (pop x)
+                     package-archive-contents (pop x))
+               (let (((alist (pop x))))
+                 (mapc #'package-activate-1 (cdr (assq 'activated alist)))
+                 (run-hook-with-args 'paradox-after-execute-functions alist))
+               (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))
+               (message "%s" message)))))))))
+
 (defun paradox--format-question (install-list delete-list)
   "Format a question of whether to perform transaction.
 INSTALL-LIST and DELETE-LIST are a list of packages about to be

@@ -529,6 +529,45 @@ PKG is a symbol. Interactively it is the package under point."
                (propertize (symbol-name pkg)
                            'face 'font-lock-keyword-face)))))
 
+
+;;; Execution Hook
+(defvar paradox-after-execute-functions
+  '(paradox--activate-installed-if-asynchronous
+    paradox--refresh-package-buffer
+    )
+  "List of functions run after performing package transactions.
+These are run after a set of installation, deletion, or upgrades
+has been performed. Each function in this hook must take a single
+argument. An associative list of the form
+
+    ((SYMBOL . DATA) (SYMBOL . DATA) ...)
+
+This list contains the following entries, describing what
+occurred during the execution:
+
+  SYMBOL      DATA
+  `installed' List of installed packages.
+  `deleted'   List of deleted packages.
+  `activated' List of activated packages.
+  `error'     List of errors.
+  `async'     Non-nil if transaction was performed asynchronously.")
+(put 'risky-local-variable-p 'paradox-after-execute-functions t)
+
+(defun paradox--refresh-package-buffer (_)
+  "Refresh the *Packages* buffer, if it exists."
+  (let ((buf (get-buffer "*Packages*")))
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (package-menu--generate t t)))))
+
+(defun paradox--activate-if-asynchronous (alist)
+  "Activate packages after an asynchronous operation."
+  (let-alist alist
+    (when .async
+      (mapc #'package-activate-1 .activated))))
+
+
+;;; Execution
 (defun paradox-menu-execute (&optional noquery)
   "Perform marked Package Menu actions.
 Packages marked for installation are downloaded and installed;

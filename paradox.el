@@ -534,6 +534,7 @@ PKG is a symbol. Interactively it is the package under point."
 (defvar paradox-after-execute-functions
   '(paradox--activate-installed-if-asynchronous
     paradox--refresh-package-buffer
+    paradox--report
     )
   "List of functions run after performing package transactions.
 These are run after a set of installation, deletion, or upgrades
@@ -566,6 +567,50 @@ occurred during the execution:
   (let-alist alist
     (when .async
       (mapc #'package-activate-1 .activated))))
+
+(defcustom paradox-async-display-buffer-function #'display-buffer
+  "Function used to display the *Paradox Report* buffer after an asynchronous upgrade.
+Set this to nil to avoid displaying the buffer. Or set this to a
+function like `display-buffer' or `pop-to-buffer'.
+
+This is only used if `paradox-menu-execute' was given a non-nil
+NOQUERY argument. Otherwise, only a message is displayed."
+  :type '(choice (const :tag "Don't display the buffer" nil)
+                 function)
+  :package-version '(paradox . "2.0"))
+
+(defun paradox--report (alist)
+  "Print a transaction report in *Package Report* buffer.
+Possibly display the buffer or message the user depending on the
+situation."
+  (let-alist alist
+    (let ((buf (get-buffer-create "*Paradox Report*")))
+      (with-current-buffer buf
+        (goto-char (point-max))
+        ;; TODO: Write our own mode for this.
+        (special-mode)
+        (insert "\n\n")
+        (save-excursion
+          (insert (format-time-string "Package transaction finished. %c\n"))
+          (when .error
+            (insert "Errors:\n  " (mapconcat #'cdr .error "\n ") "\n\n"))
+          (when .installed
+            (insert "Installed:\n  " (mapconcat #'package-desc-name .installed "\n  ") "\n\n"))
+          (when .deleted
+            (insert "Deleted:\n  " (mapconcat #'package-desc-name .deleted "\n  ") "\n\n"))))
+      (cond
+       ;; The user has never seen the packages in this transaction. So
+       ;; we display them in a buffer.
+       ((and .noquery (not .async)) (pop-to-buffer buf))
+       ;; If we're async, the user might be doing something else, so
+       ;; we don't steal focus.
+       ((and .noquery .async paradox-async-display-buffer-function)
+        (funcall paradox-async-display-buffer-function buf))
+       ;; The user was asked for confirmation, so they know what's
+       ;; going on. We just report conclusion.
+       (t (message
+           "%s See the buffer *Paradox Report* for more details."
+           (paradox--format-message nil .installed .deleted)))))))
 
 
 ;;; Execution

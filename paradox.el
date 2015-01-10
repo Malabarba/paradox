@@ -560,7 +560,7 @@ occurred during the execution:
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (package-menu--generate t t)))))
+        (paradox--generate-menu t t)))))
 
 (defun paradox--activate-if-asynchronous (alist)
   "Activate packages after an asynchronous operation."
@@ -584,7 +584,8 @@ NOQUERY argument. Otherwise, only a message is displayed."
 Possibly display the buffer or message the user depending on the
 situation."
   (let-alist alist
-    (let ((buf (get-buffer-create "*Paradox Report*")))
+    (let ((buf (get-buffer-create "*Paradox Report*"))
+          (inhibit-read-only t))
       (with-current-buffer buf
         (goto-char (point-max))
         ;; TODO: Write our own mode for this.
@@ -595,9 +596,13 @@ situation."
           (when .error
             (insert "Errors:\n  " (mapconcat #'cdr .error "\n ") "\n\n"))
           (when .installed
-            (insert "Installed:\n  " (mapconcat #'package-desc-name .installed "\n  ") "\n\n"))
+            (insert "Installed:\n  "
+                    (mapconcat (lambda (x) (symbol-name (package-desc-name x))) .installed "\n  ")
+                    "\n\n"))
           (when .deleted
-            (insert "Deleted:\n  " (mapconcat #'package-desc-name .deleted "\n  ") "\n\n"))))
+            (insert "Deleted:\n  "
+                    (mapconcat (lambda (x) (symbol-name (package-desc-name x))) .deleted "\n  ")
+                    "\n\n"))))
       (cond
        ;; The user has never seen the packages in this transaction. So
        ;; we display them in a buffer.

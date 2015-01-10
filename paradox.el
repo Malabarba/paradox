@@ -1082,7 +1082,7 @@ shown."
         (if keywords (mapconcat 'identity keywords ",")
           nil))
   (let ((idx (paradox--column-index "Package")))
-    (setcar (aref tabulated-list-format idx)
+    (setcar (elt tabulated-list-format idx)
             (if keywords
                 (concat "Package[" paradox--current-filter "]")
               "Package")))

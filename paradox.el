@@ -552,7 +552,7 @@ occurred during the execution:
   `activated' List of activated packages.
   `error'     List of errors.
   `async'     Non-nil if transaction was performed asynchronously.
-  `noquery'   The NOQUERY parameter given to `paradox-menu-execute'.")
+  `noquery'   The NOQUERY argument given to `paradox-menu-execute'.")
 (put 'risky-local-variable-p 'paradox-after-execute-functions t)
 
 (defun paradox--refresh-package-buffer (_)

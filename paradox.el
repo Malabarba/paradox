@@ -646,19 +646,24 @@ never ask anyway."
   "Install all packages from INSTALL and delete those from DELETE.
 Return an alist with properties listing installed packages,
 deleted packages, and errors."
-  `(let ((activated-before (length package-activated-list))
-         installed deleted errored)
-     (dolist (pkg ',install)
+  `(let (activated installed deleted errored)
+     (advice-add #'package-activate-1 :after
+                 (lambda (pkg &rest _)
+                   (ignore-errors (add-to-list 'activated pkg 'append)))
+                 '((name . paradox--track-activated)))
+     (dolist (pkg ,install)
        (condition-case err
            (progn (package-install pkg) (push pkg installed))
          (error (push err errored))))
-     (dolist (pkg ',delete)
+     (dolist (pkg ,delete)
        (condition-case err
            (progn (package-delete pkg) (push pkg deleted))
          (error (push err errored))))
+     (advice-remove #'package-activate-1 'paradox--track-activated)
      (list (cons 'installed (nreverse installed))
            (cons 'deleted (nreverse deleted))
-           (cons 'activated (reverse (butlast package-activated-list activated-before)))
+           ;; Because we used 'append, this is in the right order.
+           (cons 'activated activated)
            (cons 'error (nreverse errored)))))
 
 (defun paradox--menu-execute-1 (&optional noquery)

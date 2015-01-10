@@ -632,7 +632,7 @@ Synchronicity of the actions depends on
 `paradox-execute-asynchronously'. Optional argument NOQUERY
 non-nil means do not ask the user to confirm. If asynchronous,
 never ask anyway."
-  (interactive)
+  (interactive "P")
   (unless (derived-mode-p 'paradox-menu-mode)
     (error "The current buffer is not in Paradox Menu mode"))
   (when (and (stringp paradox-github-token)
@@ -640,7 +640,7 @@ never ask anyway."
     (customize-save-variable
      'paradox-automatically-star
      (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
-  (paradox--menu-execute-1))
+  (paradox--menu-execute-1 noquery))
 
 (defmacro paradox--perform-package-transaction (install delete)
   "Install all packages from INSTALL and delete those from DELETE.

@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 2.0   - 2015/01/10 - New hook `paradox-after-execute-functions'.
 ;; 2.0   - 2015/01/05 - Drop 24.3 support.
 ;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
 ;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
@@ -644,8 +645,8 @@ never ask anyway."
 
 (defmacro paradox--perform-package-transaction (install delete)
   "Install all packages from INSTALL and delete those from DELETE.
-Return an alist with properties listing installed packages,
-deleted packages, and errors."
+Return an alist with properties listing installed,
+deleted, and activated packages, and errors."
   `(let (activated installed deleted errored)
      (advice-add #'package-activate-1 :after
                  (lambda (pkg &rest _)

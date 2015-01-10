@@ -706,8 +706,7 @@ deleted packages, and errors."
                 (run-hook-with-args 'paradox-after-execute-functions
                                     `((noquery . ,noquery) (async . nil) ,@alist)))
               (when (and (stringp paradox-github-token) paradox-automatically-star)
-                (paradox--post-execute-star-unstar before-alist (paradox--repo-alist)))
-              (package-menu--generate t t))
+                (paradox--post-execute-star-unstar before-alist (paradox--repo-alist))))
           ;; Async execution
           (unless (require 'async nil t)
             (error "For asynchronous execution please install the `async' package"))
@@ -720,7 +719,8 @@ deleted packages, and errors."
                      package-archives ',package-archives
                      package-archive-contents ',package-archive-contents)
                (package-initialize)
-               (let ((alist ,(paradox--perform-package-transaction install-list delete-list)))
+               (let ((alist ,(macroexpand
+                              `(paradox--perform-package-transaction ',install-list ',delete-list))))
                  (list package-alist
                        package-archive-contents
                        ;; This is the alist that will be passed to the hook.

@@ -532,7 +532,7 @@ PKG is a symbol. Interactively it is the package under point."
 
 ;;; Execution Hook
 (defvar paradox-after-execute-functions
-  '(paradox--activate-installed-if-asynchronous
+  '(paradox--activate-if-asynchronous
     paradox--refresh-package-buffer
     paradox--report
     )

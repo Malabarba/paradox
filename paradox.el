@@ -686,7 +686,9 @@ deleted, and activated packages, and errors."
               (forward-line 1)
               (setq p (point)))))
         (when (or delete-list install-list)
-          (delete-region p (point)))))
+          (delete-region p (point))
+          (ignore-errors
+            (set-window-start (selected-window) (point-min))))))
     (if (not (or delete-list install-list))
         (message "No operations specified.")
       ;; Display the transaction about to be performed.

@@ -671,16 +671,25 @@ deleted packages, and errors."
         install-list delete-list)
     (save-excursion
       (goto-char (point-min))
-      (while (not (eobp))
-        (cl-case (char-after)
-          (?\s)
-          (?D (push (tabulated-list-get-id) delete-list))
-          (?I (push (tabulated-list-get-id) install-list)))
-        (forward-line)))
+      (let ((p (point))
+            (inhibit-read-only t))
+        (while (not (eobp))
+          (let ((c (char-after)))
+            (if (eq c ?\s)
+                (forward-line 1)
+              (push (tabulated-list-get-id)
+                    (cl-case c
+                      (?D delete-list)
+                      (?I install-list)))
+              (delete-region p (point))
+              (forward-line 1)
+              (setq p (point)))))
+        (when (or delete-list install-list)
+          (delete-region p (point)))))
     (if (not (or delete-list install-list))
         (message "No operations specified.")
       ;; Display the transaction about to be performed.
-      (package-show-package-list (append install-list delete-list))
+      (setq paradox--current-filter "Executing Transaction")
       ;; Confirm with the user.
       (when (or noquery
                 (y-or-n-p (paradox--format-message 'question install-list delete-list)))

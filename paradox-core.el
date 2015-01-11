@@ -26,6 +26,20 @@
 
 
 
+;;; Configurations
+(defface paradox-comment-face
+  '((((background light)) :foreground "Grey30")
+    (((background dark)) :foreground "Grey60"))
+  "Face used on faded out stuff."
+  :group 'paradox-menu
+  :group 'paradox-commit-list)
+(defface paradox-highlight-face
+  '((t :weight bold :inherit font-lock-variable-name-face))
+  "Face used on highlighted stuff."
+  :group 'paradox-menu
+  :group 'paradox-commit-list)
+
+
 ;;; Internal variables
 (defvar paradox--star-count nil)
 (defvar paradox--download-count nil)

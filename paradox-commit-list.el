@@ -57,6 +57,15 @@ Set it to \"%x\" for a more \"human\" date format."
   :group 'paradox-commit-list
   :package-version '(paradox . "1.2.3"))
 
+(defface paradox-commit-tag-face
+  '((t :foreground "goldenrod4"
+       :background "LemonChiffon1"
+       :box 1))
+  "Face used for tags on the commit list."
+  :group 'paradox-commit-list)
+
+
+;;; Variables
 (defvar paradox--commit-message-face nil
   "Face currently being used on commit messages.
 Gets dynamically changed to `font-lock-comment-face' on old commits.

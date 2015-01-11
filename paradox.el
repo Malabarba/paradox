@@ -253,22 +253,6 @@ If `paradox-lines-per-entry' = 1, the face
 `paradox-description-face' is used instead."
   :group 'paradox)
 
-(defface paradox-comment-face
-  '((((background light)) :foreground "Grey30")
-    (((background dark)) :foreground "Grey60"))
-  "Face used on faded out stuff."
-  :group 'paradox)
-(defface paradox-highlight-face
-  '((t :weight bold :inherit font-lock-variable-name-face))
-  "Face used on highlighted stuff."
-  :group 'paradox)
-
-(defface paradox-commit-tag-face
-  '((t :foreground "goldenrod4"
-       :background "LemonChiffon1"
-       :box 1))
-  "Face used for tags on the commit list."
-  :group 'paradox-commit-list)
 
 (defcustom paradox-execute-asynchronously 'ask
   "Whether the install/delete/upgrade should be asynchronous.

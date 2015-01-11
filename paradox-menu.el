@@ -25,6 +25,9 @@
 ;;; Code:
 (require 'package)
 (require 'paradox-core)
+(require 'paradox-github)
+(require 'paradox-commit-list)
+(require 'paradox-execute)
 
 (defgroup paradox-menu nil
   "Paradox Packages Menu configurations."
@@ -179,6 +182,8 @@ This button takes you to the package's homepage."
 
 (defvar desc-suffix nil)
 (defvar desc-prefix nil)
+
+(defvar paradox--commit-list-buffer "*Package Commit List*")
 
 
 ;;; Building the packages buffer.
@@ -459,15 +464,15 @@ fetching the list.")
      (mapcar #'car paradox--upgradeable-packages))
     (setq paradox--current-filter "Upgrade")))
 
-(defvar paradox--filter-map)
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
+(defvar paradox--filter-map)
 (define-prefix-command 'paradox--filter-map)
 (define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
 (define-key paradox-menu-mode-map "n" #'paradox-next-entry)
 (define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
 (define-key paradox-menu-mode-map "j" #'paradox-next-describe)
-(define-key paradox-menu-mode-map "f" #'paradox--filter-map)
+(define-key paradox-menu-mode-map "f" 'paradox--filter-map)
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
@@ -496,7 +501,7 @@ With prefix N, move to the N-th previous entry."
   "Move to next entry, which might not be the next line.
 With prefix N, move to the N-th next entry."
   (interactive "p")
-  (dotimes (it (abs n))
+  (dotimes (_ (abs n))
     (let ((d (cl-signum n)))
       (forward-line (if (> n 0) 1 0))
       (if (eobp) (forward-line -1))
@@ -644,7 +649,7 @@ nil) on the Packages buffer."
             (color-distance "black" fg))
          "black" "white"))))
 
-(defun paradox--update-mode-line-buffer-identification (total-lines)
+(defun paradox--update-mode-line-buffer-identification (_total-lines)
   "Update `mode-line-buffer-identification'.
 TOTAL-LINES is currently unused."
   (setq mode-line-buffer-identification
@@ -661,6 +666,13 @@ TOTAL-LINES is currently unused."
          `(paradox--current-filter
            "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
 
+(defvar sml/col-number)
+(defvar sml/numbers-separator)
+(defvar sml/col-number-format)
+(defvar sml/line-number-format)
+(defvar sml/position-construct)
+(declare-function sml/compile-position-construct "sml")
+(defvar sml/post-id-separator)
 (defun paradox--update-mode-line-front-space (total-lines)
   "Update `mode-line-front-space'.
 TOTAL-LINES is the number of lines in the buffer."
@@ -688,13 +700,6 @@ TOTAL-LINES is the number of lines in the buffer."
     (when (boundp sym)
       (set (make-local-variable sym) (cdr-safe x)))))
 
-(defun paradox--repo-alist ()
-  "List of known repos."
-  (cl-remove-duplicates
-   (remove nil
-           (--map (cdr-safe (assoc (car it) paradox--package-repo-list))
-                  package-alist))))
-
 (defun paradox--prettify-key-descriptor (desc)
   "Prettify DESC to be displayed as a help menu."
   (if (listp desc)
@@ -712,7 +717,7 @@ TOTAL-LINES is the number of lines in the buffer."
   (let (out)
     (while (search-forward-regexp
             "^ *\"full_name\" *: *\"\\(.*\\)\", *$" nil t)
-      (add-to-list 'out (match-string-no-properties 1)))
+      (push (match-string-no-properties 1) out))
     (goto-char (point-max))
     out))
 

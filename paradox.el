@@ -162,10 +162,6 @@ Please include your Emacs and paradox versions."
   :package-version '(paradox . "0.1"))
 
 
-;;; Internal Variables
-(defvar paradox--commit-list-buffer "*Package Commit List*")
-
-
 ;;; External Commands
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)

@@ -23,6 +23,7 @@
 
 
 ;;; Code:
+(require 'dash)
 (require 'package)
 (require 'paradox-core)
 (require 'paradox-github)
@@ -85,6 +86,7 @@ occurred during the execution:
   `noquery'   The NOQUERY argument given to `paradox-menu-execute'.")
 (put 'risky-local-variable-p 'paradox-after-execute-functions t)
 
+(declare-function paradox--generate-menu "paradox-menu")
 (defun paradox--refresh-package-buffer (_)
   "Refresh the *Packages* buffer, if it exists."
   (let ((buf (get-buffer "*Packages*")))
@@ -185,6 +187,7 @@ deleted, and activated packages, and errors."
            (cons 'activated activated)
            (cons 'error (nreverse errored)))))
 
+(defvar paradox--current-filter)
 (defun paradox--menu-execute-1 (&optional noquery)
   (let ((before-alist (paradox--repo-alist))
         install-list delete-list)
@@ -251,6 +254,15 @@ deleted, and activated packages, and errors."
                      package-archive-contents (pop x))
                (run-hook-with-args 'paradox-after-execute-functions (pop x))
                (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))))))))))
+
+
+;;; Aux functions
+(defun paradox--repo-alist ()
+  "List of known repos."
+  (cl-remove-duplicates
+   (remove nil
+           (--map (cdr-safe (assoc (car it) paradox--package-repo-list))
+                  package-alist))))
 
 (defun paradox--format-message (question-p install-list delete-list)
   "Format a message regarding a transaction.

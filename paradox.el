@@ -193,60 +193,6 @@ Please include your Emacs and paradox versions."
 (defvar paradox--column-name-download
   (if (char-displayable-p ?↓) "↓" "DC"))
 
-(defcustom paradox-github-token nil
-  "Access token to use for github actions.
-Currently, that means (un)starring repos.
-
-To generate an access token:
-  1. Visit the page https://github.com/settings/tokens/new and
-     login to github (if asked).
-  2. Give the token any name you want (Paradox, for instance).
-  3. The only permission we need is \"public_repo\", so unmark
-     all others.
-  4. Click on \"Generate Token\", copy the generated token, and
-     save it to this variable by writing
-         (setq paradox-github-token TOKEN)
-     somewhere in your configuration and evaluating it (or just
-     restart emacs).
-
-This is similar to how erc or jabber handle authentication in
-emacs, but the following disclaimer always worth reminding.
-
-DISCLAIMER
-When you save this variable, DON'T WRITE IT ANYWHERE PUBLIC. This
-token grants (very) limited access to your account.
-END DISCLAIMER
-
-Paradox will ask you whether you want github integration the
-first time you start it. If you answer \"no\", it will remember
-your choice via `customize-save-variable'. You can do this
-manually by setting this variable to t. Setting it to nil means
-it hasn't been configured yet."
-  :type '(choice (string :tag "Token")
-                 (const :tag "Disable" t)
-                 (const :tag "Ask me next time" nil))
-  :group 'paradox
-  :package-version '(paradox . "0.2"))
-
-(defcustom paradox-automatically-star 'unconfigured
-  "When you install new packages, should they be automatically starred?
-This variable has no effect if `paradox-github-token' isn't set
-to a string.
-
-Paradox is capable of automatically starring packages when you
-install them, and unstarring when you delete them. This only
-applies to actual installation/deletion, i.e. Paradox doesn't
-auto (un)star packages that were simply upgraded.
-
-If this variable is nil, this behaviour is disabled. \\<paradox-menu-mode-map>
-
-On the Package Menu, you can always manually star packages with \\[paradox-menu-mark-star-unstar]."
-  :type '(choice (const :tag "Yes." t)
-                 (const :tag "No." nil)
-                 (const :tag "Ask later." unconfigured))
-  :group 'paradox
-  :package-version '(paradox . "0.2"))
-
 (defcustom paradox-display-star-count t
   "If non-nil, adds a \"Star\" column to the Package Menu."
   :type 'boolean

@@ -981,30 +981,29 @@ Also increments the count for \"total\"."
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
-
 (defun paradox--refresh-star-count ()
-    "Download the star-count file and populate the respective variable."
-    (interactive)
-    (unwind-protect
-        (with-current-buffer
-        (url-retrieve-synchronously paradox--star-count-url)
+  "Download the star-count file and populate the respective variable."
+  (interactive)
+  (unwind-protect
+      (with-current-buffer
+          (url-retrieve-synchronously paradox--star-count-url)
         (when (search-forward "\n\n" nil t)
-            (setq paradox--star-count (read (current-buffer)))
-            (setq paradox--package-repo-list (read (current-buffer)))
-            (setq paradox--download-count (read (current-buffer))))
+          (setq paradox--star-count (read (current-buffer)))
+          (setq paradox--package-repo-list (read (current-buffer)))
+          (setq paradox--download-count (read (current-buffer))))
         (kill-buffer))
-        (unless (and (listp paradox--star-count)
-               (listp paradox--package-repo-list)
-               (listp paradox--download-count))
-        (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
-        (unless (listp paradox--download-count)
-        (setq paradox--download-count nil))
-        (unless (listp paradox--package-repo-list)
-        (setq paradox--package-repo-list nil))
-        (unless (listp paradox--star-count)
-        (setq paradox--star-count nil)))
-    (when (stringp paradox-github-token)
-        (paradox--refresh-user-starred-list)))
+    (unless (and (listp paradox--star-count)
+                 (listp paradox--package-repo-list)
+                 (listp paradox--download-count))
+      (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
+    (unless (listp paradox--download-count)
+      (setq paradox--download-count nil))
+    (unless (listp paradox--package-repo-list)
+      (setq paradox--package-repo-list nil))
+    (unless (listp paradox--star-count)
+      (setq paradox--star-count nil)))
+  (when (stringp paradox-github-token)
+    (paradox--refresh-user-starred-list)))
 
 (defun paradox--package-star-count (package)
   "Get the star count of PACKAGE."

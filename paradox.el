@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 2.0   - 2015/01/10 - New command `paradox-filter-clear'. Bound to `f c'.
 ;; 2.0   - 2015/01/10 - New hook `paradox-after-execute-functions'.
 ;; 2.0   - 2015/01/05 - Drop 24.3 support.
 ;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
@@ -421,6 +422,10 @@ Letters do not insert themselves; instead, they are commands.
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
 
+(defalias 'paradox-filter-clear #'package-show-package-list
+  "Clear current Package filter.
+Redisplay the Packages buffer listing all packages, without
+fetching the list.")
 (defvar paradox--filter-map)
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
@@ -442,6 +447,7 @@ Letters do not insert themselves; instead, they are commands.
 (define-key paradox--filter-map "r" #'occur)
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+(define-key paradox--filter-map "c" #'paradox-filter-clear)
 
 
 ;;; Menu Mode Commands
@@ -511,12 +517,10 @@ The full list of keys can be viewed with \\[describe-mode]."
   "Bury this buffer and close the window.
 With prefix KILL, kill the buffer instead of burying."
   (interactive "P")
-  (if paradox--current-filter
-      (package-show-package-list)
-    (let ((log (get-buffer-window paradox--commit-list-buffer)))
-      (when (window-live-p log)
-        (quit-window kill log))
-      (quit-window kill))))
+  (let ((log (get-buffer-window paradox--commit-list-buffer)))
+    (when (window-live-p log)
+      (quit-window kill log))
+    (quit-window kill)))
 
 (defun paradox-menu-visit-homepage (pkg)
   "Visit the homepage of package named PKG.

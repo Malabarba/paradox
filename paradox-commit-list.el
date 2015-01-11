@@ -23,7 +23,10 @@
 
 
 ;;; Code:
+(require 'package)
+(require 'dash)
 
+(require 'paradox-github)
 
 (defgroup paradox-commit-list nil
   "Buffer used by paradox to list commits for a package."
@@ -150,8 +153,8 @@ nil means `default'.")
      (mapcar (lambda (m) (list x (vector "" (propertize m 'face paradox--commit-message-face))))
        (cdr title)))))
 
-(defun paradox--version<= (date version package-version)
-  "Non-nil if commit at DATE tagged with VERSION is older or equal to PACKAGE-VERSION."
+(defun paradox--version<= (date version)
+  "Non-nil if commit at DATE tagged with VERSION is older or equal to `paradox--package-version'."
   ;; Melpa date-like versions
   (if (listp paradox--package-version)
       ;; Installed date >= to commit date
@@ -167,7 +170,7 @@ nil means `default'.")
 
 
 ;;; Commands
-(defun paradox-commit-list-visit-commit (&optional ignore)
+(defun paradox-commit-list-visit-commit (&optional _)
   "Visit this commit on GitHub.
 IGNORE is ignored."
   (interactive)
@@ -184,7 +187,7 @@ With prefix N, move to the N-th previous commit."
   "Move to next commit, which might not be the next line.
 With prefix N, move to the N-th next commit."
   (interactive "p")
-  (dotimes (it (abs n))
+  (dotimes (_ (abs n))
     (let ((d (cl-signum n)))
       (forward-line d)
       (while (looking-at "  +")
@@ -210,6 +213,7 @@ Letters do not insert themselves; instead, they are commands.
 (define-key paradox-commit-list-mode-map "" #'paradox-commit-list-visit-commit)
 (define-key paradox-commit-list-mode-map "p" #'paradox-previous-commit)
 (define-key paradox-commit-list-mode-map "n" #'paradox-next-commit)
+
 
 (provide 'paradox-commit-list)
 ;;; paradox-commit-list.el ends here.

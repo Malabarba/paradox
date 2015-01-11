@@ -137,6 +137,9 @@
 (require 'package)
 (require 'cl-lib)
 (require 'dash)
+
+(require 'paradox-core)
+
 (defconst paradox-version "2.0" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser. Please send any bugs you find.
@@ -280,31 +283,10 @@ Possible values are:
 
 
 ;;; Internal Variables
-(defvar paradox--star-count nil)
-(defvar paradox--download-count nil)
-(defvar paradox--package-repo-list nil)
-
-(defvar paradox--star-count-url
-  "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
-  "Address of the raw star-count file.")
-
-(defvar paradox--package-count
-  '(("total" . 0) ("built-in" . 0)
-    ("obsolete" . 0) ("deleted" . 0)
-    ("available" . 0) ("new" . 0)
-    ("held" . 0) ("disabled" . 0)
-    ("installed" . 0) ("unsigned" . 0)))
-
 (defvar paradox--current-filter nil)
 (make-variable-buffer-local 'paradox--current-filter)
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
-
-(defvar paradox--truncate-string-to-width-backup)
-
-(defmacro paradox--cas (string)
-  "Same as (cdr (assoc-string ,STRING paradox--package-count))."
-  `(cdr (assoc-string ,string paradox--package-count)))
 
 (defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
   "Address of the raw data file.")
@@ -880,17 +862,6 @@ This button takes you to the package's homepage."
 
 
 ;;; Building the packages buffer.
-(defun paradox--truncate-string-to-width (&rest args)
-  "Like `truncate-string-to-width', but uses \"…\" on package buffer.
-All arguments STR, END-COLUMN, START-COLUMN, PADDING, and
-ELLIPSIS are passed to `truncate-string-to-width'.
-
-\(fn STR END-COLUMN &optional START-COLUMN PADDING ELLIPSIS)"
-  (when (and (eq major-mode 'paradox-menu-mode)
-             (eq t (nth 4 args)))
-    (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
-  (apply paradox--truncate-string-to-width-backup args))
-
 (defvar paradox--upgradeable-packages nil)
 (defvar paradox--upgradeable-packages-number nil)
 (defvar paradox--upgradeable-packages-any? nil)

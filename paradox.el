@@ -792,11 +792,6 @@ not prevent downloading the actual packages (obviously)."
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode)
   (paradox--core-enable))
 
-;;; Right now this is trivial, but we leave it as function so it's easy to improve.
-(defun paradox--active-p ()
-  "Non-nil if paradox has been activated."
-  paradox--backups)
-
 
 ;;; `paradox-menu-mode' configuration
 (defcustom paradox-status-face-alist

@@ -1380,8 +1380,7 @@ Return value is always a list.
   "Check that the user has either set or refused the github token.
 If neither has happened, ask the user now whether he'd like to
 configure or refuse the token."
-  (if (stringp
-       paradox-github-token) t
+  (if (stringp paradox-github-token) t
     (if paradox-github-token
         t
       (if (not (y-or-n-p "Would you like to set up GitHub integration?

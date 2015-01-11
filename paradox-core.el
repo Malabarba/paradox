@@ -59,6 +59,33 @@ ELLIPSIS are passed to `truncate-string-to-width'.
     (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
   (apply paradox--truncate-string-to-width-backup args))
 
+
+;;; Overriding definitions
+(defun paradox--core-enable ()
+  "Enable core features."
+  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width))
+
+(defvar paradox--backups nil)
+
+(defun paradox-disable ()
+  "Disable paradox, and go back to regular package-menu."
+  (interactive)
+  (dolist (it paradox--backups)
+    (message "Restoring %s to %s" (car it) (eval (cdr it)))
+    (fset (car it) (eval (cdr it))))
+  (setq paradox--backups nil))
+
+(defun paradox--override-definition (sym newdef)
+  "Temporarily override SYM's function definition with NEWDEF.
+The original definition is saved to paradox--SYM-backup."
+  (let ((backup-name (intern (format "paradox--%s-backup" sym)))
+        (def (symbol-function sym)))
+    (unless (assoc sym paradox--backups)
+      (message "Overriding %s with %s" sym newdef)
+      (eval (list 'defvar backup-name nil))
+      (add-to-list 'paradox--backups (cons sym backup-name))
+      (set backup-name def)
+      (fset sym newdef))))
 
 (provide 'paradox-core)
 ;;; paradox-core.el ends here.

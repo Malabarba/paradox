@@ -789,30 +789,8 @@ not prevent downloading the actual packages (obviously)."
   (interactive)
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
-  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width)
-  (paradox--override-definition 'package-menu-mode 'paradox-menu-mode))
-
-(defvar paradox--backups nil)
-
-(defun paradox-disable ()
-  "Disable paradox, and go back to regular package-menu."
-  (interactive)
-  (dolist (it paradox--backups)
-    (message "Restoring %s to %s" (car it) (eval (cdr it)))
-    (fset (car it) (eval (cdr it))))
-  (setq paradox--backups nil))
-
-(defun paradox--override-definition (sym newdef)
-  "Temporarily override SYM's function definition with NEWDEF.
-The original definition is saved to paradox--SYM-backup."
-  (let ((backup-name (intern (format "paradox--%s-backup" sym)))
-        (def (symbol-function sym)))
-    (unless (assoc sym paradox--backups)
-      (message "Overriding %s with %s" sym newdef)
-      (eval (list 'defvar backup-name nil))
-      (add-to-list 'paradox--backups (cons sym backup-name))
-      (set backup-name def)
-      (fset sym newdef))))
+  (paradox--override-definition 'package-menu-mode 'paradox-menu-mode)
+  (paradox--core-enable))
 
 ;;; Right now this is trivial, but we leave it as function so it's easy to improve.
 (defun paradox--active-p ()

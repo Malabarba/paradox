@@ -1477,7 +1477,7 @@ PKG is a symbol. Interactively it is the package under point."
       (let ((version (package-desc-version desc)))
         (if (> (car version) 19000000)
             (date-to-time
-             (format "%8dT%2d:%2d"
+             (format "%8dT%02d:%02d"
                (car version)
                (/ (cadr version) 100)
                (% (cadr version) 100)))

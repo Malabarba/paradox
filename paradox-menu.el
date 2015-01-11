@@ -558,10 +558,9 @@ PKG is a symbol. Interactively it is the package under point."
                (propertize (symbol-name pkg)
                            'face 'font-lock-keyword-face)))))
 
-(defun paradox-menu-mark-star-unstar (&optional n)
-  "Star or unstar a package and move to the next line.
-With prefix N, mark N packages."
-  (interactive "p")
+(defun paradox-menu-mark-star-unstar ()
+  "Star or unstar a package and move to the next line."
+  (interactive)
   (paradox--enforce-github-token
    (unless paradox--user-starred-list
      (paradox--refresh-user-starred-list))

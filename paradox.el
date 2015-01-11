@@ -99,6 +99,7 @@
 ;;
 
 ;;; Change Log:
+;; 2.0   - 2015/01/11 - paradox-menu-mark-star-unstar no longer takes a prefix argument.
 ;; 2.0   - 2015/01/10 - New command `paradox-filter-clear'. Bound to `f c'.
 ;; 2.0   - 2015/01/10 - New hook `paradox-after-execute-functions'.
 ;; 2.0   - 2015/01/05 - Drop 24.3 support.

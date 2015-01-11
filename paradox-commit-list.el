@@ -25,6 +25,12 @@
 ;;; Code:
 
 
+(defgroup paradox-commit-list nil
+  "Buffer used by paradox to list commits for a package."
+  :prefix "paradox-"
+  :package-version '(paradox . "2.0")
+  :group 'paradox)
+
 
 ;;; Variables
 (defcustom paradox-commit-list-query-max-pages 1
@@ -36,7 +42,7 @@ Increasing this number consequently multiplies the time it takes
 to load the commit list on repos which actually use that many
 pages."
   :type 'integer
-  :group 'paradox
+  :group 'paradox-commit-list
   :package-version '(paradox . "1.2.3"))
 
 (defcustom paradox-date-format "%Y-%m-%d"

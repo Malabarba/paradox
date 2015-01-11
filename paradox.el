@@ -154,11 +154,6 @@ Please include your Emacs and paradox versions."
   :prefix "paradox-"
   :group 'emacs
   :package-version '(paradox . "0.1"))
-(defgroup paradox-commit-list nil
-  "Customization group for paradox."
-  :prefix "paradox-"
-  :group 'paradox
-  :package-version '(paradox . "1.2.3"))
 
 
 ;;; Customization Variables

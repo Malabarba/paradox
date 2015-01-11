@@ -1,4 +1,4 @@
-;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable.
+;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable. -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2014-2015 Artur Malabarba <bruce.connor.am@gmail.com>
 

@@ -288,9 +288,6 @@ Possible values are:
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
 
-(defvar paradox--data-url "https://raw.github.com/Bruce-Connor/paradox/data/full"
-  "Address of the raw data file.")
-
 
 ;;; Mode Definition
 (define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
@@ -780,7 +777,6 @@ not prevent downloading the actual packages (obviously)."
   (interactive "P")
   (save-window-excursion
     (paradox-list-packages no-fetch)
-    (paradox-filter-upgrades)
     (package-menu-mark-upgrades)
     (paradox-menu-execute 'noquery)))
 

@@ -426,6 +426,16 @@ Letters do not insert themselves; instead, they are commands.
   "Clear current Package filter.
 Redisplay the Packages buffer listing all packages, without
 fetching the list.")
+
+(defun paradox-filter-upgrades ()
+  "Show only upgradable packages."
+  (interactive)
+  (if (null paradox--upgradeable-packages)
+      (message "No packages have upgrades.")
+    (package-show-package-list
+     (mapcar #'car paradox--upgradeable-packages))
+    (setq paradox--current-filter "Upgrade")))
+
 (defvar paradox--filter-map)
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (define-prefix-command 'paradox--filter-map)
@@ -482,15 +492,6 @@ With prefix N, move to the N-th previous package instead."
   (interactive "p")
   (paradox-previous-entry n)
   (call-interactively 'package-menu-describe-package))
-
-(defun paradox-filter-upgrades ()
-  "Show only upgradable packages."
-  (interactive)
-  (if (null paradox--upgradeable-packages)
-      (message "No packages have upgrades.")
-    (package-show-package-list
-     (mapcar #'car paradox--upgradeable-packages))
-    (setq paradox--current-filter "Upgrade")))
 
 (defun paradox-push-button ()
   "Push button under point, or describe package."

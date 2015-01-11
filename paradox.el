@@ -981,7 +981,6 @@ Also increments the count for \"total\"."
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
-(defvar paradox--user-starred-list nil)
 
 (defun paradox--refresh-star-count ()
     "Download the star-count file and populate the respective variable."

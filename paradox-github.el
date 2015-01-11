@@ -23,16 +23,19 @@
 
 
 ;;; Code:
+(require 'package)
+(require 'paradox-core)
 
-
-
-;;; Github token
 (defgroup paradox-github nil
   "Paradox Github configurations."
   :prefix "paradox-"
   :package-version '(paradox . "2.0")
   :group 'paradox)
 
+(defvar paradox--user-starred-list nil)
+
+
+;;; Github token
 (defcustom paradox-github-token nil
   "Access token to use for github actions.
 Currently, that means (un)starring repos.

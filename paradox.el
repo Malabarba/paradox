@@ -1,6 +1,6 @@
 ;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable.
 
-;; Copyright (C) 2014 Artur Malabarba <bruce.connor.am@gmail.com>
+;; Copyright (C) 2014-2015 Artur Malabarba <bruce.connor.am@gmail.com>
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 ;; URL: http://github.com/Bruce-Connor/paradox

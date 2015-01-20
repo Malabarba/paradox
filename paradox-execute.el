@@ -118,11 +118,15 @@ situation."
             (insert "Errors:\n  " (mapconcat #'cdr .error "\n ") "\n\n"))
           (when .installed
             (insert "Installed:\n  "
-                    (mapconcat (lambda (x) (symbol-name (package-desc-name x))) .installed "\n  ")
+                    (mapconcat
+                     #'paradox--format-package-name-and-version
+                     .installed "\n  ")
                     "\n\n"))
           (when .deleted
             (insert "Deleted:\n  "
-                    (mapconcat (lambda (x) (symbol-name (package-desc-name x))) .deleted "\n  ")
+                    (mapconcat
+                     #'paradox--format-package-name-and-version
+                     .deleted "\n  ")
                     "\n\n"))))
       (cond
        ;; The user has never seen the packages in this transaction. So
@@ -138,6 +142,11 @@ situation."
            "%s See the buffer *Paradox Report* for more details."
            (paradox--format-message nil .installed .deleted)))))))
 
+(defun paradox--format-package-name-and-version (pkg)
+  "Return a string describing PKG name and version."
+  (concat (symbol-name (package-desc-name pkg))
+          " "
+          (mapconcat #'number-to-string (package-desc-version pkg) ".")))
 
 ;;; Execution
 (defun paradox-menu-execute (&optional noquery)

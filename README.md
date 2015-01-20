@@ -63,6 +63,30 @@ And some more...
     * Customize local variables.
 
 
+### Execution Hook ###
+
+Paradox defines a hook called `paradox-after-execute-hook`. Functions
+added to this hook are run whenever packages are installed, deleted,
+or upgraded. This is used to implement part of the Paradox
+functionality, which makes it very easy to customize and extend.
+
+- A full report is available at the *\*Paradox Report\** buffer. You
+  can disable this feature with:
+
+        (remove-hook 'paradox--report-buffer-print 'paradox-after-execute-functions)
+
+- If the upgrade was performed without querying the user (which
+  happens when `paradox-execute` is called with a prefix argument),
+  then the report buffer is displayed at the end.  
+  You can disable this feature with:
+
+        (remove-hook 'paradox--report-buffer-display-if-noquery 'paradox-after-execute-functions)
+
+- A message is printed in the echo area with a brief summary of the
+  transaction. You can disable this feature with:
+
+        (remove-hook 'paradox--report-message 'paradox-after-execute-functions)
+
 ### Package Ratings ###
 
 Paradox also integrates with

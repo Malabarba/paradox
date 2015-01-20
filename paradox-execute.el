@@ -65,7 +65,9 @@ NOQUERY argument. Otherwise, only a message is displayed."
 (defvar paradox-after-execute-functions
   '(paradox--activate-if-asynchronous
     paradox--refresh-package-buffer
-    paradox--report
+    paradox--report-buffer-print
+    paradox--report-buffer-display-if-noquery
+    paradox--report-message
     )
   "List of functions run after performing package transactions.
 These are run after a set of installation, deletion, or upgrades
@@ -100,7 +102,7 @@ occurred during the execution:
     (when .async
       (mapc #'package-activate-1 .activated))))
 
-(defun paradox--report (alist)
+(defun paradox--report-buffer-print (alist)
   "Print a transaction report in *Package Report* buffer.
 Possibly display the buffer or message the user depending on the
 situation."
@@ -127,20 +129,36 @@ situation."
                     (mapconcat
                      #'paradox--format-package-name-and-version
                      .deleted "\n  ")
-                    "\n\n"))))
-      (cond
-       ;; The user has never seen the packages in this transaction. So
-       ;; we display them in a buffer.
-       ((and .noquery (not .async)) (pop-to-buffer buf))
-       ;; If we're async, the user might be doing something else, so
-       ;; we don't steal focus.
-       ((and .noquery .async paradox-async-display-buffer-function)
-        (funcall paradox-async-display-buffer-function buf))
-       ;; The user was asked for confirmation, so they know what's
-       ;; going on. We just report conclusion.
-       (t (message
-           "%s See the buffer *Paradox Report* for more details."
-           (paradox--format-message nil .installed .deleted)))))))
+                    "\n\n")))))))
+
+(defun paradox--report-buffer-display-if-noquery (alist)
+  "Display report buffer if `paradox-execute' was called with a NOQUERY prefix.
+ALIST describes the transaction.
+`paradox-async-display-buffer-function' is used if transaction
+was asynchronous. Otherwise, `pop-to-buffer' is used."
+  (let-alist alist
+    ;; The user has never seen the packages in this transaction. So
+    ;; we display them in a buffer.
+    (when .noquery
+      (let ((buf (get-buffer "*Paradox Report*")))
+        (when (buffer-live-p buf)
+          (cond
+           ;; If we're async, the user might be doing something else, so
+           ;; we don't steal focus.
+           ((and .async paradox-async-display-buffer-function)
+            (funcall paradox-async-display-buffer-function buf))
+           ;; If we're not async, just go ahead and pop.
+           ((not .async)
+            (pop-to-buffer buf))))))))
+
+(defun paradox--report-message (alist)
+  "Message the user about the executed transaction.
+ALIST describes the transaction."
+  (let-alist alist
+    (message "%s%s"
+      (paradox--format-message nil .installed .deleted)
+      (if (memq 'paradox--report-buffer-print paradox-after-execute-functions)
+          " See the buffer *Paradox Report* for more details." ""))))
 
 (defun paradox--format-package-name-and-version (pkg)
   "Return a string describing PKG name and version."

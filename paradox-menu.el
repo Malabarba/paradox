@@ -662,7 +662,9 @@ TOTAL-LINES is currently unused."
            (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))
          '(package-menu--new-package-list
            (:eval (paradox--build-buffer-id " New:" (paradox--cas "new"))))
-         (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed") (paradox--cas "unsigned")))
+         (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed")
+                                                    (paradox--cas "dependency")
+                                                    (paradox--cas "unsigned")))
          `(paradox--current-filter
            "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
 

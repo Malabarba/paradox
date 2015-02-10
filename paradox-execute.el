@@ -143,7 +143,7 @@ was asynchronous. Otherwise, `pop-to-buffer' is used."
   (let-alist alist
     ;; The user has never seen the packages in this transaction. So
     ;; we display them in a buffer.
-    (when .noquery
+    (when (or .noquery .error)
       (let ((buf (get-buffer "*Paradox Report*")))
         (when (buffer-live-p buf)
           (cond
@@ -152,7 +152,10 @@ was asynchronous. Otherwise, `pop-to-buffer' is used."
            ((and .async paradox-async-display-buffer-function)
             (funcall paradox-async-display-buffer-function buf))
            ;; If we're not async, just go ahead and pop.
-           ((not .async)
+           ((or (not .async)
+                ;; If there's an error, display the buffer even if
+                ;; `paradox-async-display-buffer-function' is nil.
+                .error)
             (pop-to-buffer buf))))))))
 
 (defun paradox--report-message (alist)

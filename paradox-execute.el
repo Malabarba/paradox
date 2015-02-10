@@ -117,7 +117,11 @@ situation."
         (save-excursion
           (insert (format-time-string "Package transaction finished. %c\n"))
           (when .error
-            (insert "Errors:\n  " (mapconcat #'cdr .error "\n ") "\n\n"))
+            (insert "Errors:\n  ")
+            (dolist (it .error)
+              (princ it (current-buffer))
+              (insert "\n"))
+            (insert "\n\n"))
           (when .installed
             (insert "Installed:\n  "
                     (mapconcat

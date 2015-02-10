@@ -162,7 +162,12 @@ ALIST describes the transaction."
     (message "%s%s"
       (paradox--format-message nil .installed .deleted)
       (if (memq 'paradox--report-buffer-print paradox-after-execute-functions)
-          " See the buffer *Paradox Report* for more details." ""))))
+          " See the buffer *Paradox Report* for more details." ""))
+    (when .errors
+      (message "Errors encountered during the operation: %S\n%s"
+        .errors
+        (if (memq 'paradox--report-buffer-print paradox-after-execute-functions)
+            " See the buffer *Paradox Report* for more details." "")))))
 
 (defun paradox--format-package-name-and-version (pkg)
   "Return a string describing PKG name and version."

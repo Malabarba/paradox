@@ -134,7 +134,7 @@ nil means `default'.")
     (unless (or paradox--commit-message-face
                 (equal '(0) paradox--package-version))
       ;; Is this where we cross to old commits?
-      (when (paradox--version<= date tag paradox--package-version)
+      (when (paradox--version<= date tag)
         (setq paradox--commit-message-face 'paradox-comment-face)))
     ;; Return the tabulated list entry.
     (cons

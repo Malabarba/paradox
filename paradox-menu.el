@@ -131,6 +131,7 @@ If `paradox-lines-per-entry' = 1, the face
     ("held"      . font-lock-constant-face)
     ("disabled"  . font-lock-warning-face)
     ("installed" . font-lock-comment-face)
+    ("dependency" . font-lock-comment-face)
     ("deleted"   . font-lock-comment-face)
     ("unsigned"  . font-lock-warning-face))
   "List of (\"STATUS\" . FACE) cons cells.
@@ -139,7 +140,7 @@ Version, Status, and Description columns of each package whose
 status is STATUS."
   :type '(repeat (cons string face))
   :group 'paradox-menu
-  :package-version '(paradox . "0.2"))
+  :package-version '(paradox . "2.0"))
 
 (defcustom paradox-homepage-button-string "h"
   "String used to for the link that takes you to a package's homepage."

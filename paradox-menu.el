@@ -132,6 +132,7 @@ If `paradox-lines-per-entry' = 1, the face
     ("disabled"  . font-lock-warning-face)
     ("installed" . font-lock-comment-face)
     ("dependency" . font-lock-comment-face)
+    ("incompat"  . font-lock-comment-face)
     ("deleted"   . font-lock-comment-face)
     ("unsigned"  . font-lock-warning-face))
   "List of (\"STATUS\" . FACE) cons cells.

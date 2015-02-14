@@ -104,7 +104,7 @@
   "Face used on the star column, for packages you haven't starred."
   :group 'paradox)
 (defface paradox-starred-face
-  '((t :weight bold :inherit paradox-star-face))
+  '((t :inherit font-lock-variable-name-face))
   "Face used on the star column, for packages you have starred."
   :group 'paradox)
 (defface paradox-download-face

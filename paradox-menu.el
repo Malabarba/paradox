@@ -420,10 +420,10 @@ Letters do not insert themselves; instead, they are commands.
         (paradox--column-index paradox--column-name-download))
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
-  ;; (add-hook 'tabulated-list-revert-hook 'package-menu--refresh nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox-refresh-upgradeable-packages nil t)
-  ;; (add-hook 'tabulated-list-revert-hook 'paradox--refresh-star-count nil t)
-  (add-hook 'tabulated-list-revert-hook 'paradox--update-mode-line nil t)
+  (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
+  ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-star-count nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line nil t)
   (tabulated-list-init-header)
   ;; We need package-menu-mode to be our parent, otherwise some
   ;; commands throw errors. But we can't actually derive from it,

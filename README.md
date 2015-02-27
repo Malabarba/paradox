@@ -1,6 +1,8 @@
 Paradox
 =======
 
+[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba) 
+
 Project for modernizing Emacs' Package Menu. With package ratings,
 usage statistics, customizability, and more.
 

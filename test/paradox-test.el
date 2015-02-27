@@ -1,3 +1,10 @@
+(unless (bound-and-true-p package--initialized)
+  (setq
+   package-user-dir (expand-file-name
+                     (format "../.cask/%s/elpa" emacs-version)
+                     (file-name-directory load-file-name)))
+
+  (package-initialize))
 
 (require 'ert)
 (require 'paradox)
@@ -32,6 +39,6 @@
 (ert-deftest sanity ()
   ""
   (let ((paradox-github-token t))
-    (should (paradox-list-packages)))
+    (should (progn (paradox-list-packages) t)))
   (let ((paradox-github-token "okokok"))
     (should-error (paradox-list-packages))))

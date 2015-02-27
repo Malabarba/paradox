@@ -187,18 +187,16 @@ Return value is always a list.
 - If READER is nil, the result of the action is completely
   ignored (no pagination is performed on this case, making it
   much faster).
-- Otherwise:
-  - If the result was a 404, the function returns nil;
-  - Otherwise, READER is called as a function with point right
-    after the headers and should always return a list. As a
-    special exception, if READER is t, it is equivalent to a
-    function that returns (t)."
+- Otherwise, READER is called as a function with point right
+  after the headers and should always return a list. As a special
+  exception, if READER is t, it is equivalent to a function that
+  returns (t)."
   ;; Make sure the token's configured.
   (unless (string-match "\\`https?://" action)
     (setq action (concat "https://api.github.com/" action)))
   ;; Make the request
   (message "Contacting %s" action)
-  (let ((pages (if (boundp 'pages) (1+ pages) 1)) next)
+  (let (next)
     (append
      (with-temp-buffer
        (save-excursion
@@ -213,19 +211,22 @@ Return value is always a list.
          (unless (search-forward " " nil t)
            (message "%s" (buffer-string))
            (error ""))
-         ;; 204 means OK, but no content.
-         (if (looking-at "204") '(t)
-           ;; 404 is not found.
-           (if (looking-at "404") nil
-             ;; Anything else gets interpreted.
-             (when (search-forward-regexp "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
-               (setq next (match-string-no-properties 1)))
-             (search-forward-regexp "^?$")
-             (skip-chars-forward "[:blank:]\n")
-             (delete-region (point-min) (point))
-             (unless (eobp) (if (eq reader t) t (funcall reader)))))))
-     (when (and next (or (null max-pages) (< pages max-pages)))
-       (paradox--github-action next method reader)))))
+         (cl-case (thing-at-point 'number)
+           (204 '(t)) ;; OK, but no content.
+           (404 nil) ;; Not found.
+           (200 ;; Good.
+            (when (search-forward-regexp
+                   "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
+              (setq next (match-string-no-properties 1)))
+            (search-forward-regexp "^?$")
+            (skip-chars-forward "[:blank:]\n")
+            (delete-region (point-min) (point))
+            (unless (eobp) (if (eq reader t) t (funcall reader))))
+           (t (error "Github returned: %s" (thing-at-point 'line))))))
+     (unless (or (not next) (and max-pages (< max-pages 2)))
+       (paradox--github-action
+        next method reader
+        (when max-pages (1- max-pages)))))))
 
 (provide 'paradox-github)
 ;;; paradox-github.el ends here.

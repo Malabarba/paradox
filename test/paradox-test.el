@@ -39,6 +39,6 @@
 (ert-deftest sanity ()
   ""
   (let ((paradox-github-token t))
-    (should (progn (paradox-list-packages) t)))
+    (should (progn (paradox-list-packages nil) t)))
   (let ((paradox-github-token "okokok"))
-    (should-error (paradox-list-packages))))
+    (should-error (paradox-list-packages nil))))

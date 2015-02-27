@@ -3,8 +3,9 @@ Paradox [![Build Status](https://secure.travis-ci.org/Bruce-Connor/paradox.png?b
 
 [![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba) 
 
-Project for modernizing Emacs' Package Menu. With package ratings,
-usage statistics, customizability, and more.
+Project for modernizing Emacs' Package Menu. With improved appearance,
+mode-line information. Github integration, customizability,
+asynchronous upgrading, and more.
 
 Here are some visual comparisons:
 
@@ -21,8 +22,10 @@ Here are some visual comparisons:
 Usage
 ===
 
-Paradox can be installed from Melpa with `M-x package-install RET
-paradox`.  
+Paradox can be installed from Melpa with 
+
+    M-x package-install RET paradox
+
 It can also be installed manually in the usual way, just be mindful of
 the dependencies.
 
@@ -34,7 +37,8 @@ able to star packages as well, just configure the
 again.
 
 If you'd like to stop using Paradox, you may call `paradox-disable`
-and go back to using the regular `list-packages`.
+(or just restart Emacs) and go back to using the regular
+`list-packages`.
 
 ## Current Features ##
 

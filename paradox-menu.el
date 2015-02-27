@@ -464,7 +464,8 @@ fetching the list.")
       (message "No packages have upgrades.")
     (package-show-package-list
      (mapcar #'car paradox--upgradeable-packages))
-    (setq paradox--current-filter "Upgrade")))
+    (setq paradox--current-filter "Upgrade")
+    (paradox-sort-by-package nil)))
 
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (defvar paradox--filter-map)

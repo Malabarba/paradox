@@ -1,4 +1,4 @@
-Paradox
+Paradox [![Build Status](https://secure.travis-ci.org/Bruce-Connor/paradox.png?branch=master)](http://travis-ci.org/Bruce-Connor/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
 =======
 
 [![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba) 

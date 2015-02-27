@@ -41,4 +41,4 @@
   (let ((paradox-github-token t))
     (should (progn (paradox-list-packages nil) t)))
   (let ((paradox-github-token "okokok"))
-    (should-error (paradox-list-packages nil))))
+    (should (progn (paradox-list-packages nil) t))))

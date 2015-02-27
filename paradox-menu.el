@@ -170,10 +170,10 @@ This button takes you to the package's homepage."
 (defvar-local paradox--current-filter nil)
 
 (defvar paradox--column-name-star
-  (if (char-displayable-p ?★) "★" "*"))
+  (if (char-displayable-p ?\x2605) "\x2605" "*"))
 
 (defvar paradox--column-name-download
-  (if (char-displayable-p ?↓) "↓" "DC"))
+  (if (char-displayable-p ?\x2193) "\x2193" "DC"))
 
 (defvar paradox--upgradeable-packages nil)
 (defvar paradox--upgradeable-packages-number nil)

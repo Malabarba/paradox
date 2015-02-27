@@ -370,7 +370,16 @@ shown."
   (paradox--update-mode-line)
   (paradox-refresh-upgradeable-packages))
 
-(defalias 'paradox-menu--refresh 'package-menu--refresh)
+(defun paradox-menu--refresh (&optional packages keywords)
+  "Call `package-menu--refresh' retaining current filter."
+  (cond
+   ((or packages keywords (not paradox--current-filter))
+    (package-menu--refresh packages keywords))
+   ((string= paradox--current-filter "Upgrade")
+    (paradox-filter-upgrades))
+   (t
+    (paradox-menu--refresh
+     packages (split-string keyword ",")))))
 
 (defun paradox--column-index (regexp)
   "Find the index of the column that matches REGEXP."
@@ -420,7 +429,7 @@ Letters do not insert themselves; instead, they are commands.
         (paradox--column-index paradox--column-name-download))
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Status" nil))
-  (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox-menu--refresh nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
   ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-star-count nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line nil t)

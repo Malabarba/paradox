@@ -102,6 +102,22 @@ occurred during the execution:
     (when .async
       (mapc #'package-activate-1 .activated))))
 
+(defun paradox--print-package-list (list)
+  "Print LIST at point."
+  (let* ((width (apply #'max
+                  (mapcar (lambda (x) (string-width (symbol-name (package-desc-name x))))
+                          list)))
+         (tabulated-list-format
+          `[("Package" ,(1+ width) nil)
+            ("Version" 0 nil)])
+         (tabulated-list-padding 2))
+    (mapc
+     (lambda (p) (tabulated-list-print-entry
+             p
+             `[,(symbol-name (package-desc-name p))
+               ,(mapconcat #'number-to-string (package-desc-version p) ".")]))
+     list)))
+
 (defun paradox--report-buffer-print (alist)
   "Print a transaction report in *Package Report* buffer.
 Possibly display the buffer or message the user depending on the
@@ -123,17 +139,13 @@ situation."
               (insert "\n"))
             (insert "\n\n"))
           (when .installed
-            (insert "Installed:\n  "
-                    (mapconcat
-                     #'paradox--format-package-name-and-version
-                     .installed "\n  ")
-                    "\n\n"))
+            (insert  "Installed:\n")
+            (paradox--print-package-list .installed)
+            (insert "\n"))
           (when .deleted
-            (insert "Deleted:\n  "
-                    (mapconcat
-                     #'paradox--format-package-name-and-version
-                     .deleted "\n  ")
-                    "\n\n")))))))
+            (insert  "Deleted:\n")
+            (paradox--print-package-list .deleted)
+            (insert "\n")))))))
 
 (defun paradox--report-buffer-display-if-noquery (alist)
   "Display report buffer if `paradox-execute' was called with a NOQUERY prefix.
@@ -172,11 +184,6 @@ ALIST describes the transaction."
         (if (memq 'paradox--report-buffer-print paradox-after-execute-functions)
             " See the buffer *Paradox Report* for more details." "")))))
 
-(defun paradox--format-package-name-and-version (pkg)
-  "Return a string describing PKG name and version."
-  (concat (symbol-name (package-desc-name pkg))
-          " "
-          (mapconcat #'number-to-string (package-desc-version pkg) ".")))
 
 ;;; Execution
 (defun paradox-menu-execute (&optional noquery)

@@ -33,7 +33,7 @@
 (eval-when-compile (require 'cl))
 
 (defcustom paradox-melpa-directory
-  (expand-file-name "~/Git-Projects/melpa/")
+  (expand-file-name "~/.melpa/")
   "Directory with melpa package recipes."
   :type 'directory
   :group 'paradox)
@@ -82,7 +82,7 @@ Also saves result to `package-star-count'"
            (files (directory-files recipes-dir t "\\`[^\\.]"))
            (N (length files)))
       (dolist (file files)
-        (message "%s / %s" (incf i) N)
+        (paradox-log "%s / %s" (incf i) N)
         (insert-file-contents file)
         (let ((package (read (buffer-string)))
               repo)
@@ -96,7 +96,10 @@ Also saves result to `package-star-count'"
   (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
-  (apply 'message s))
+  (princ (apply #'format s) t))
+
+(defun paradox-error (&rest s)
+  (apply #'message s))
 
 (defun paradox-list-to-file ()
   "Save lists in \"data\" file."
@@ -111,7 +114,7 @@ Also saves result to `package-star-count'"
                         (format "repos/%s" repo)
                         nil #'json-read)))))
     (unless (numberp sc)
-      (paradox-log "%s	%s" repo sc))
+      (paradox-error "%s	%s" repo sc))
     sc))
 
 (provide 'paradox-counter)

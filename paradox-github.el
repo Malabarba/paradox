@@ -195,7 +195,6 @@ Return value is always a list.
   (unless (string-match "\\`https?://" action)
     (setq action (concat "https://api.github.com/" action)))
   ;; Make the request
-  (message "Contacting %s" action)
   (let (next)
     (append
      (with-temp-buffer
@@ -209,8 +208,8 @@ Return value is always a list.
               (or method "GET") action)) t))
        (when reader
          (unless (search-forward " " nil t)
-           (message "%s" (buffer-string))
-           (error ""))
+           (error "Invalid request:\n%s"
+             (buffer-substring-no-properties (point-min) (point-max))))
          (cl-case (thing-at-point 'number)
            (204 '(t)) ;; OK, but no content.
            (404 nil) ;; Not found.

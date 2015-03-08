@@ -29,7 +29,7 @@
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
-(require 'paradox)
+(require 'paradox-github)
 (eval-when-compile (require 'cl))
 
 (defcustom paradox-melpa-directory
@@ -68,6 +68,8 @@
   "Get the number of stars for each github repo and return.
 Also saves result to `package-star-count'"
   (interactive)
+  (setq paradox-github-token
+        (or (getenv "GHTOKEN") paradox-github-token))
   (unless recipes-dir
     (setq recipes-dir paradox-recipes-directory))
   (setq paradox--star-count nil)
@@ -104,21 +106,13 @@ Also saves result to `package-star-count'"
     (pp paradox--download-count (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
-  (let (res)
-    (with-current-buffer (url-retrieve-synchronously (format "https://github.com/%s/" repo))
-      (when (search-forward-regexp (format "href=\"/%s/stargazers\">" repo) nil t)
-        (skip-chars-forward "\n 	")
-        (if (looking-at "[0-9]")
-            (progn
-              (while (looking-at "[0-9]")
-                (forward-char 1)
-                (when (looking-at ",")
-                  (delete-char 1)))
-              (forward-char -1)
-              (setq res (thing-at-point 'number)))
-          (setq res nil)))
-      (kill-buffer))
-    res))
+  (let ((sc (cdr (assq 'stargazers_count
+                       (paradox--github-action
+                        (format "repos/%s" repo)
+                        nil #'json-read)))))
+    (unless (numberp sc)
+      (paradox-log "%s	%s" repo sc))
+    sc))
 
 (provide 'paradox-counter)
 ;;; paradox-counter.el ends here.

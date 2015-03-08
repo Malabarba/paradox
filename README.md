@@ -1,8 +1,11 @@
-Paradox
+Paradox [![Build Status](https://secure.travis-ci.org/Bruce-Connor/paradox.png?branch=master)](http://travis-ci.org/Bruce-Connor/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
 =======
 
-Project for modernizing Emacs' Package Menu. With package ratings,
-usage statistics, customizability, and more.
+[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba) 
+
+Project for modernizing Emacs' Package Menu. With improved appearance,
+mode-line information. Github integration, customizability,
+asynchronous upgrading, and more.
 
 Here are some visual comparisons:
 
@@ -19,8 +22,10 @@ Here are some visual comparisons:
 Usage
 ===
 
-Paradox can be installed from Melpa with `M-x package-install RET
-paradox`.  
+Paradox can be installed from Melpa with 
+
+    M-x package-install RET paradox
+
 It can also be installed manually in the usual way, just be mindful of
 the dependencies.
 
@@ -32,7 +37,8 @@ able to star packages as well, just configure the
 again.
 
 If you'd like to stop using Paradox, you may call `paradox-disable`
-and go back to using the regular `list-packages`.
+(or just restart Emacs) and go back to using the regular
+`list-packages`.
 
 ## Current Features ##
 
@@ -62,6 +68,30 @@ And some more...
       `paradox-status-face-alist` and `paradox-archive-face`).
     * Customize local variables.
 
+
+### Execution Hook ###
+
+Paradox defines a hook called `paradox-after-execute-hook`. Functions
+added to this hook are run whenever packages are installed, deleted,
+or upgraded. This is used to implement part of the Paradox
+functionality, which makes it very easy to customize and extend.
+
+- A full report is available at the *\*Paradox Report\** buffer. You
+  can disable this feature with:
+
+        (remove-hook 'paradox--report-buffer-print 'paradox-after-execute-functions)
+
+- If the upgrade was performed without querying the user (which
+  happens when `paradox-execute` is called with a prefix argument),
+  then the report buffer is displayed at the end.  
+  You can disable this feature with:
+
+        (remove-hook 'paradox--report-buffer-display-if-noquery 'paradox-after-execute-functions)
+
+- A message is printed in the echo area with a brief summary of the
+  transaction. You can disable this feature with:
+
+        (remove-hook 'paradox--report-message 'paradox-after-execute-functions)
 
 ### Package Ratings ###
 

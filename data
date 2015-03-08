@@ -1935,7 +1935,7 @@
  (auto-complete-chunk . 4)
  (auto-complete-c-headers . 15)
  (auto-complete-auctex . 22)
- (auto-complete . 936)
+ (auto-complete . 937)
  (auto-compile . 22)
  (auto-auto-indent . 0)
  (aurora-config-mode)

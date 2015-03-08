@@ -96,7 +96,7 @@ Also saves result to `package-star-count'"
   (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
-  (princ (apply #'format s) t))
+  (princ (concat (apply #'format s) "\n") t))
 
 (defun paradox-error (&rest s)
   (apply #'message s))

@@ -234,6 +234,9 @@ deleted, and activated packages, and errors."
            (cons 'error (nreverse errored)))))
 
 (defvar paradox--current-filter)
+(defvar paradox--spinner-stop nil
+  "Holds the function that stops the spinner.")
+
 (defun paradox--menu-execute-1 (&optional noquery)
   (let ((before-alist (paradox--repo-alist))
         install-list delete-list)
@@ -277,6 +280,8 @@ deleted, and activated packages, and errors."
                                     `((noquery . ,noquery) (async . nil) ,@alist)))
               (when (and (stringp paradox-github-token) paradox-automatically-star)
                 (paradox--post-execute-star-unstar before-alist (paradox--repo-alist))))
+          ;; Start spinning
+          (setq paradox--spinner-stop (spinner-start 'horizontal-moving))
           ;; Async execution
           (unless (require 'async nil t)
             (error "For asynchronous execution please install the `async' package"))
@@ -298,6 +303,9 @@ deleted, and activated packages, and errors."
              (lambda (x)
                (setq package-alist (pop x)
                      package-archive-contents (pop x))
+               (when (functionp paradox--spinner-stop)
+                 (funcall paradox--spinner-stop)
+                 (setq paradox--spinner-stop nil))
                (run-hook-with-args 'paradox-after-execute-functions (pop x))
                (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))))))))))
 

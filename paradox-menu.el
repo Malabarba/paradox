@@ -379,7 +379,7 @@ shown."
     (paradox-filter-upgrades))
    (t
     (paradox-menu--refresh
-     packages (split-string keyword ",")))))
+     packages (split-string keywords ",")))))
 
 (defun paradox--column-index (regexp)
   "Find the index of the column that matches REGEXP."

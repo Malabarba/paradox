@@ -6,12 +6,12 @@ if [[ -z "$EMACS" ]]; then
 else
     # Paradox
     cd ~/.melpa &&
-        git pull &&
+        git pull &> /dev/null &&
+        git checkout data &> /dev/null &&
+        git pull &> /dev/null &&
         cd ~/.paradox/helpers &&
-        git checkout data &&
-        git pull &&
-        /usr/bin/nice $EMACS --batch -Q -L . -L .. -l paradox-counter.el -f toggle-debug-on-error -f paradox-generate-star-count &&
-        git add .. &&
-        git commit -m "$(date)" &&
-        git push -v origin data:refs/heads/data;
+        /usr/bin/nice $EMACS --batch -Q -L . -L .. -l paradox-counter.el --eval '(setq debug-on-error t)' -f paradox-generate-star-count &&
+        git add .. &> /dev/null &&
+        git commit -m "$(date)" &> /dev/null &&
+        git push -v origin data:refs/heads/data &> /dev/null;
 fi

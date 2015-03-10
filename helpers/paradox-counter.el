@@ -22,7 +22,7 @@
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+;;
 
 ;;; Change Log:
 ;; 0.1 - 2014/04/03 - Generator complete.
@@ -101,8 +101,14 @@ Also saves result to `package-star-count'"
 (defun paradox-error (&rest s)
   (apply #'message s))
 
+(defvar paradox--output-error-file (expand-file-name "~/.invalid-packages-paradox.log")
+  "")
+
 (defun paradox-list-to-file ()
   "Save lists in \"data\" file."
+  (with-temp-file paradox--output-error-file
+    (pp (cl-remove-if #'cdr paradox--star-count)
+        (current-buffer)))
   (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
     (pp paradox--package-repo-list (current-buffer))
@@ -113,8 +119,8 @@ Also saves result to `package-star-count'"
                        (paradox--github-action
                         (format "repos/%s" repo)
                         nil #'json-read)))))
-    (unless (numberp sc)
-      (paradox-error "%s	%s" repo sc))
+    ;; (unless (numberp sc)
+    ;;   (paradox-error "%s	%s" repo sc))
     sc))
 
 (provide 'paradox-counter)

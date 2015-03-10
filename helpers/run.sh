@@ -7,6 +7,7 @@ else
     # Paradox
     cd ~/.melpa &&
         git pull &> /dev/null &&
+        cd ~/.paradox &&
         git checkout data &> /dev/null &&
         git pull &> /dev/null &&
         cd ~/.paradox/helpers &&

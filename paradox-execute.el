@@ -297,11 +297,14 @@ deleted, and activated packages, and errors."
                (let ((alist ,(macroexpand
                               `(paradox--perform-package-transaction ',install-list ',delete-list))))
                  (list package-alist
+                       (when (boundp 'package-selected-packages)
+                         package-selected-packages)
                        package-archive-contents
                        ;; This is the alist that will be passed to the hook.
                        (cons '(noquery . ,noquery) (cons '(async . t) alist)))))
              (lambda (x)
                (setq package-alist (pop x)
+                     package-selected-packages (pop x)
                      package-archive-contents (pop x))
                (when (functionp paradox--spinner-stop)
                  (funcall paradox--spinner-stop)

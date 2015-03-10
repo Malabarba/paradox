@@ -290,10 +290,8 @@ deleted, and activated packages, and errors."
           (eval
            `(async-start
              (lambda ()
-               (setq package-user-dir ,package-user-dir
-                     package-archives ',package-archives
-                     package-archive-contents ',package-archive-contents)
-               (package-initialize)
+               (require 'package)
+               ,(async-inject-variables "\\`package-")
                (let ((alist ,(macroexpand
                               `(paradox--perform-package-transaction ',install-list ',delete-list))))
                  (list package-alist

@@ -94,7 +94,12 @@ occurred during the execution:
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (paradox--generate-menu t t)))))
+        (if (and (stringp paradox--current-filter)
+                 (string= paradox--current-filter "Upgrade"))
+            ;; If this was an Upgrades buffer, go back to full list.
+            (package-show-package-list nil nil)
+          ;; Otherwise, just refresh whatever is displayed.
+          (paradox-menu--refresh nil nil))))))
 
 (defun paradox--activate-if-asynchronous (alist)
   "Activate packages after an asynchronous operation."

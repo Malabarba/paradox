@@ -1000,7 +1000,7 @@
  (jump-char . 31)
  (jump . 31)
  (jumblr . 1)
- (julia-mode . 5198)
+ (julia-mode . 5199)
  (jsx-mode . 25)
  (jss . 62)
  (json-snatcher . 13)

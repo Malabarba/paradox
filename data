@@ -2020,7 +2020,7 @@
  (ac-mozc . 21)
  (ac-math)
  (ac-js2 . 69)
- (ac-ispell . 9)
+ (ac-ispell . 10)
  (ac-inf-ruby . 4)
  (ac-html-csswatcher . 0)
  (ac-html-bootstrap . 1)

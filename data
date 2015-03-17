@@ -762,7 +762,7 @@
  (ob-cypher . 2)
  (ob-browser . 10)
  (oauth . 37)
- (o-blog . 199)
+ (o-blog . 200)
  (nyan-prompt . 3)
  (nyan-mode . 165)
  (nvm . 9)

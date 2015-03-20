@@ -182,8 +182,8 @@ This button takes you to the package's homepage."
 (defvar paradox--column-index-star nil)
 (defvar paradox--column-index-download nil)
 
-(defvar desc-suffix nil)
-(defvar desc-prefix nil)
+(defvar paradox--desc-suffix nil)
+(defvar paradox--desc-prefix nil)
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
 
@@ -240,10 +240,10 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                   (list (propertize (or (package-desc-archive pkg-desc) "")
                                     'font-lock-face 'paradox-archive-face)))
             ,@(paradox--count-print (package-desc-name pkg-desc))
-            ,(propertize ;; (package-desc-summary pkg-desc)
-              (concat (propertize " " 'display desc-prefix)
+            ,(propertize
+              (concat (propertize " " 'display paradox--desc-prefix)
                       (package-desc-summary pkg-desc)
-                      (propertize " " 'display desc-suffix)) ;└╰
+                      (propertize " " 'display paradox--desc-suffix)) ;└╰
               'font-lock-face
               (if (> paradox-lines-per-entry 1)
                   'paradox-description-face-multiline
@@ -372,8 +372,8 @@ shown."
 
 (defun paradox-menu--refresh (&optional packages keywords)
   "Call `package-menu--refresh' retaining current filter."
-  (let ((desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
-        (desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
+  (let ((paradox--desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
+        (paradox--desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
     (cond
      ((or packages keywords (not paradox--current-filter))
       (package-menu--refresh packages keywords))

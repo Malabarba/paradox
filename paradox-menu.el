@@ -356,9 +356,7 @@ or a list of package names (symbols) to display.
 With KEYWORDS given, only packages with those keywords are
 shown."
   (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
-  (let ((desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
-        (desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
-    (paradox-menu--refresh packages keywords))
+  (paradox-menu--refresh packages keywords)
   (setq paradox--current-filter
         (if keywords (mapconcat 'identity keywords ",")
           nil))
@@ -374,14 +372,16 @@ shown."
 
 (defun paradox-menu--refresh (&optional packages keywords)
   "Call `package-menu--refresh' retaining current filter."
-  (cond
-   ((or packages keywords (not paradox--current-filter))
-    (package-menu--refresh packages keywords))
-   ((string= paradox--current-filter "Upgrade")
-    (paradox-filter-upgrades))
-   (t
-    (paradox-menu--refresh
-     packages (split-string paradox--current-filter ",")))))
+  (let ((desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
+        (desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
+    (cond
+     ((or packages keywords (not paradox--current-filter))
+      (package-menu--refresh packages keywords))
+     ((string= paradox--current-filter "Upgrade")
+      (paradox-filter-upgrades))
+     (t
+      (paradox-menu--refresh
+       packages (split-string paradox--current-filter ","))))))
 
 (defun paradox--column-index (regexp)
   "Find the index of the column that matches REGEXP."

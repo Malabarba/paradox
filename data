@@ -424,7 +424,7 @@
  (ruby-dev . 16)
  (ruby-compilation . 383)
  (rubocop . 39)
- (rtags . 259)
+ (rtags . 260)
  (rspec-mode . 141)
  (rsense . 226)
  (rpm-spec-mode . 3)

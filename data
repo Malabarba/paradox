@@ -711,7 +711,7 @@
  (org-page . 169)
  (org-outlook . 16)
  (org-octopress . 35)
- (org-multiple-keymap . 1)
+ (org-multiple-keymap . 2)
  (org-mobile-sync . 8)
  (org-magit . 31)
  (org-linkany . 5)

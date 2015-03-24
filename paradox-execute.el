@@ -62,13 +62,7 @@ NOQUERY argument. Otherwise, only a message is displayed."
 
 
 ;;; Execution Hook
-(defvar paradox-after-execute-functions
-  '(paradox--activate-if-asynchronous
-    paradox--refresh-package-buffer
-    paradox--report-buffer-print
-    paradox--report-buffer-display-if-noquery
-    paradox--report-message
-    )
+(defvar paradox-after-execute-functions nil
   "List of functions run after performing package transactions.
 These are run after a set of installation, deletion, or upgrades
 has been performed. Each function in this hook must take a single
@@ -87,6 +81,13 @@ occurred during the execution:
   `async'     Non-nil if transaction was performed asynchronously.
   `noquery'   The NOQUERY argument given to `paradox-menu-execute'.")
 (put 'risky-local-variable-p 'paradox-after-execute-functions t)
+(mapc (lambda (x) (add-hook 'paradox-after-execute-functions x t))
+      '(paradox--activate-if-asynchronous
+        paradox--refresh-package-buffer
+        paradox--report-buffer-print
+        paradox--report-buffer-display-if-noquery
+        paradox--report-message
+        ))
 
 (declare-function paradox--generate-menu "paradox-menu")
 (defun paradox--refresh-package-buffer (_)

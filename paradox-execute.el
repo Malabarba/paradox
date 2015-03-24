@@ -96,11 +96,12 @@ occurred during the execution:
     (when (buffer-live-p buf)
       (with-current-buffer buf
         (if (and (stringp paradox--current-filter)
-                 (string= paradox--current-filter "Upgrade"))
+                 (string-match "Upgrade" paradox--current-filter))
             ;; If this was an Upgrades buffer, go back to full list.
             (package-show-package-list nil nil)
           ;; Otherwise, just refresh whatever is displayed.
-          (paradox-menu--refresh nil nil))))))
+          (paradox-menu--refresh nil nil)
+          (tabulated-list-print 'remember))))))
 
 (defun paradox--activate-if-asynchronous (alist)
   "Activate packages after an asynchronous operation."
@@ -274,8 +275,6 @@ deleted, and activated packages, and errors."
             (set-window-start (selected-window) (point-min))))))
     (if (not (or delete-list install-list))
         (message "No operations specified.")
-      ;; Display the transaction about to be performed.
-      (setq paradox--current-filter "Executing Transaction")
       ;; Confirm with the user.
       (when (or noquery
                 (y-or-n-p (paradox--format-message 'question install-list delete-list)))

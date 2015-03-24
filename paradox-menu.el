@@ -666,21 +666,22 @@ nil) on the Packages buffer."
 (defun paradox--update-mode-line-buffer-identification (_total-lines)
   "Update `mode-line-buffer-identification'.
 TOTAL-LINES is currently unused."
+  (require 'spinner)
   (setq mode-line-buffer-identification
-        (list
-         (list 'paradox-display-buffer-name
-               (propertized-buffer-identification
-                (format "%%%sb" (length (buffer-name)))))
-         '(paradox--current-filter (:propertize ("[" paradox--current-filter "]") face paradox-mode-line-face))
-         '(paradox--upgradeable-packages-any?
+        `((paradox-display-buffer-name
+           ,(propertized-buffer-identification
+             (format "%%%sb" (length (buffer-name)))))
+          (paradox--current-filter (:propertize ("[" paradox--current-filter "]") face paradox-mode-line-face))
+          (paradox--upgradeable-packages-any?
            (:eval (paradox--build-buffer-id " Upgrade:" paradox--upgradeable-packages-number)))
-         '(package-menu--new-package-list
+          (package-menu--new-package-list
            (:eval (paradox--build-buffer-id " New:" (paradox--cas "new"))))
-         (paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed")
-                                                    (paradox--cas "dependency")
-                                                    (paradox--cas "unsigned")))
-         `(paradox--current-filter
-           "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
+          ,(paradox--build-buffer-id " Installed:" (+ (paradox--cas "installed")
+                                                      (paradox--cas "dependency")
+                                                      (paradox--cas "unsigned")))
+          (paradox--current-filter
+           "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents)))
+          (spinner-current " Executing Transaction"))))
 
 (defvar sml/col-number)
 (defvar sml/numbers-separator)

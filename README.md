@@ -1,4 +1,4 @@
-Paradox [![Build Status](https://secure.travis-ci.org/Bruce-Connor/paradox.png?branch=master)](http://travis-ci.org/Bruce-Connor/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+Paradox [![Build Status](https://secure.travis-ci.org/Malabarba/paradox.png?branch=master)](http://travis-ci.org/Malabarba/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
 =======
 
 [![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba) 
@@ -10,13 +10,13 @@ asynchronous upgrading, and more.
 Here are some visual comparisons:
 
 #### Regular Package Menu ####
-![Regular Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/before.png)
+![Regular Package Menu](before.png)
 
 #### Paradox ####
-![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/after.png)
+![Paradox Package Menu](after.png)
 
 #### Paradox (multi-line) ####
-![Paradox Package Menu](https://raw.github.com/Bruce-Connor/paradox/master/multi-line.png)  
+![Paradox Package Menu](multi-line.png)  
 *These screenshots use smart-mode-line, but a similar effect is obtained with the regular mode-line.*
 
 Usage
@@ -129,5 +129,5 @@ Currently, packages that are not hosted on GitHub are listed with a
 blank star count, which is clearly different from 0-star packages
 (which are displayed with a 0, obviously).  
 If you know of an alternative that could be used for these packages,
-[open an issue](https://github.com/Bruce-Connor/paradox/issues/new)
+[open an issue](https://github.com/Malabarba/paradox/issues/new)
 here, I'd love to hear.

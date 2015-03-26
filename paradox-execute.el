@@ -22,6 +22,12 @@
 ;;
 
 
+
+;;; Commentary:
+;; 
+;; Functions related to executing package-menu transactions.
+;; Everything that happens when you hit `x' is in here.
+
 ;;; Code:
 (require 'dash)
 (require 'package)
@@ -49,7 +55,7 @@ Possible values are:
   :group 'paradox-execute)
 
 (defcustom paradox-async-display-buffer-function #'display-buffer
-  "Function used to display the *Paradox Report* buffer after an asynchronous upgrade.
+  "Function used to display *Paradox Report* buffer after asynchronous upgrade.
 Set this to nil to avoid displaying the buffer. Or set this to a
 function like `display-buffer' or `pop-to-buffer'.
 
@@ -104,7 +110,8 @@ occurred during the execution:
           (tabulated-list-print 'remember))))))
 
 (defun paradox--activate-if-asynchronous (alist)
-  "Activate packages after an asynchronous operation."
+  "Activate packages after an asynchronous operation.
+Argument ALIST describes the operation."
   (let-alist alist
     (when .async
       (mapc #'package-activate-1 .activated))))
@@ -128,7 +135,8 @@ occurred during the execution:
 (defun paradox--report-buffer-print (alist)
   "Print a transaction report in *Package Report* buffer.
 Possibly display the buffer or message the user depending on the
-situation."
+situation.
+Argument ALIST describes the operation."
   (let-alist alist
     (let ((buf (get-buffer-create "*Paradox Report*"))
           (inhibit-read-only t))
@@ -252,6 +260,9 @@ deleted, and activated packages, and errors."
   "Holds the function that stops the spinner.")
 
 (defun paradox--menu-execute-1 (&optional noquery)
+  "Implementation used by `paradox-menu-execute'.
+NOQUERY, if non-nil, means to execute without prompting the
+user."
   (let ((before-alist (paradox--repo-alist))
         install-list delete-list)
     (save-excursion
@@ -283,7 +294,7 @@ deleted, and activated packages, and errors."
                    ((nil) nil)
                    ((ask)
                     (if noquery nil
-                      (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')")))
+                      (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))
                    (t t)))
             ;; Synchronous execution
             (progn

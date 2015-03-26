@@ -104,7 +104,7 @@
  (visual-ascii-mode . 2)
  (virtualenvwrapper . 61)
  (virtualenv . 90)
- (vimrc-mode . 8)
+ (vimrc-mode . 9)
  (vimgolf . 16)
  (vim-region . 3)
  (vim-empty-lines-mode . 4)

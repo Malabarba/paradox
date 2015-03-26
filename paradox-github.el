@@ -229,4 +229,4 @@ Return value is always a list.
         (when max-pages (1- max-pages)))))))
 
 (provide 'paradox-github)
-;;; paradox-github.el ends here.
+;;; paradox-github.el ends here

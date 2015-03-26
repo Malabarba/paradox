@@ -29,6 +29,7 @@
 ;; Everything that happens when you hit `x' is in here.
 
 ;;; Code:
+(require 'cl-lib)
 (require 'dash)
 (require 'package)
 (require 'paradox-core)

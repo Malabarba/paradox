@@ -23,6 +23,7 @@
 
 
 ;;; Code:
+(require 'cl-lib)
 (require 'package)
 (require 'paradox-core)
 

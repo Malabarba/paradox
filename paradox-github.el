@@ -171,6 +171,22 @@ DELETE and NO-RESULT are passed on."
 
 
 ;;; The Base (generic) function
+(defun paradox--github-report (text)
+  "Write TEXT to the *Paradox Github* buffer."
+  (with-current-buffer (get-buffer-create "*Paradox Report*")
+    (erase-buffer)
+    (insert text)
+    (goto-char (point-min))))
+
+(defun paradox--github-error (format &rest args)
+  "Throw an error using FORMAT and ARGS.
+Also print contents of current buffer to *Paradox Github*."
+  (declare (indent 1))
+  (paradox--github-report (buffer-string))
+  (apply #'error
+    (concat format "  See *Paradox Github* buffer for the full result")
+    args))
+
 (defun paradox--github-action (action &optional method reader max-pages)
   "Contact the github api performing ACTION with METHOD.
 Default METHOD is \"GET\".
@@ -209,11 +225,27 @@ Return value is always a list.
               (or method "GET") action)) t))
        (when reader
          (unless (search-forward " " nil t)
-           (error "Invalid request:\n%s"
-             (buffer-substring-no-properties (point-min) (point-max))))
+           (paradox--github-report (buffer-string))
+           (error "Tried contacting Github, but I can't understand the result.  See *Paradox Github* buffer for the full result"))
          (cl-case (thing-at-point 'number)
            (204 '(t)) ;; OK, but no content.
-           (404 nil) ;; Not found.
+           ;; I'll implement redirection if anyone ever reports this.
+           ;; For now, I haven't found a place where it's used.
+           ((301 302 303 304 305 306 307)
+            (paradox--github-error
+             "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')"))
+           ((403 404) ;; Not found.
+            (paradox--github-report (buffer-string))
+            (message "This repo doesn't seem to exist, Github replied with: %s"
+              (substring (thing-at-point 'line) 0 -1))
+            nil)
+           ((400 422) ;; Bad request.
+            (paradox--github-error
+             "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))
+           (401 (paradox--github-error
+                 (if (stringp paradox-github-token)
+                     "Github says you're not authenticated, try creating a new Github token"
+                   "Github says you're not authenticated, you need to configure `paradox-github-token'")))
            (200 ;; Good.
             (when (search-forward-regexp
                    "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
@@ -222,7 +254,8 @@ Return value is always a list.
             (skip-chars-forward "[:blank:]\n")
             (delete-region (point-min) (point))
             (unless (eobp) (if (eq reader t) t (funcall reader))))
-           (t (error "Github returned: %s" (thing-at-point 'line))))))
+           (t (paradox--github-error "Github returned: %S"
+                                     (substring (thing-at-point 'line) 0 -1))))))
      (unless (or (not next) (and max-pages (< max-pages 2)))
        (paradox--github-action
         next method reader

@@ -304,6 +304,8 @@ deleted, and activated packages, and errors."
              (lambda ()
                (require 'package)
                ,(async-inject-variables "\\`package-")
+               (dolist (elt package-alist)
+                 (package-activate (car elt) 'force))
                (let ((alist ,(macroexpand
                               `(paradox--perform-package-transaction ',install-list ',delete-list))))
                  (list package-alist

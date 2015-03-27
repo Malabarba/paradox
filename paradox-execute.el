@@ -96,19 +96,12 @@ occurred during the execution:
         paradox--report-message
         ))
 
-(declare-function paradox--generate-menu "paradox-menu")
 (defun paradox--refresh-package-buffer (_)
   "Refresh the *Packages* buffer, if it exists."
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (if (and (stringp paradox--current-filter)
-                 (string-match "Upgrade" paradox--current-filter))
-            ;; If this was an Upgrades buffer, go back to full list.
-            (package-show-package-list nil nil)
-          ;; Otherwise, just refresh whatever is displayed.
-          (paradox-menu--refresh nil nil)
-          (tabulated-list-print 'remember))))))
+        (revert-buffer)))))
 
 (defun paradox--activate-if-asynchronous (alist)
   "Activate packages after an asynchronous operation.
@@ -222,7 +215,12 @@ never ask anyway."
              (eq paradox-automatically-star 'unconfigured))
     (customize-save-variable
      'paradox-automatically-star
-     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
+     (y-or-n-p "When you install new packages would you like them to be automatically starred?
+\(They will be unstarred when you delete them) ")))
+  (when (and (stringp paradox--current-filter)
+             (string-match "Upgrade" paradox--current-filter))
+    (setq tabulated-list-sort-key '("Status" . nil))
+    (setq paradox--current-filter nil))
   (paradox--menu-execute-1 noquery))
 
 (defmacro paradox--perform-package-transaction (install delete)

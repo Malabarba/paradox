@@ -356,7 +356,6 @@ or a list of package names (symbols) to display.
 
 With KEYWORDS given, only packages with those keywords are
 shown."
-  (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
   (paradox-menu--refresh packages keywords)
   (setq paradox--current-filter
         (if keywords (mapconcat 'identity keywords ",")
@@ -368,17 +367,19 @@ shown."
               "Package")))
   (tabulated-list-print remember-pos)
   (tabulated-list-init-header)
-  (paradox--update-mode-line)
-  (paradox-refresh-upgradeable-packages))
+  (paradox--update-mode-line))
 
 (defun paradox-menu--refresh (&optional packages keywords)
   "Call `package-menu--refresh' retaining current filter."
+  (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
   (let ((paradox--desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
         (paradox--desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
     (cond
      ((or packages keywords (not paradox--current-filter))
-      (package-menu--refresh packages keywords))
+      (package-menu--refresh packages keywords)
+      (paradox-refresh-upgradeable-packages))
      ((string= paradox--current-filter "Upgrade")
+      (paradox-refresh-upgradeable-packages)
       (paradox-filter-upgrades))
      (t
       (paradox-menu--refresh
@@ -435,7 +436,7 @@ Letters do not insert themselves; instead, they are commands.
   (add-hook 'tabulated-list-revert-hook #'paradox-menu--refresh nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
   ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-star-count nil t)
-  (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
   (tabulated-list-init-header)
   ;; We need package-menu-mode to be our parent, otherwise some
   ;; commands throw errors. But we can't actually derive from it,

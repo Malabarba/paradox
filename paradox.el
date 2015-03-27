@@ -211,6 +211,7 @@ not prevent downloading the actual packages (obviously)."
   (interactive)
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  ;; Tough it may not look like it, this is totally necessary too.
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode)
   (paradox--core-enable))
 

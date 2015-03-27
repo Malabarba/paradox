@@ -21,7 +21,8 @@
 ;; GNU General Public License for more details.
 ;;
 
-
+;;; Change Log:
+;; 
 ;;; Code:
 (require 'cl-lib)
 (require 'package)
@@ -278,6 +279,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
         (and (setq extras (cdr (assoc name paradox--package-repo-list)))
              (format "https://github.com/%s" extras)))))
 (defun paradox--get-or-return-package (pkg)
+  "Take a marker or package name PKG and return a package name."
   (if (or (markerp pkg) (null pkg))
       (if (derived-mode-p 'package-menu-mode)
           (package-desc-name (tabulated-list-get-id))
@@ -318,7 +320,7 @@ Also increments the count for \"total\"."
     (unless (and (listp paradox--star-count)
                  (listp paradox--package-repo-list)
                  (listp paradox--download-count))
-      (message "[Paradox] Error downloading the list of repositories. This might be a proxy"))
+      (message "[Paradox] Error downloading the list of repositories.  This might be a proxy"))
     (unless (listp paradox--download-count)
       (setq paradox--download-count nil))
     (unless (listp paradox--package-repo-list)
@@ -370,7 +372,10 @@ shown."
   (paradox--update-mode-line))
 
 (defun paradox-menu--refresh (&optional packages keywords)
-  "Call `package-menu--refresh' retaining current filter."
+  "Call `package-menu--refresh' retaining current filter.
+PACKAGES and KEYWORDS are passed to `package-menu--refresh'.  If
+KEYWORDS is nil and `paradox--current-filter' is non-nil, it is
+used to define keywords."
   (mapc (lambda (x) (setf (cdr x) 0)) paradox--package-count)
   (let ((paradox--desc-prefix (if (> paradox-lines-per-entry 1) " \n      " ""))
         (paradox--desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
@@ -439,14 +444,15 @@ Letters do not insert themselves; instead, they are commands.
   (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
   (tabulated-list-init-header)
   ;; We need package-menu-mode to be our parent, otherwise some
-  ;; commands throw errors. But we can't actually derive from it,
-  ;; otherwise its initialization will screw up the header-format. So
+  ;; commands throw errors.  But we can't actually derive from it,
+  ;; otherwise its initialization will screw up the header-format.  So
   ;; we "patch" it like this.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
 
 (defun paradox--define-sort (name &optional key)
-  "Define sorting function paradox-sort-by-NAME and bind it to KEY."
+  "Define sorting by column NAME and bind it to KEY.
+Defines a function called paradox-sort-by-NAME."
   (let ((symb (intern (format "paradox-sort-by-%s" (downcase name))))
         (key (or key (substring name 0 1))))
     (eval
@@ -464,6 +470,7 @@ Letters do not insert themselves; instead, they are commands.
 (paradox--define-sort "Package")
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
+(declare-function paradox-sort-by-package "paradox-menu")
 
 (defalias 'paradox-filter-clear #'package-show-package-list
   "Clear current Package filter.
@@ -569,7 +576,7 @@ With prefix KILL, kill the buffer instead of burying."
 
 (defun paradox-menu-visit-homepage (pkg)
   "Visit the homepage of package named PKG.
-PKG is a symbol. Interactively it is the package under point."
+PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let ((url (paradox--package-homepage
               (paradox--get-or-return-package pkg))))
@@ -604,7 +611,7 @@ PKG is a symbol. Interactively it is the package under point."
 
 (defun paradox-menu-view-commit-list (pkg)
   "Visit the commit list of package named PKG.
-PKG is a symbol. Interactively it is the package under point."
+PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let* ((name (paradox--get-or-return-package pkg))
          (repo (cdr (assoc name paradox--package-repo-list))))
@@ -732,7 +739,8 @@ TOTAL-LINES is the number of lines in the buffer."
     (paradox--prettify-key-descriptor (cons desc 0))))
 
 (defun paradox--full-name-reader ()
-  "Return all \"full_name\" properties in the buffer. Much faster than `json-read'."
+  "Return all \"full_name\" properties in the buffer.
+Much faster than `json-read'."
   (let (out)
     (while (search-forward-regexp
             "^ *\"full_name\" *: *\"\\(.*\\)\", *$" nil t)
@@ -741,4 +749,4 @@ TOTAL-LINES is the number of lines in the buffer."
     out))
 
 (provide 'paradox-menu)
-;;; paradox-menu.el ends here.
+;;; paradox-menu.el ends here

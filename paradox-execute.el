@@ -376,4 +376,4 @@ installed and deleted, respectively."
     (-intersection (-difference before after) paradox--user-starred-list)))
 
 (provide 'paradox-execute)
-;;; paradox-execute.el ends here.
+;;; paradox-execute.el ends here

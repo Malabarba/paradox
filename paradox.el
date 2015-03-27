@@ -145,11 +145,11 @@
 
 (defconst paradox-version "2.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
-  "Opens github issues page in a web browser. Please send any bugs you find.
+  "Opens github issues page in a web browser.  Please send any bugs you find.
 Please include your Emacs and paradox versions."
   (interactive)
   (message "Your paradox-version is: %s, and your emacs version is: %s.\nPlease include this in your report!"
-           paradox-version emacs-version)
+    paradox-version emacs-version)
   (browse-url "https://github.com/Bruce-Connor/paradox/issues/new"))
 (defun paradox-customize ()
   "Open the customization menu in the `paradox' group."
@@ -165,7 +165,7 @@ Please include your Emacs and paradox versions."
 ;;; External Commands
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)
-  "Improved version of `package-list-packages'. The heart of Paradox.
+  "Improved version of `package-list-packages'.  The heart of Paradox.
 Function is equivalent to `package-list-packages' (including the
 prefix NO-FETCH), but the resulting Package Menu is improved in
 several ways.
@@ -189,16 +189,16 @@ for packages.
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)
-  "Upgrade all packages. No questions asked.
+  "Upgrade all packages.  No questions asked.
 This function is equivalent to `list-packages', followed by a
-`package-menu-mark-upgrades' and a `package-menu-execute'. Except
+`package-menu-mark-upgrades' and a `package-menu-execute'.  Except
 the user isn't asked to confirm deletion of packages.
 
 If `paradox-execute-asynchronously' is non-nil, part of this
 operation may be performed in the background.
 
-The NO-FETCH prefix argument is passed to `list-packages'. It
-prevents re-download of information about new versions. It does
+The NO-FETCH prefix argument is passed to `list-packages'.  It
+prevents re-download of information about new versions.  It does
 not prevent downloading the actual packages (obviously)."
   (interactive "P")
   (save-window-excursion
@@ -216,21 +216,19 @@ not prevent downloading the actual packages (obviously)."
 
 ;;;###autoload
 (defun paradox-require (feature &optional filename noerror package refresh)
-  "A replacement for `require' which also installs the feature if it is absent.
+  "Like `require', but also install FEATURE if it is absent.
+FILENAME is passed to `require'.
+If NOERROR is non-nil, don't complain if the feature couldn't be
+installed, just return nil.
+
 - If FEATURE is present, `require' it and return t.
 
 - If FEATURE is not present, install PACKAGE with `package-install'.
 If PACKAGE is nil, assume FEATURE is the package name.
 After installation, `require' FEATURE.
 
-FILENAME is passed to `require'.
-
-If NOERROR is non-nil, don't complain if the feature couldn't be
-installed, just return nil.
-
-By default, the current package database (stored in
-`package-archive-contents') is only updated if it is empty.
-Passing a non-nil REFRESH argument forces this update."
+By default, the current package database is only updated if it is
+empty.  Passing a non-nil REFRESH argument forces this update."
   (or (require feature filename t)
       (let ((package (or package
                          (if (stringp feature)
@@ -245,4 +243,4 @@ Passing a non-nil REFRESH argument forces this update."
              (require feature filename noerror)))))
 
 (provide 'paradox)
-;;; paradox.el ends here.
+;;; paradox.el ends here

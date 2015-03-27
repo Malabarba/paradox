@@ -21,13 +21,12 @@
 ;; GNU General Public License for more details.
 ;;
 
-
-
 ;;; Commentary:
 ;; 
 ;; Functions related to executing package-menu transactions.
 ;; Everything that happens when you hit `x' is in here.
 
+
 ;;; Code:
 (require 'cl-lib)
 (require 'dash)
@@ -41,6 +40,7 @@
   :package-version '(paradox . "2.0")
   :group 'paradox)
 
+(defvar paradox--current-filter)
 
 ;;; Customization Variables
 (defcustom paradox-execute-asynchronously 'ask
@@ -208,12 +208,12 @@ Packages marked for installation are downloaded and installed;
 packages marked for deletion are removed.
 
 Afterwards, if `paradox-automatically-star' is t, automatically
-star new packages, and unstar removed packages. Upgraded packages
+star new packages, and unstar removed packages.  Upgraded packages
 aren't changed.
 
 Synchronicity of the actions depends on
-`paradox-execute-asynchronously'. Optional argument NOQUERY
-non-nil means do not ask the user to confirm. If asynchronous,
+`paradox-execute-asynchronously'.  Optional argument NOQUERY
+non-nil means do not ask the user to confirm.  If asynchronous,
 never ask anyway."
   (interactive "P")
   (unless (derived-mode-p 'paradox-menu-mode)

@@ -1,1 +1,3 @@
 flycheck_*
+/paradox-autoloads.el
+/paradox-pkg.el

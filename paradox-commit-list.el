@@ -23,9 +23,9 @@
 
 
 ;;; Code:
+(require 'subr-x)
 (require 'cl-lib)
 (require 'package)
-(require 'dash)
 
 (require 'paradox-github)
 
@@ -101,7 +101,7 @@ nil means `default'.")
 - If it has a Melpa-like version (YYYYMMDD HHMM), return it as a
   time value.
 - If it has a regular version number, return it as a string."
-  (-if-let (desc (cadr (assoc pkg package-alist)))
+  (if-let ((desc (cadr (assoc pkg package-alist))))
       (let ((version (package-desc-version desc)))
         (if (> (car version) 19000000)
             (date-to-time

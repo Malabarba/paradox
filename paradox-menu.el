@@ -26,6 +26,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'package)
+
 (require 'paradox-core)
 (require 'paradox-github)
 (require 'paradox-commit-list)

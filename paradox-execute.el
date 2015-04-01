@@ -29,7 +29,7 @@
 
 ;;; Code:
 (require 'cl-lib)
-(require 'dash)
+
 (require 'package)
 (require 'paradox-core)
 (require 'paradox-github)
@@ -258,6 +258,7 @@ deleted, and activated packages, and errors."
 (defvar paradox--spinner-stop nil
   "Holds the function that stops the spinner.")
 
+(declare-function async-inject-variables "async")
 (defun paradox--menu-execute-1 (&optional noquery)
   "Implementation used by `paradox-menu-execute'.
 NOQUERY, if non-nil, means to execute without prompting the
@@ -339,9 +340,11 @@ user."
 (defun paradox--repo-alist ()
   "List of known repos."
   (cl-remove-duplicates
-   (remove nil
-           (--map (cdr-safe (assoc (car it) paradox--package-repo-list))
-                  package-alist))))
+   (remove
+    nil
+    (mapcar
+     (lambda (it) (cdr-safe (assoc (car it) paradox--package-repo-list)))
+     package-alist))))
 
 (defun paradox--format-message (question-p install-list delete-list)
   "Format a message regarding a transaction.
@@ -371,9 +374,9 @@ installed and deleted, respectively."
 (defun paradox--post-execute-star-unstar (before after)
   "Star repos in AFTER absent from BEFORE, unstar vice-versa."
   (mapc #'paradox--star-repo
-    (-difference (-difference after before) paradox--user-starred-list))
+        (cl-set-difference (cl-set-difference after before) paradox--user-starred-list))
   (mapc #'paradox--unstar-repo
-    (-intersection (-difference before after) paradox--user-starred-list)))
+        (cl-intersection (cl-set-difference before after) paradox--user-starred-list)))
 
 (provide 'paradox-execute)
 ;;; paradox-execute.el ends here

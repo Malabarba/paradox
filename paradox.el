@@ -137,7 +137,6 @@
 
 (require 'package)
 (require 'cl-lib)
-(require 'dash)
 
 (require 'paradox-core)
 (require 'paradox-execute)

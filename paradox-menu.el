@@ -569,7 +569,7 @@ With prefix N, move to the N-th previous package instead."
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
     ("list commits")
-    ("filter by" "+" "upgrades" "regexp" "keyword" "clear")
+    ("filter by" "+" "upgrades" "regexp" "keyword" "starred" "clear")
     ("Sort by" "+" "Package name" "Status" "*(star)")))
 
 (defun paradox-menu-quick-help ()

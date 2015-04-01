@@ -387,6 +387,9 @@ used to define keywords."
      ((string= paradox--current-filter "Upgrade")
       (paradox-refresh-upgradeable-packages)
       (paradox-filter-upgrades))
+     ((string= paradox--current-filter "Starred")
+      (paradox-filter-stars)
+      (paradox-refresh-upgradeable-packages))
      (t
       (paradox-menu--refresh
        packages (split-string paradox--current-filter ","))))))

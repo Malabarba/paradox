@@ -488,6 +488,19 @@ fetching the list.")
     (setq paradox--current-filter "Upgrade")
     (paradox-sort-by-package nil)))
 
+(defun paradox-filter-stars ()
+  "Show only upgradable packages."
+  (interactive)
+  (let ((packages (cl-remove-if-not
+				   (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
+				   paradox--package-repo-list)))
+	(if (null packages)
+		(message "No packages are starred.")
+	  (package-show-package-list
+	   (mapcar #'car packages))
+	  (setq paradox--current-filter "Starred")
+	  (paradox-sort-by-package nil))))
+
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (defvar paradox--filter-map)
 (define-prefix-command 'paradox--filter-map)
@@ -509,6 +522,7 @@ fetching the list.")
 (define-key paradox--filter-map "r" #'occur)
 (define-key paradox--filter-map "o" #'occur)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
+(define-key paradox--filter-map "s" #'paradox-filter-stars)
 (define-key paradox--filter-map "c" #'paradox-filter-clear)
 
 
@@ -556,7 +570,7 @@ With prefix N, move to the N-th previous package instead."
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
     ("star," "visit homepage")
     ("list commits")
-    ("filter by" "+" "upgrades" "regexp" "keyword" "clear")
+    ("filter by" "+" "upgrades" "regexp" "keyword" "starred" "clear")
     ("Sort by" "+" "Package name" "Status" "*(star)")))
 
 (defun paradox-menu-quick-help ()

@@ -26,6 +26,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'package)
+(require 'subr-x)
 
 (require 'paradox-core)
 (require 'paradox-github)

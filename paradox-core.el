@@ -22,6 +22,7 @@
 ;;
 
 ;;; Code:
+(require 'subr-x)
 
 
 ;;; Configurations

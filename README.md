@@ -53,7 +53,7 @@ itself. They all work out of the box and are completely customizable!
 * Use `paradox-require` instead of `require` to automatically install
   absent packages.
 * Shortcuts for package filtering:
-    * `f r` filters by regexp (`occur`).
+    * `f r` filters by regexp.
     * `f u` display only packages with upgrades.
     * `f k` filters by keyword (emacs 24.4 only).
     * `f s` filters by user starred packages.

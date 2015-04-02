@@ -391,6 +391,9 @@ used to define keywords."
      ((string= paradox--current-filter "Starred")
       (paradox-filter-stars)
       (paradox-refresh-upgradeable-packages))
+     ((string= paradox--current-filter "Regexp")
+      (paradox-filter-regexp)
+      (paradox-refresh-upgradeable-packages))
      (t
       (paradox-menu--refresh
        packages (split-string paradox--current-filter ","))))))
@@ -505,6 +508,21 @@ fetching the list.")
 	  (setq paradox--current-filter "Starred")
 	  (paradox-sort-by-package nil))))
 
+(defun paradox-filter-regexp (regexp)
+  "Show only packages matching regexp"
+  (interactive "sEnter regexp: ")
+  (let* ((packages (cl-remove-if
+					(lambda (package)
+					  (and (null (string-match-p regexp (symbol-name (car package))))
+						   (null (string-match-p regexp (aref (car (cdr (assoc (car package) package-archive-contents))) 3)))))
+					package-archive-contents)))
+	(if (null packages)
+		(message "No packages are matching this regexp.")
+	  (package-show-package-list
+	   (mapcar #'car packages))
+	  (setq paradox--current-filter "Regexp")
+	  (paradox-sort-by-package nil))))
+
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (defvar paradox--filter-map)
 (define-prefix-command 'paradox--filter-map)
@@ -523,8 +541,7 @@ fetching the list.")
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
 (define-key paradox--filter-map "k" #'package-menu-filter)
 (define-key paradox--filter-map "f" #'package-menu-filter)
-(define-key paradox--filter-map "r" #'occur)
-(define-key paradox--filter-map "o" #'occur)
+(define-key paradox--filter-map "r" #'paradox-filter-regexp)
 (define-key paradox--filter-map "u" #'paradox-filter-upgrades)
 (define-key paradox--filter-map "s" #'paradox-filter-stars)
 (define-key paradox--filter-map "c" #'paradox-filter-clear)

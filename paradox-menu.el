@@ -685,11 +685,12 @@ nil) on the Packages buffer."
     (paradox--update-mode-line-buffer-identification total-lines))
   (set-face-foreground
    'paradox-mode-line-face
-   (when-let ((fg (or (face-foreground 'mode-line-buffer-id nil t)
-                      (face-foreground 'default nil t))))
-     (if (> (color-distance "white" fg)
-            (color-distance "black" fg))
-         "black" "white"))))
+   (let ((fg (or (face-foreground 'mode-line-buffer-id nil t)
+                 (face-foreground 'default nil t))))
+     (when fg
+       (if (> (color-distance "white" fg)
+              (color-distance "black" fg))
+           "black" "white")))))
 
 (defun paradox--update-mode-line-buffer-identification (_total-lines)
   "Update `mode-line-buffer-identification'.

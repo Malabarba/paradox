@@ -391,8 +391,8 @@ used to define keywords."
      ((string= paradox--current-filter "Starred")
       (paradox-filter-stars)
       (paradox-refresh-upgradeable-packages))
-     ((string= paradox--current-filter "Regexp")
-      (paradox-filter-regexp)
+     ((string-match "\\`Regexp:\\(.*\\)\\'" paradox--current-filter)
+      (paradox-filter-regexp (match-string 1 paradox--current-filter))
       (paradox-refresh-upgradeable-packages))
      (t
       (paradox-menu--refresh
@@ -499,8 +499,8 @@ fetching the list.")
   "Show only upgradable packages."
   (interactive)
   (let ((packages (cl-remove-if-not
-				   (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
-				   paradox--package-repo-list)))
+                   (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
+                   paradox--package-repo-list)))
 	(if (null packages)
 		(message "No packages are starred.")
 	  (package-show-package-list
@@ -509,19 +509,18 @@ fetching the list.")
 	  (paradox-sort-by-package nil))))
 
 (defun paradox-filter-regexp (regexp)
-  "Show only packages matching regexp"
-  (interactive "sEnter regexp: ")
-  (let* ((packages (cl-remove-if
+  "Show only packages matching REGEXP.
+Test match against name and summary."
+  (interactive (list (read-regexp "Enter Regular Expression: ")))
+  (let* ((packages (cl-remove-if-not
 					(lambda (package)
-					  (and (null (string-match-p regexp (symbol-name (car package))))
-						   (null (string-match-p regexp (aref (car (cdr (assoc (car package) package-archive-contents))) 3)))))
+					  (or (string-match-p regexp (symbol-name (car package)))
+                          (string-match-p regexp (package-desc-summary (cadr package)))))
 					package-archive-contents)))
 	(if (null packages)
-		(message "No packages are matching this regexp.")
-	  (package-show-package-list
-	   (mapcar #'car packages))
-	  (setq paradox--current-filter "Regexp")
-	  (paradox-sort-by-package nil))))
+		(message "No packages match this regexp.")
+	  (package-show-package-list (mapcar #'car packages))
+	  (setq paradox--current-filter (concat "Regexp:" regexp)))))
 
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (defvar paradox--filter-map)

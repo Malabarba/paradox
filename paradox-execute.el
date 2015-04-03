@@ -315,6 +315,7 @@ user."
              (lambda ()
                (require 'package)
                ,(async-inject-variables "\\`package-")
+               (setq package-menu-async nil)
                (dolist (elt package-alist)
                  (package-activate (car elt) 'force))
                (let ((alist ,(macroexpand

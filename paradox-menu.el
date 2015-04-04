@@ -385,7 +385,7 @@ used to define keywords."
      ((or packages keywords (not paradox--current-filter))
       (package-menu--refresh packages keywords)
       (paradox-refresh-upgradeable-packages))
-     ((string= paradox--current-filter "Upgrade")
+     ((string= paradox--current-filter "Upgradable")
       (paradox-refresh-upgradeable-packages)
       (paradox-filter-upgrades))
      ((string= paradox--current-filter "Starred")
@@ -485,42 +485,51 @@ Defines a function called paradox-sort-by-NAME."
 Redisplay the Packages buffer listing all packages, without
 fetching the list.")
 
+(defmacro paradox--apply-filter (name packages &optional nil-message)
+  "Apply filter called NAME (a string) listing only PACKAGES.
+PACKAGES should be a list of symbols (the names of packages to
+display) or a list of cons cells whose `car's are symbols.
+NIL-MESSAGE is the message to show if PACKAGES is nil, and
+defaults to: \"No %s packages\"."
+  (declare (debug t)
+           (indent 1))
+  (let* ((n (format "%s" name))
+         (cn (capitalize n))
+         (dn (downcase n)))
+    (macroexp-let2 macroexp-copyable-p pl packages
+      `(if (null ,pl)
+           (user-error ,(or nil-message (format "No %s packages." dn)))
+         (package-show-package-list
+          (mapcar (lambda (p) (or (car-safe p) p)) ,pl))
+         (setq paradox--current-filter ,cn)))))
+
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."
   (interactive)
-  (if (null paradox--upgradeable-packages)
-      (message "No packages have upgrades.")
-    (package-show-package-list
-     (mapcar #'car paradox--upgradeable-packages))
-    (setq paradox--current-filter "Upgrade")
-    (paradox-sort-by-package nil)))
+  (paradox--apply-filter Upgradable
+    paradox--upgradeable-packages)
+  (paradox-sort-by-package nil))
 
 (defun paradox-filter-stars ()
-  "Show only upgradable packages."
+  "Show only starred packages."
   (interactive)
-  (let ((packages (cl-remove-if-not
-                   (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
-                   paradox--package-repo-list)))
-	(if (null packages)
-		(message "No packages are starred.")
-	  (package-show-package-list
-	   (mapcar #'car packages))
-	  (setq paradox--current-filter "Starred")
-	  (paradox-sort-by-package nil))))
+  (paradox--apply-filter Starred
+    (cl-remove-if-not
+     (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
+     paradox--package-repo-list)))
 
 (defun paradox-filter-regexp (regexp)
   "Show only packages matching REGEXP.
 Test match against name and summary."
   (interactive (list (read-regexp "Enter Regular Expression: ")))
-  (let* ((packages (cl-remove-if-not
-					(lambda (package)
-					  (or (string-match-p regexp (symbol-name (car package)))
-                          (string-match-p regexp (package-desc-summary (cadr package)))))
-					package-archive-contents)))
-	(if (null packages)
-		(message "No packages match this regexp.")
-	  (package-show-package-list (mapcar #'car packages))
-	  (setq paradox--current-filter (concat "Regexp:" regexp)))))
+  (paradox--apply-filter Regexp
+    (cl-remove-if-not
+     (lambda (package)
+       (or (string-match-p regexp (symbol-name (car package)))
+           (string-match-p regexp (package-desc-summary (cadr package)))))
+     package-archive-contents)
+    "No packages match this regexp.")
+  (setq paradox--current-filter (concat "Regexp:" regexp)))
 
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
 (defvar paradox--filter-map)

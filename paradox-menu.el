@@ -308,27 +308,43 @@ Also increments the count for \"total\"."
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
+(defun paradox--handle-failed-download (&rest _)
+  "Handle the case when Emacs fails to download Github data."
+  (when (fboundp 'package--update-downloads-in-progress)
+    (package--update-downloads-in-progress 'paradox--data))
+  (unless (listp paradox--download-count)
+    (setq paradox--download-count nil))
+  (unless (listp paradox--package-repo-list)
+    (setq paradox--package-repo-list nil))
+  (unless (listp paradox--star-count)
+    (setq paradox--star-count nil))
+  (message "[Paradox] Error downloading Github data"))
+
+(if (fboundp 'package--with-work-buffer-async)
+    (defmacro paradox--with-work-buffer (location file &rest body)
+      "Run BODY in a buffer containing the contents of FILE at LOCATION.
+This is the same as `package--with-work-buffer-async', except it
+automatically decides whether to download asynchronously based on
+`package-menu-async'."
+      (declare (indent 2) (debug t))
+      `(package--with-work-buffer-async
+           ,location ,file
+           (when package-menu-async
+             #'paradox--handle-failed-download)
+         ,@body))
+  (defalias 'paradox--with-work-buffer 'package--with-work-buffer))
+
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."
   (interactive)
-  (unwind-protect
-      (with-current-buffer
-          (url-retrieve-synchronously paradox--star-count-url)
-        (when (search-forward "\n\n" nil t)
-          (setq paradox--star-count (read (current-buffer)))
-          (setq paradox--package-repo-list (read (current-buffer)))
-          (setq paradox--download-count (read (current-buffer))))
-        (kill-buffer))
-    (unless (and (listp paradox--star-count)
-                 (listp paradox--package-repo-list)
-                 (listp paradox--download-count))
-      (message "[Paradox] Error downloading the list of repositories.  This might be a proxy"))
-    (unless (listp paradox--download-count)
-      (setq paradox--download-count nil))
-    (unless (listp paradox--package-repo-list)
-      (setq paradox--package-repo-list nil))
-    (unless (listp paradox--star-count)
-      (setq paradox--star-count nil)))
+  (when (boundp 'package--downloads-in-progress)
+    (push 'paradox--data package--downloads-in-progress))
+  (condition-case nil
+      (paradox--with-work-buffer paradox--data-url "data"
+        (setq paradox--star-count (read (current-buffer)))
+        (setq paradox--package-repo-list (read (current-buffer)))
+        (setq paradox--download-count (read (current-buffer))))
+    (error (paradox--handle-failed-download)))
   (when (stringp paradox-github-token)
     (paradox--refresh-user-starred-list)))
 

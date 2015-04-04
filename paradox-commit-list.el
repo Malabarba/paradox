@@ -101,17 +101,18 @@ nil means `default'.")
 - If it has a Melpa-like version (YYYYMMDD HHMM), return it as a
   time value.
 - If it has a regular version number, return it as a string."
-  (-if-let ((desc (cadr (assoc pkg package-alist))))
-      (let ((version (package-desc-version desc)))
-        (if (> (car version) 19000000)
-            (date-to-time
-             (format "%8dT%02d:%02d"
-                     (car version)
-                     (/ (cadr version) 100)
-                     (% (cadr version) 100)))
-          ;; Regular version numbers.
-          (mapconcat 'int-to-string version ".")))
-    '(0 0)))
+  (let ((desc (cadr (assoc pkg package-alist))))
+    (if desc
+        (let ((version (package-desc-version desc)))
+          (if (> (car version) 19000000)
+              (date-to-time
+               (format "%8dT%02d:%02d"
+                 (car version)
+                 (/ (cadr version) 100)
+                 (% (cadr version) 100)))
+            ;; Regular version numbers.
+            (mapconcat 'int-to-string version ".")))
+      '(0 0))))
 
 (defun paradox--commit-tabulated-list (repo)
   "Return the tabulated list for REPO's commit list."

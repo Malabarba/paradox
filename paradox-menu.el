@@ -308,10 +308,15 @@ Also increments the count for \"total\"."
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
+(declare-function paradox--update-downloads-in-progress "paradox-menu")
+(if (fboundp 'package--update-downloads-in-progress)
+    (defun paradox--update-downloads-in-progress ()
+      (package--update-downloads-in-progress 'paradox--data))
+  (defalias 'paradox--update-downloads-in-progress #'ignore))
+
 (defun paradox--handle-failed-download (&rest _)
   "Handle the case when Emacs fails to download Github data."
-  (when (fboundp 'package--update-downloads-in-progress)
-    (package--update-downloads-in-progress 'paradox--data))
+  (paradox--update-downloads-in-progress)
   (unless (listp paradox--download-count)
     (setq paradox--download-count nil))
   (unless (listp paradox--package-repo-list)
@@ -320,6 +325,7 @@ Also increments the count for \"total\"."
     (setq paradox--star-count nil))
   (message "[Paradox] Error downloading Github data"))
 
+(declare-function paradox--with-work-buffer "paradox-menu")
 (if (fboundp 'package--with-work-buffer-async)
     (defmacro paradox--with-work-buffer (location file &rest body)
       "Run BODY in a buffer containing the contents of FILE at LOCATION.
@@ -331,7 +337,8 @@ automatically decides whether to download asynchronously based on
            ,location ,file
            (when package-menu-async
              #'paradox--handle-failed-download)
-         ,@body))
+         ,@body
+         (paradox--pdate-downloads-in-progress)))
   (defalias 'paradox--with-work-buffer 'package--with-work-buffer))
 
 (defun paradox--refresh-star-count ()

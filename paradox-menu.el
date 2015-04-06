@@ -234,7 +234,8 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                                'help-echo (format "Visit %s" url)
                                'button t
                                'follow-link t
-                               'action 'paradox-menu-visit-homepage))
+                               'keymap '(keymap (mouse-2 . push-button))
+                               'action #'paradox-menu-visit-homepage))
                 ""))
             ,(propertize (package-version-join
                           (package-desc-version pkg-desc))

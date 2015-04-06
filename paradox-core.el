@@ -44,11 +44,15 @@
 (defvar paradox--download-count nil)
 (defvar paradox--package-repo-list nil)
 
-(defvar paradox--star-count-url
-  "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
-  "Address of the raw star-count file.")
+(defconst paradox--data-url
+  "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/"
+  "Address of Paradox's data directory.")
 
-(defvar paradox--package-count
+(defconst paradox--star-count-url (concat paradox--data-url "data")
+  "Address of the raw star-count file.")
+(make-obsolete-variable 'paradox--star-count-url 'paradox--data-url "2.1")
+
+(defconst paradox--package-count
   '(("total" . 0) ("built-in" . 0)
     ("obsolete" . 0) ("deleted" . 0)
     ("available" . 0) ("new" . 0)

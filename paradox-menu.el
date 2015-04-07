@@ -314,6 +314,10 @@ Also increments the count for \"total\"."
     (defun paradox--update-downloads-in-progress ()
       (package--update-downloads-in-progress 'paradox--data))
   (defalias 'paradox--update-downloads-in-progress #'ignore))
+(define-obsolete-function-alias
+  'paradox--pdate-downloads-in-progress
+  'paradox--update-downloads-in-progress
+  "2.1")
 
 (defun paradox--handle-failed-download (&rest _)
   "Handle the case when Emacs fails to download Github data."
@@ -347,7 +351,7 @@ automatically decides whether to download asynchronously based on
   (interactive)
   (when (boundp 'package--downloads-in-progress)
     (push 'paradox--data package--downloads-in-progress))
-  (condition-case nil
+  (condition-case-unless-debug nil
       (paradox--with-work-buffer paradox--data-url "data"
         (setq paradox--star-count (read (current-buffer)))
         (setq paradox--package-repo-list (read (current-buffer)))

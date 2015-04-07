@@ -1586,7 +1586,7 @@
  (emacsc . 7)
  (emacsagist . 4)
  (emacs-setup . 6)
- (emacs-eclim . 458)
+ (emacs-eclim . 459)
  (elx . 6)
  (elwm . 5)
  (elscreen-separate-buffer-list . 3)

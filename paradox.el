@@ -1,6 +1,6 @@
 ;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable. -*- lexical-binding:t -*-
 
-;; Copyright (C) 2014-2015 Artur Malabarba <bruce.connor.am@gmail.com>
+;; Copyright (C) 2014-2015 Artur Malabarba <emacs@endlessparentheses.com>
 
 ;; Author: Artur Malabarba <emacs@endlessparentheses.com>
 ;; URL: http://github.com/Malabarba/paradox

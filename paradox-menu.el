@@ -339,7 +339,7 @@ automatically decides whether to download asynchronously based on
            (when package-menu-async
              #'paradox--handle-failed-download)
          ,@body
-         (paradox--pdate-downloads-in-progress)))
+         (paradox--update-downloads-in-progress)))
   (defalias 'paradox--with-work-buffer 'package--with-work-buffer))
 
 (defun paradox--refresh-star-count ()

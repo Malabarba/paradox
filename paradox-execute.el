@@ -218,7 +218,7 @@ never ask anyway."
      (y-or-n-p "When you install new packages would you like them to be automatically starred?
 \(They will be unstarred when you delete them) ")))
   (when (and (stringp paradox--current-filter)
-             (string-match "Upgrade" paradox--current-filter))
+             (string-match "Upgradable" paradox--current-filter))
     (setq tabulated-list-sort-key '("Status" . nil))
     (setq paradox--current-filter nil))
   (paradox--menu-execute-1 noquery))

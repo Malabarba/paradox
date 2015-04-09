@@ -278,7 +278,7 @@
  (ssh-tunnels . 2)
  (ssh-config-mode . 10)
  (ssh . 6)
- (srefactor . 41)
+ (srefactor . 42)
  (sqlup-mode . 20)
  (sqlite . 2)
  (sprintly-mode . 2)

@@ -1757,7 +1757,7 @@
  (dakrone-theme . 7)
  (dactyl-mode . 0)
  (d-mode . 27)
- (cython-mode . 1088)
+ (cython-mode . 1089)
  (cypher-mode . 10)
  (cycle-themes . 4)
  (cycle-resize . 0)

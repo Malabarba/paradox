@@ -183,8 +183,17 @@ for packages.
   (interactive "P")
   (when (paradox--check-github-token)
     (paradox-enable)
-    (unless no-fetch (paradox--refresh-star-count))
-    (package-list-packages no-fetch)))
+    (unless no-fetch
+      (if (fboundp 'package--update-downloads-in-progress)
+          (when (boundp 'package--downloads-in-progress)
+            (add-to-list 'package--downloads-in-progress 'paradox--data))
+        (paradox--refresh-star-count)))
+    (package-list-packages no-fetch)
+    (unless no-fetch
+      (when (fboundp 'package--update-downloads-in-progress)
+        (paradox--refresh-star-count)))
+    (when (stringp paradox-github-token)
+      (paradox--refresh-user-starred-list))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)

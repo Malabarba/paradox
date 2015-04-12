@@ -73,8 +73,8 @@ Takes a value accepted by `spinner-start'."
   :type '(choice (const nil)
 		 (const :tag "'random" random)
 		 (symbol :tag "Symbol from `spinner-types'")
-		 (vector :tag "A user defined vector")
-		 (list :tag "A list of symbols from `spinner-types' to randomly choose from"))
+		 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from" symbol)
+		 (sexp :tag "A user defined vector"))
   :group 'paradox-execute)
 
 

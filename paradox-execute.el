@@ -67,6 +67,16 @@ NOQUERY argument. Otherwise, only a message is displayed."
   :package-version '(paradox . "2.0")
   :group 'paradox-execute)
 
+(defcustom paradox-spinner-type 'horizontal-moving
+  "Holds the type of spinner to be used in the mode-line.
+Takes a value accepted by `spinner-start'."
+  :type '(choice (const nil)
+		 (const :tag "'random" random)
+		 (symbol :tag "Symbol from `spinner-types'")
+		 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from" symbol)
+		 (sexp :tag "A user defined vector"))
+  :group 'paradox-execute)
+
 
 ;;; Execution Hook
 (defvar paradox-after-execute-functions nil
@@ -304,7 +314,7 @@ user."
               (when (and (stringp paradox-github-token) paradox-automatically-star)
                 (paradox--post-execute-star-unstar before-alist (paradox--repo-alist))))
           ;; Start spinning
-          (setq paradox--spinner-stop (spinner-start 'horizontal-moving))
+          (setq paradox--spinner-stop (spinner-start paradox-spinner-type))
           ;; Async execution
           (unless (require 'async nil t)
             (error "For asynchronous execution please install the `async' package"))

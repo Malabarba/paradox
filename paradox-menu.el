@@ -330,21 +330,21 @@ Also increments the count for \"total\"."
     (setq paradox--star-count nil))
   (message "[Paradox] Error downloading Github data"))
 
-(declare-function paradox--with-work-buffer "paradox-menu")
-(if (fboundp 'package--with-work-buffer-async)
-    (defmacro paradox--with-work-buffer (location file &rest body)
-      "Run BODY in a buffer containing the contents of FILE at LOCATION.
+(defmacro paradox--with-work-buffer (location file &rest body)
+  "Run BODY in a buffer containing the contents of FILE at LOCATION.
 This is the same as `package--with-work-buffer-async', except it
 automatically decides whether to download asynchronously based on
 `package-menu-async'."
-      (declare (indent 2) (debug t))
+  (declare (indent 2) (debug t))
+  (require 'package)
+  (if (fboundp 'package--with-work-buffer-async)
       `(package--with-work-buffer-async
            ,location ,file
            (when package-menu-async
              #'paradox--handle-failed-download)
          ,@body
-         (paradox--update-downloads-in-progress)))
-  (defalias 'paradox--with-work-buffer 'package--with-work-buffer))
+         (paradox--update-downloads-in-progress))
+    `(package--with-work-buffer ,location ,file ,@body)))
 
 (defun paradox--refresh-star-count ()
   "Download the star-count file and populate the respective variable."

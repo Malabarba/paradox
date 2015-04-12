@@ -67,14 +67,21 @@ NOQUERY argument. Otherwise, only a message is displayed."
   :package-version '(paradox . "2.0")
   :group 'paradox-execute)
 
+(eval-when-compile (require 'spinner))
 (defcustom paradox-spinner-type 'horizontal-moving
   "Holds the type of spinner to be used in the mode-line.
 Takes a value accepted by `spinner-start'."
-  :type '(choice (const nil)
-		 (const :tag "'random" random)
-		 (symbol :tag "Symbol from `spinner-types'")
-		 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from" symbol)
-		 (sexp :tag "A user defined vector"))
+  :type `(choice (choice :tag "Choose a spinner by name"
+                         ,@(mapcar (lambda (c) (list 'const (car c)))
+                                   spinner-types))
+                 (const :tag "A random spinner" random)
+                 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from"
+                         (choice :tag "Choose a spinner by name"
+                                 ,@(mapcar (lambda (c) (list 'const (car c)))
+                                           spinner-types)))
+                 (vector :tag "A user defined vector"
+                         (repeat :inline t string)))
+  :package-version '(paradox . "2.1")
   :group 'paradox-execute)
 
 

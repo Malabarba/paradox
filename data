@@ -240,7 +240,7 @@
  (sws-mode . 126)
  (swoop . 45)
  (switch-window . 79)
- (swiper-helm . 6)
+ (swiper-helm . 7)
  (swiper . 54)
  (swift-mode . 97)
  (swap-buffers . 2)

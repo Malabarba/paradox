@@ -67,7 +67,7 @@ NOQUERY argument. Otherwise, only a message is displayed."
   :package-version '(paradox . "2.0")
   :group 'paradox-execute)
 
-(eval-when-compile (require 'spinner))
+(eval-and-compile (require 'spinner))
 (defcustom paradox-spinner-type 'horizontal-moving
   "Holds the type of spinner to be used in the mode-line.
 Takes a value accepted by `spinner-start'."

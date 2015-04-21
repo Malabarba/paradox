@@ -249,21 +249,23 @@ deleted, and activated packages, and errors."
                  (lambda (pkg &rest _)
                    (ignore-errors (add-to-list 'activated pkg 'append)))
                  '((name . paradox--track-activated)))
-     (dolist (pkg ,install)
-       (condition-case err
-           (progn
-             ;; 2nd arg introduced in 25.
-             (if (version<= "25" emacs-version)
-                 (package-install pkg (and (not (package-installed-p pkg))
-                                           (package-installed-p
-                                            (package-desc-name pkg))))
-               (package-install pkg))
-             (push pkg installed))
-         (error (push err errored))))
-     (dolist (pkg ,delete)
-       (condition-case err
-           (progn (package-delete pkg) (push pkg deleted))
-         (error (push err errored))))
+     (condition-case err
+         (progn
+           (dolist (pkg ,install)
+             (progn
+               ;; 2nd arg introduced in 25.
+               (if (version<= "25" emacs-version)
+                   (package-install pkg (and (not (package-installed-p pkg))
+                                             (package-installed-p
+                                              (package-desc-name pkg))))
+                 (package-install pkg))
+               (push pkg installed)))
+           (dolist (pkg ,delete)
+             (condition-case err
+                 (progn (package-delete pkg)
+                        (push pkg deleted))
+               (error (push err errored)))))
+       (error (push err errored)))
      (advice-remove #'package-activate-1 'paradox--track-activated)
      (list (cons 'installed (nreverse installed))
            (cons 'deleted (nreverse deleted))

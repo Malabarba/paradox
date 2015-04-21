@@ -218,7 +218,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
     (list pkg-desc
           `[,(concat
               (propertize name
-                          'face 'paradox-name-face
+                          'font-lock-face 'paradox-name-face
                           'button t
                           'follow-link t
                           'help-echo (format "Package: %s" name)
@@ -229,7 +229,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
                   (concat
                    (make-string (- paradox-column-width-package name-length button-length) ?\s)
                    (propertize paradox-homepage-button-string
-                               'face 'paradox-homepage-button-face
+                               'font-lock-face 'paradox-homepage-button-face
                                'mouse-face 'custom-button-mouse
                                'help-echo (format "Visit %s" url)
                                'button t
@@ -269,7 +269,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
      (if (numberp c)
          (if (> c 999) (format "%sK" (truncate c 1000)) (format "%s" c))
        " ")
-     'face 'paradox-download-face
+     'font-lock-face 'paradox-download-face
      'value (or c 0))))
 
 (defun paradox--package-homepage (pkg)
@@ -364,7 +364,7 @@ automatically decides whether to download asynchronously based on
         (repo (cdr-safe (assoc package paradox--package-repo-list))))
     (propertize
      (format "%s" (or count ""))
-     'face
+     'font-lock-face
      (if (and repo (assoc-string repo paradox--user-starred-list))
          'paradox-starred-face
        'paradox-star-face))))

@@ -1836,7 +1836,7 @@
  (comment-dwim-2 . 22)
  (commander . 20)
  (command-log-mode . 35)
- (column-enforce-mode . 6)
+ (column-enforce-mode . 7)
  (colorsarenice-theme . 8)
  (color-theme-solarized . 801)
  (color-theme-sanityinc-tomorrow . 61)

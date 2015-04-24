@@ -1568,7 +1568,7 @@
  (ert-runner . 24)
  (ert-modeline . 4)
  (ert-async . 3)
- (erlang . 3282)
+ (erlang . 3283)
  (ergoemacs-mode . 96)
  (erefactor . 10)
  (ercn . 3)

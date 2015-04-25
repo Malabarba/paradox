@@ -674,7 +674,7 @@
  (ox-pukiwiki . 1)
  (ox-pandoc . 17)
  (ox-nikola . 4)
- (ox-ioslide . 54)
+ (ox-ioslide . 55)
  (ox-impress-js . 40)
  (ox-html5slide . 9)
  (ox-gfm . 9)

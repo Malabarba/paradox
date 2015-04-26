@@ -1903,7 +1903,7 @@
  (chatwork . 1)
  (charmap . 4)
  (change-inner . 17)
- (cfengine-code-style . 214)
+ (cfengine-code-style . 215)
  (cerbere . 4)
  (centimacro . 3)
  (centered-window-mode)

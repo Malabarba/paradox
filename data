@@ -1659,7 +1659,7 @@
  (egison-mode)
  (egg . 86)
  (efire . 2)
- (edts . 223)
+ (edts . 224)
  (edn . 11)
  (editorconfig . 117)
  (edit-server-htmlize . 7)

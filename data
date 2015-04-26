@@ -1033,7 +1033,7 @@
  (jump-char . 31)
  (jump . 31)
  (jumblr . 1)
- (julia-mode . 5415)
+ (julia-mode . 5416)
  (jsx-mode . 34)
  (jss . 63)
  (json-snatcher . 15)

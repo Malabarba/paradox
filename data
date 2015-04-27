@@ -672,7 +672,7 @@
  (ox-rst . 6)
  (ox-reveal . 206)
  (ox-pukiwiki . 1)
- (ox-pandoc . 18)
+ (ox-pandoc . 19)
  (ox-nikola . 5)
  (ox-ioslide . 55)
  (ox-impress-js . 41)

@@ -293,7 +293,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
   "Increment the count for STATUS on `paradox--package-count'.
 Also increments the count for \"total\"."
   (paradox--inc-count status)
-  (unless (string= status "obsolete")
+  (unless (member status '("obsolete" "avail-obso" "incompat"))
     (paradox--inc-count "total")))
 
 (defun paradox--inc-count (string)

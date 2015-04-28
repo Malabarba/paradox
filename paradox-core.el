@@ -57,7 +57,7 @@
     ("obsolete" . 0) ("deleted" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
-    ("dependency" . 0)
+    ("dependency" . 0) ("avail-obso" . 0)
     ("incompat" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 

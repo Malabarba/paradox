@@ -810,15 +810,5 @@ TOTAL-LINES is the number of lines in the buffer."
           out))
     (paradox--prettify-key-descriptor (cons desc 0))))
 
-(defun paradox--full-name-reader ()
-  "Return all \"full_name\" properties in the buffer.
-Much faster than `json-read'."
-  (let (out)
-    (while (search-forward-regexp
-            "^ *\"full_name\" *: *\"\\(.*\\)\", *$" nil t)
-      (push (match-string-no-properties 1) out))
-    (goto-char (point-max))
-    out))
-
 (provide 'paradox-menu)
 ;;; paradox-menu.el ends here

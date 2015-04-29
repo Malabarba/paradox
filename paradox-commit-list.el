@@ -87,13 +87,15 @@ nil means `default'.")
   "Get REPO's tag list and associate them to commit hashes."
   (require 'json)
   (mapcar
-      (lambda (x)
-        (cons
-         (cdr (assoc 'sha (cdr (assoc 'commit x))))
-         (cdr (assoc 'name x))))
-    (paradox--github-action
-     (format "repos/%s/tags?per_page=100" repo)
-     "GET" 'json-read paradox-commit-list-query-max-pages)))
+   (lambda (x)
+     (cons
+      (cdr (assoc 'sha (cdr (assoc 'commit x))))
+      (cdr (assoc 'name x))))
+   (let ((json-array-type 'list))
+     (paradox--github-action
+      (format "repos/%s/tags?per_page=100" repo)
+      :reader #'json-read
+      :max-pages paradox-commit-list-query-max-pages))))
 
 (defun paradox--get-installed-version (pkg)
   "Return the installed version of PKG.
@@ -117,10 +119,12 @@ nil means `default'.")
 (defun paradox--commit-tabulated-list (repo)
   "Return the tabulated list for REPO's commit list."
   (require 'json)
-  (let ((paradox--commit-message-face nil)
-        (feed (paradox--github-action
-               (format "repos/%s/commits?per_page=100" repo)
-               "GET" 'json-read paradox-commit-list-query-max-pages)))
+  (let* ((paradox--commit-message-face nil)
+         (json-array-type 'list)
+         (feed (paradox--github-action
+                (format "repos/%s/commits?per_page=100" repo)
+                :reader #'json-read
+                :max-pages paradox-commit-list-query-max-pages)))
     (apply 'append (mapcar 'paradox--commit-print-info feed))))
 
 (defun paradox--commit-print-info (x)

@@ -159,15 +159,15 @@ Calls (paradox--star-repo REPO (not DELETE) QUERY)."
   (setq paradox--user-starred-list
         (ignore-errors
           (paradox--github-action
-           "user/starred?per_page=100" nil
-           'paradox--full-name-reader))))
+           "user/starred?per_page=100"
+           :reader #'paradox--full-name-reader))))
 
-(defun paradox--github-action-star (repo &optional delete no-result)
+(defun paradox--github-action-star (repo &optional delete)
   "Call `paradox--github-action' with \"user/starred/REPO\" as the action.
 DELETE and NO-RESULT are passed on."
   (paradox--github-action (concat "user/starred/" repo)
-                          (if (stringp delete) delete (if delete "DELETE" "PUT"))
-                          (null no-result)))
+                          :method (if (stringp delete) delete
+                                    (if delete "DELETE" "PUT"))))
 
 
 ;;; The Base (generic) function
@@ -187,17 +187,78 @@ Also print contents of current buffer to *Paradox Github*."
     (concat format "  See *Paradox Github* buffer for the full result")
     args))
 
-(defun paradox--github-action (action &optional method reader max-pages)
+(defun paradox--github-parse-response-code ()
+  "Non-nil if this reponse buffer looks ok.
+Leave point at the return code on the first line."
+  (goto-char (point-min))
+  (unless (search-forward " " nil t)
+    (paradox--github-report (buffer-string))
+    (error "Tried contacting Github, but I can't understand the result.  See *Paradox Github* buffer for the full result"))
+  (cl-case (thing-at-point 'number)
+    (204 nil) ;; OK, but no content.
+    (200 t)   ;; OK, with content.
+    ;; I'll implement redirection if anyone ever reports this.
+    ;; For now, I haven't found a place where it's used.
+    ((301 302 303 304 305 306 307)
+     (paradox--github-error
+         "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')"))
+    ((403 404) ;; Not found.
+     (paradox--github-report (buffer-string))
+     (message "This repo doesn't seem to exist, Github replied with: %s"
+       (substring (thing-at-point 'line) 0 -1))
+     nil)
+    ((400 422) ;; Bad request.
+     (paradox--github-error
+         "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))
+    (401 (paradox--github-error
+             (if (stringp paradox-github-token)
+                 "Github says you're not authenticated, try creating a new Github token"
+               "Github says you're not authenticated, you need to configure `paradox-github-token'")))
+    (t (paradox--github-error "Github returned: %S"
+         (substring (thing-at-point 'line) 0 -1)))))
+
+(defmacro paradox--with-github-buffer (method action async &rest body)
+  "Run BODY in a Github request buffer."
+  (declare (indent 3)
+           (debug t))
+  (let ((call-name (make-symbol "callback")))
+    `(with-temp-buffer
+       (let ((,call-name
+              (lambda ()
+                (when (paradox--github-parse-response-code)
+                  (let ((next-page))
+                    (when (search-forward-regexp
+                           "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
+                      (setq next-page (match-string-no-properties 1)))
+                    (ignore next-page)
+                    (search-forward-regexp "^?$")
+                    (skip-chars-forward "[:blank:]\n\r")
+                    (delete-region (point-min) (point))
+                    ,@body)))))
+         ;; Make the request.
+         (apply #'call-process
+           "curl" nil t nil "-s" "-i" "-d" "" "-X" ,method ,action
+           (when (stringp paradox-github-token)
+             (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
+         ;; Do the processing.
+         (funcall ,call-name)))))
+
+(cl-defun paradox--github-action (action &key
+                                         (method "GET")
+                                         (reader )
+                                         max-pages
+                                         (callback #'identity)
+                                         async)
   "Contact the github api performing ACTION with METHOD.
 Default METHOD is \"GET\".
 
 Action can be anything such as \"user/starred?per_page=100\". If
 it's not a full url, it will be prepended with
-\"https://api.github.com/\".
+\"https://api.github.com/\". The action might not work if
+`paradox-github-token' isn't set.
 
-The api action might not work if `paradox-github-token' isn't
-set. This function also handles the pagination used in github
-results, results of each page are appended. Use MAX-PAGES to
+This function also handles the pagination used in github results,
+results of each page are appended together. Use MAX-PAGES to
 limit the number of pages that are fetched.
 
 Return value is always a list.
@@ -211,55 +272,25 @@ Return value is always a list.
   ;; Make sure the token's configured.
   (unless (string-match "\\`https?://" action)
     (setq action (concat "https://api.github.com/" action)))
-  ;; Make the request
-  (let (next)
-    (append
-     (with-temp-buffer
-       (save-excursion
-         (shell-command
-          (if (stringp paradox-github-token)
-              (format "curl -s -i -d \"\" -X %s -u %s:x-oauth-basic \"%s\" "
-                (or method "GET") paradox-github-token action)
-
-            (format "curl -s -i -d \"\" -X %s \"%s\" "
-              (or method "GET") action)) t))
-       (when reader
-         (unless (search-forward " " nil t)
-           (paradox--github-report (buffer-string))
-           (error "Tried contacting Github, but I can't understand the result.  See *Paradox Github* buffer for the full result"))
-         (cl-case (thing-at-point 'number)
-           (204 '(t)) ;; OK, but no content.
-           ;; I'll implement redirection if anyone ever reports this.
-           ;; For now, I haven't found a place where it's used.
-           ((301 302 303 304 305 306 307)
-            (paradox--github-error
-             "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')"))
-           ((403 404) ;; Not found.
-            (paradox--github-report (buffer-string))
-            (message "This repo doesn't seem to exist, Github replied with: %s"
-              (substring (thing-at-point 'line) 0 -1))
-            nil)
-           ((400 422) ;; Bad request.
-            (paradox--github-error
-             "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))
-           (401 (paradox--github-error
-                 (if (stringp paradox-github-token)
-                     "Github says you're not authenticated, try creating a new Github token"
-                   "Github says you're not authenticated, you need to configure `paradox-github-token'")))
-           (200 ;; Good.
-            (when (search-forward-regexp
-                   "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
-              (setq next (match-string-no-properties 1)))
-            (search-forward-regexp "^?$")
-            (skip-chars-forward "[:blank:]\n")
-            (delete-region (point-min) (point))
-            (unless (eobp) (if (eq reader t) t (funcall reader))))
-           (t (paradox--github-error "Github returned: %S"
-                                     (substring (thing-at-point 'line) 0 -1))))))
-     (unless (or (not next) (and max-pages (< max-pages 2)))
-       (paradox--github-action
-        next method reader
-        (when max-pages (1- max-pages)))))))
+  (paradox--with-github-buffer method action async
+    (cond
+     ((not reader)
+      (funcall callback nil))
+     ((or (not next-page)
+          (and max-pages (< max-pages 2)))
+      (funcall callback
+        (unless (eobp) (funcall reader))))
+     (t
+      (let ((result (unless (eobp) (funcall reader))))
+        (paradox--github-action
+         next-page
+         :method method
+         :reader reader
+         :async  async
+         :max-pages (when max-pages (1- max-pages))
+         :callback (lambda (res)
+                     (funcall callback
+                       (append result res)))))))))
 
 (provide 'paradox-github)
 ;;; paradox-github.el ends here

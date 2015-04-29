@@ -134,6 +134,7 @@ If `paradox-lines-per-entry' = 1, the face
     ("new"       . bold)
     ("held"      . font-lock-constant-face)
     ("disabled"  . font-lock-warning-face)
+    ("avail-obso" . font-lock-comment-face)
     ("installed" . font-lock-comment-face)
     ("dependency" . font-lock-comment-face)
     ("incompat"  . font-lock-comment-face)

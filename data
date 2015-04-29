@@ -1901,7 +1901,7 @@
  (chinese-yasdcv . 3)
  (chinese-word-at-point . 5)
  (chinese-remote-input . 0)
- (chinese-pyim . 27)
+ (chinese-pyim . 28)
  (chinese-fonts-setup . 27)
  (chicken-scheme . 1)
  (cherry-blossom-theme . 10)

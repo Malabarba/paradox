@@ -106,5 +106,18 @@ The original definition is saved to paradox--SYM-backup."
       (set backup-name def)
       (fset sym newdef))))
 
+
+;;; Pre 25.1 support
+(declare-function paradox--update-downloads-in-progress "paradox-menu")
+(if (fboundp 'package--update-downloads-in-progress)
+    (defun paradox--update-downloads-in-progress (&optional name)
+      (when name
+        (package--update-downloads-in-progress name)))
+  (defalias 'paradox--update-downloads-in-progress #'ignore))
+(define-obsolete-function-alias
+  'paradox--pdate-downloads-in-progress
+  'paradox--update-downloads-in-progress
+  "2.1")
+
 (provide 'paradox-core)
 ;;; paradox-core.el ends here.

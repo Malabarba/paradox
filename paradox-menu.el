@@ -310,19 +310,9 @@ Also increments the count for \"total\"."
        ;; So we also try interning the package name.
        (intern (car (elt (cadr entry) 0))))))
 
-(declare-function paradox--update-downloads-in-progress "paradox-menu")
-(if (fboundp 'package--update-downloads-in-progress)
-    (defun paradox--update-downloads-in-progress ()
-      (package--update-downloads-in-progress 'paradox--data))
-  (defalias 'paradox--update-downloads-in-progress #'ignore))
-(define-obsolete-function-alias
-  'paradox--pdate-downloads-in-progress
-  'paradox--update-downloads-in-progress
-  "2.1")
-
 (defun paradox--handle-failed-download (&rest _)
   "Handle the case when Emacs fails to download Github data."
-  (paradox--update-downloads-in-progress)
+  (paradox--update-downloads-in-progress 'paradox--data)
   (unless (listp paradox--download-count)
     (setq paradox--download-count nil))
   (unless (listp paradox--package-repo-list)
@@ -344,7 +334,7 @@ automatically decides whether to download asynchronously based on
            (when package-menu-async
              #'paradox--handle-failed-download)
          ,@body
-         (paradox--update-downloads-in-progress))
+         (paradox--update-downloads-in-progress 'paradox--data))
     `(package--with-work-buffer ,location ,file ,@body)))
 
 (defun paradox--refresh-star-count ()

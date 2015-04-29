@@ -154,6 +154,16 @@ Throws error if repo is malformed."
 Calls (paradox--star-repo REPO (not DELETE) QUERY)."
   (paradox--star-repo repo (not delete) query))
 
+(defun paradox--full-name-reader ()
+  "Return all \"full_name\" properties in the buffer.
+Much faster than `json-read'."
+  (let (out)
+    (while (search-forward-regexp
+            "^ *\"full_name\" *: *\"\\(.*\\)\", *$" nil t)
+      (push (match-string-no-properties 1) out))
+    (goto-char (point-max))
+    out))
+
 (defun paradox--refresh-user-starred-list ()
   "Fetch the user's list of starred repos."
   (setq paradox--user-starred-list

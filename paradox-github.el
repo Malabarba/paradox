@@ -176,6 +176,7 @@ Much faster than `json-read'."
   "Call `paradox--github-action' with \"user/starred/REPO\" as the action.
 DELETE and NO-RESULT are passed on."
   (paradox--github-action (concat "user/starred/" repo)
+                          :async t
                           :method (if (stringp delete) delete
                                     (if delete "DELETE" "PUT"))))
 
@@ -232,26 +233,46 @@ Leave point at the return code on the first line."
   (declare (indent 3)
            (debug t))
   (let ((call-name (make-symbol "callback")))
-    `(with-temp-buffer
-       (let ((,call-name
-              (lambda ()
-                (when (paradox--github-parse-response-code)
-                  (let ((next-page))
-                    (when (search-forward-regexp
-                           "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
-                      (setq next-page (match-string-no-properties 1)))
-                    (ignore next-page)
-                    (search-forward-regexp "^?$")
-                    (skip-chars-forward "[:blank:]\n\r")
-                    (delete-region (point-min) (point))
-                    ,@body)))))
-         ;; Make the request.
-         (apply #'call-process
-           "curl" nil t nil "-s" "-i" "-d" "" "-X" ,method ,action
-           (when (stringp paradox-github-token)
-             (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
-         ;; Do the processing.
-         (funcall ,call-name)))))
+    `(let ((,call-name
+            (lambda (&optional process event)
+              (cond
+               ((or (not event)
+                    (string-match "\\`finished" event))
+                (with-current-buffer (if (processp process)
+                                         (process-buffer process)
+                                       (current-buffer))
+                  (unwind-protect
+                      (when (paradox--github-parse-response-code)
+                        (let ((next-page))
+                          (when (search-forward-regexp
+                                 "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
+                            (setq next-page (match-string-no-properties 1)))
+                          (ignore next-page)
+                          (search-forward-regexp "^?$")
+                          (skip-chars-forward "[:blank:]\n\r")
+                          (delete-region (point-min) (point))
+                          ,@body))
+                    (kill-buffer (current-buffer)))))
+               ((string-match "\\`exited abnormally" event)
+                (paradox--github-report (buffer-string))
+                (message "async curl command %s\n  method: %s\n  action: %s"
+                  event ,method ,action))))))
+       (if ,async
+           (set-process-sentinel
+            (apply #'start-process "paradox-github"
+                   (generate-new-buffer "*Paradox http*")
+                   "curl" "-s" "-i" "-d" "" "-X" ,method ,action
+                   (when (stringp paradox-github-token)
+                     (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
+            ,call-name)
+         (with-temp-buffer
+           ;; Make the request.
+           (apply #'call-process
+             "curl" nil t nil "-s" "-i" "-d" "" "-X" ,method ,action
+             (when (stringp paradox-github-token)
+               (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
+           ;; Do the processing.
+           (funcall ,call-name))))))
 
 (cl-defun paradox--github-action (action &key
                                          (method "GET")

@@ -67,23 +67,6 @@ NOQUERY argument. Otherwise, only a message is displayed."
   :package-version '(paradox . "2.0")
   :group 'paradox-execute)
 
-(eval-and-compile (require 'spinner))
-(defcustom paradox-spinner-type 'horizontal-moving
-  "Holds the type of spinner to be used in the mode-line.
-Takes a value accepted by `spinner-start'."
-  :type `(choice (choice :tag "Choose a spinner by name"
-                         ,@(mapcar (lambda (c) (list 'const (car c)))
-                                   spinner-types))
-                 (const :tag "A random spinner" random)
-                 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from"
-                         (choice :tag "Choose a spinner by name"
-                                 ,@(mapcar (lambda (c) (list 'const (car c)))
-                                           spinner-types)))
-                 (vector :tag "A user defined vector"
-                         (repeat :inline t string)))
-  :package-version '(paradox . "2.1")
-  :group 'paradox-execute)
-
 
 ;;; Execution Hook
 (defvar paradox-after-execute-functions nil
@@ -274,8 +257,6 @@ deleted, and activated packages, and errors."
            (cons 'error (nreverse errored)))))
 
 (defvar paradox--current-filter)
-(defvar paradox--spinner-stop nil
-  "Holds the function that stops the spinner.")
 
 (declare-function async-inject-variables "async")
 (defun paradox--menu-execute-1 (&optional noquery)
@@ -323,7 +304,8 @@ user."
               (when (and (stringp paradox-github-token) paradox-automatically-star)
                 (paradox--post-execute-star-unstar before-alist (paradox--repo-alist))))
           ;; Start spinning
-          (setq paradox--spinner-stop (spinner-start paradox-spinner-type))
+          (paradox--start-spinner)
+          
           ;; Async execution
           (unless (require 'async nil t)
             (error "For asynchronous execution please install the `async' package"))
@@ -349,9 +331,10 @@ user."
                (setq package-alist (pop x)
                      package-selected-packages (pop x)
                      package-archive-contents (pop x))
-               (when (functionp paradox--spinner-stop)
-                 (funcall paradox--spinner-stop)
-                 (setq paradox--spinner-stop nil))
+               (when (spinner-p paradox--spinner)
+                 (spinner-stop paradox--spinner)
+                 (setq paradox--spinner nil))
+               (setq paradox--executing nil)
                (run-hook-with-args 'paradox-after-execute-functions (pop x))
                (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))))))))))
 

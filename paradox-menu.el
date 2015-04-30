@@ -449,6 +449,21 @@ Letters do not insert themselves; instead, they are commands.
 \\<paradox-menu-mode-map>
 \\{paradox-menu-mode-map}"
   (hl-line-mode 1)
+  (when (boundp 'package--post-download-archives-hook)
+    (add-hook 'package--post-download-archives-hook
+              #'paradox--stop-spinner))
+  (if (boundp 'package--downloads-in-progress)
+      (setq mode-line-process
+            '("" (package--downloads-in-progress
+                  (":Loading "
+                   (paradox--spinner
+                    (:eval (spinner-print paradox--spinner))
+                    (:eval (paradox--start-spinner))))
+                  (paradox--spinner
+                   (":Executing " (:eval (spinner-print paradox--spinner)))))))
+    (setq mode-line-process
+          '(paradox--spinner
+            (":Executing " (:eval (spinner-print paradox--spinner))))))
   (paradox--update-mode-line)
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)

@@ -119,5 +119,38 @@ The original definition is saved to paradox--SYM-backup."
   'paradox--update-downloads-in-progress
   "2.1")
 
+
+;;; Spinner
+(defvar paradox--spinner nil)
+
+(eval-and-compile (require 'spinner))
+(defcustom paradox-spinner-type 'horizontal-moving
+  "Holds the type of spinner to be used in the mode-line.
+Takes a value accepted by `spinner-start'."
+  :type `(choice (choice :tag "Choose a spinner by name"
+                         ,@(mapcar (lambda (c) (list 'const (car c)))
+                                   spinner-types))
+                 (const :tag "A random spinner" random)
+                 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from"
+                         (choice :tag "Choose a spinner by name"
+                                 ,@(mapcar (lambda (c) (list 'const (car c)))
+                                           spinner-types)))
+                 (vector :tag "A user defined vector"
+                         (repeat :inline t string)))
+  :package-version '(paradox . "2.1")
+  :group 'paradox-execute)
+
+(defun paradox--start-spinner ()
+  (when (spinner-p paradox--spinner)
+    (spinner-stop paradox--spinner))
+  (setq paradox--spinner
+        (make-spinner paradox-spinner-type t 10))
+  (spinner-start paradox--spinner))
+
+(defun paradox--stop-spinner ()
+  (when (spinner-p paradox--spinner)
+    (spinner-stop paradox--spinner))
+  (setq paradox--spinner nil))
+
 (provide 'paradox-core)
 ;;; paradox-core.el ends here.

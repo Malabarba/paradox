@@ -207,8 +207,8 @@ This button takes you to the package's homepage."
   "Return a package entry suitable for `tabulated-list-entries'.
 PKG has the form (PKG-DESC . STATUS).
 Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
-  (let* ((pkg-desc (car pkg))
-         (status  (cdr pkg))
+  (let* ((pkg-desc (if (consp pkg) (car pkg) pkg))
+         (status   (if (consp pkg) (cdr pkg) (package-desc-status pkg)))
          (face (or (cdr (assoc-string status paradox-status-face-alist))
                    'font-lock-warning-face))
          (url (paradox--package-homepage pkg-desc))

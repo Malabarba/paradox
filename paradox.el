@@ -219,6 +219,8 @@ not prevent downloading the actual packages (obviously)."
   "Enable paradox, overriding the default package-menu."
   (interactive)
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
+  (when (fboundp 'package-menu--print-info-simple)
+    (paradox--override-definition 'package-menu--print-info-simple 'paradox--print-info))
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
   ;; Tough it may not look like it, this is totally necessary too.
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode)

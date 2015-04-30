@@ -96,42 +96,7 @@
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;;
 
-;;; Change Log:
-;; 2.0   - 2015/01/11 - paradox-menu-mark-star-unstar no longer takes a prefix argument.
-;; 2.0   - 2015/01/10 - New command `paradox-filter-clear'. Bound to `f c'.
-;; 2.0   - 2015/01/10 - New hook `paradox-after-execute-functions'.
-;; 2.0   - 2015/01/05 - Drop 24.3 support.
-;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
-;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
-;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
-;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
-;; 1.1   - 2014/05/10 - Added Download column.
-;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
-;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
-;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
-;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
-;; 1.0   - 2014/05/04 - j and k describe the next and previous entries.
-;; 0.11  - 2014/05/01 - Sorting commands and keys (under "S").
-;; 0.10  - 2014/04/26 - New help menu!
-;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
-;; 0.10  - 2014/04/25 - Links to package homepages.
-;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
-;; 0.9.2 - 2014/04/15 - Ask the user before automatically starring.
-;; 0.9.1 - 2014/04/14 - paradox-filter-upgrades is informative when there are no upgrades.
-;; 0.9   - 2014/04/14 - First full feature release.
-;; 0.5   - 2014/04/14 - Star all installed packages.
-;; 0.5   - 2014/04/13 - (Un)Star packages with the "s" key!.
-;; 0.2   - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
-;; 0.2   - 2014/04/13 - New archive face.
-;; 0.2   - 2014/04/13 - Define filtering keys (fk, fu, fr).
-;; 0.2   - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
-;; 0.2   - 2014/04/08 - Even better mode-line.
-;; 0.2   - 2014/04/08 - Intelligent width for the "archive" column.
-;; 0.2   - 2014/04/08 - Customizable widths.
-;; 0.2   - 2014/04/08 - Prettier trunctation.
-;; 0.1   - 2014/04/03 - Created File.
 
 ;;; Code:
 

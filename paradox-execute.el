@@ -290,12 +290,13 @@ user."
       (when (or noquery
                 (y-or-n-p (paradox--format-message 'question install-list delete-list)))
         ;; Background or foreground?
-        (if (not (cl-case paradox-execute-asynchronously
-                   ((nil) nil)
-                   ((ask)
-                    (if noquery nil
-                      (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))
-                   (t t)))
+        (if (or (not install-list)
+                (not (cl-case paradox-execute-asynchronously
+                       ((nil) nil)
+                       ((ask)
+                        (if noquery nil
+                          (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))
+                       (t t))))
             ;; Synchronous execution
             (progn
               (let ((alist (paradox--perform-package-transaction install-list delete-list)))

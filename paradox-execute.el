@@ -140,7 +140,7 @@ Argument ALIST describes the operation."
      (lambda (p) (tabulated-list-print-entry
              p
              `[,(symbol-name (package-desc-name p))
-               ,(mapconcat #'number-to-string (package-desc-version p) ".")]))
+               ,(package-version-join (package-desc-version p))]))
      list)))
 
 (defun paradox--report-buffer-print (alist)

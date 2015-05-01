@@ -1549,7 +1549,7 @@
  (evil-escape . 27)
  (evil-easymotion . 13)
  (evil-dvorak . 3)
- (evil-commentary . 8)
+ (evil-commentary . 9)
  (evil-args . 15)
  (evil-anzu . 7)
  (evil-annoying-arrows . 0)

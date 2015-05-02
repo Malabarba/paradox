@@ -575,7 +575,7 @@
  (pointback . 1)
  (point-stack . 10)
  (plsense-direx . 2)
- (plsense . 14)
+ (plsense . 15)
  (plim-mode . 1)
  (plenv . 3)
  (plantuml-mode . 2)

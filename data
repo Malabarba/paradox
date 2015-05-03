@@ -2032,7 +2032,7 @@
  (auctex-lua . 3)
  (auctex-latexmk . 13)
  (atom-dark-theme . 12)
- (async . 186)
+ (async . 187)
  (asn1-mode . 0)
  (asilea . 0)
  (artbollocks-mode . 15)

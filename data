@@ -1863,7 +1863,7 @@
  (command-log-mode . 35)
  (column-enforce-mode . 6)
  (colorsarenice-theme . 8)
- (color-theme-solarized . 808)
+ (color-theme-solarized . 809)
  (color-theme-sanityinc-tomorrow . 61)
  (color-theme-sanityinc-solarized . 48)
  (color-theme-buffer-local . 32)

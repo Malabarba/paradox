@@ -154,10 +154,10 @@ for packages.
             (add-to-list 'package--downloads-in-progress 'paradox--data))
         (paradox--refresh-star-count)))
     (package-list-packages no-fetch)
-    (when (stringp paradox-github-token)
-      (paradox--refresh-user-starred-list
-       (bound-and-true-p package-menu-async)))
     (unless no-fetch
+      (when (stringp paradox-github-token)
+        (paradox--refresh-user-starred-list
+         (bound-and-true-p package-menu-async)))
       (when (fboundp 'package--update-downloads-in-progress)
         (paradox--refresh-star-count)))))
 

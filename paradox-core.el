@@ -58,7 +58,7 @@
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
     ("dependency" . 0) ("avail-obso" . 0)
-    ("incompat" . 0)
+    ("incompat" . 0)  ("external" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 
 (defvar paradox--truncate-string-to-width-backup)

@@ -87,7 +87,7 @@
  (web-server . 42)
  (web-mode . 707)
  (web-completion-data . 3)
- (web-beautify . 63)
+ (web-beautify . 64)
  (web . 47)
  (weather-metno . 18)
  (wcheck-mode . 21)

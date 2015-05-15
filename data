@@ -759,7 +759,7 @@
  (org-gcal . 59)
  (org-elisp-help . 1)
  (org-ehtml . 63)
- (org-dropbox . 6)
+ (org-dropbox . 7)
  (org-drill-table . 7)
  (org-download . 29)
  (org-dotemacs . 14)

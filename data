@@ -1877,7 +1877,7 @@
  (company-c-headers . 19)
  (company-auctex . 13)
  (company-anaconda . 24)
- (company . 479)
+ (company . 480)
  (comment-dwim-2 . 23)
  (commander . 20)
  (command-log-mode . 35)

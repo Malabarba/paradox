@@ -435,7 +435,7 @@
  (s-buffer . 0)
  (s . 267)
  (rvm . 187)
- (rust-mode . 39)
+ (rust-mode . 40)
  (runner . 5)
  (ruby-tools)
  (ruby-test-mode . 13)

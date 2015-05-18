@@ -34,6 +34,9 @@
   :group 'paradox)
 
 (defvar paradox--user-starred-list nil)
+(make-obsolete-variable
+ 'paradox--user-starred-list 'paradox--user-starred-repos "2.1")
+(defvar paradox--user-starred-repos nil)
 
 
 ;;; Github token
@@ -127,11 +130,15 @@ No questions asked."
   (paradox--enforce-github-token
    (mapc (lambda (x) (paradox--star-package-safe (car-safe x))) package-alist)))
 
+(defun paradox--starred-repo-p (repo)
+  "Non-nil if REPO is starred by the user."
+  (gethash repo paradox--user-starred-repos))
+
 (defun paradox--star-package-safe (pkg &optional delete query)
   "Star PKG without throwing errors, unless DELETE is non-nil, then unstar.
 If QUERY is non-nil, ask the user first."
   (let ((repo (gethash pkg paradox--package-repo-list)))
-    (when (and repo (not (assoc repo paradox--user-starred-list)))
+    (when (and repo (paradox--starred-repo-p repo))
       (paradox--star-repo repo delete query))))
 
 (defun paradox--star-repo (repo &optional delete query)
@@ -145,9 +152,8 @@ Throws error if repo is malformed."
     (paradox--github-action-star repo delete)
     (message "%starred %s." (if delete "Uns" "S") repo)
     (if delete
-        (setq paradox--user-starred-list
-              (remove repo paradox--user-starred-list))
-      (add-to-list 'paradox--user-starred-list repo))))
+        (remhash repo paradox--user-starred-repos)
+      (puthash repo t paradox--user-starred-repos))))
 
 (defun paradox--unstar-repo (repo &optional delete query)
   "Unstar REPO.
@@ -170,7 +176,11 @@ Much faster than `json-read'."
    "user/starred?per_page=100"
    :async    (when async 'refresh)
    :callback (lambda (res)
-               (setq paradox--user-starred-list res))
+               (setq paradox--user-starred-repos
+                     (make-hash-table :size (length res)
+                                      :test #'equal))
+               (dolist (it res)
+                 (puthash it t paradox--user-starred-repos)))
    :reader   #'paradox--full-name-reader))
 
 (defun paradox--github-action-star (repo &optional delete)

@@ -376,10 +376,11 @@ installed and deleted, respectively."
 
 (defun paradox--post-execute-star-unstar (before after)
   "Star repos in AFTER absent from BEFORE, unstar vice-versa."
-  (mapc #'paradox--star-repo
-        (cl-set-difference (cl-set-difference after before) paradox--user-starred-list))
-  (mapc #'paradox--unstar-repo
-        (cl-intersection (cl-set-difference before after) paradox--user-starred-list)))
+  (let ((repos (hash-table-keys paradox--user-starred-repos)))
+    (mapc #'paradox--star-repo
+          (seq-difference (seq-difference after before) repos))
+    (mapc #'paradox--unstar-repo
+          (seq-intersection (seq-difference before after) repos))))
 
 (provide 'paradox-execute)
 ;;; paradox-execute.el ends here

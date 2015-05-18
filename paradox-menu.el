@@ -359,7 +359,7 @@ automatically decides whether to download asynchronously based on
     (propertize
      (format "%s" (or count ""))
      'font-lock-face
-     (if (and repo (assoc-string repo paradox--user-starred-list))
+     (if (and repo (paradox--starred-repo-p repo))
          'paradox-starred-face
        'paradox-star-face))))
 
@@ -550,7 +550,7 @@ defaults to: \"No %s packages\"."
   (interactive)
   (let ((list))
     (maphash (lambda (pkg repo)
-               (when (assoc-string (cdr repo) paradox--user-starred-list)
+               (when (paradox--starred-repo-p repo)
                  (push pkg list)))
              paradox--package-repo-list)
     (paradox--apply-filter Starred list)))
@@ -671,7 +671,7 @@ PKG is a symbol.  Interactively it is the package under point."
   "Star or unstar a package and move to the next line."
   (interactive)
   (paradox--enforce-github-token
-   (unless paradox--user-starred-list
+   (unless paradox--user-starred-repos
      (paradox--refresh-user-starred-list))
    ;; Get package name
    (let* ((pkg (paradox--get-or-return-package nil))
@@ -681,7 +681,7 @@ PKG is a symbol.  Interactively it is the package under point."
      ;; (Un)Star repo
      (if (not repo)
          (message "This package is not a GitHub repo.")
-       (setq will-delete (member repo paradox--user-starred-list))
+       (setq will-delete (paradox--starred-repo-p repo))
        (paradox--star-repo repo will-delete)
        (cl-incf (gethash pkg paradox--star-count 0)
                 (if will-delete -1 1))

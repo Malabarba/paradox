@@ -50,12 +50,6 @@
   :type 'directory
   :group 'paradox)
 
-(defcustom paradox--star-count-output-file
-  (expand-file-name "./star-count")
-  "File where a list of star counts will be saved."
-  :type 'file
-  :group 'paradox-counter
-  :package-version '(paradox-counter . "0.1"))
 (defcustom paradox--output-data-file
   (expand-file-name "../data")
   "File where a list of star counts will be saved."
@@ -77,22 +71,20 @@ Also saves result to `package-star-count'"
   (require 'json)
   (setq paradox--download-count
         (paradox--github-action paradox-download-count-url nil 'json-read))
-  (with-temp-buffer
-    (let* ((i 0)
-           (files (directory-files recipes-dir t "\\`[^\\.]"))
-           (N (length files)))
-      (dolist (file files)
-        (paradox-log "%s / %s" (incf i) N)
-        (insert-file-contents file)
-        (let ((package (read (buffer-string)))
-              repo)
-          (when (eq 'github (cadr (memq :fetcher package)))
-            (setq repo (cadr (memq :repo package)))
-            (push (cons (car package) (paradox-fetch-star-count repo))
-                  paradox--star-count)
-            (push (cons (car package) repo)
-                  paradox--package-repo-list)))
-        (erase-buffer))))
+  (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
+    (search-forward "\n\n")
+    (let* ((i 0))
+      (dolist (it (json-read))
+        (let ((name (car it)))
+          (let-alist (cdr it)
+            (paradox-log "%s / %s" (incf i) name)
+            (pcase .fetcher
+              (`"github"
+               (push (cons name (paradox-fetch-star-count .repo))
+                     paradox--star-count)
+               (push (cons name .repo) paradox--package-repo-list) )
+              (`"wiki"
+               (push name paradox--wiki-packages))))))))
   (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
@@ -112,7 +104,8 @@ Also saves result to `package-star-count'"
   (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
     (pp paradox--package-repo-list (current-buffer))
-    (pp paradox--download-count (current-buffer))))
+    (pp paradox--download-count (current-buffer))
+    (pp paradox--wiki-packages (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
   (let ((sc (cdr (assq 'stargazers_count

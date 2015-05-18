@@ -43,6 +43,7 @@
 (defvar paradox--star-count nil)
 (defvar paradox--download-count nil)
 (defvar paradox--package-repo-list nil)
+(defvar paradox--wiki-packages nil)
 
 (defconst paradox--data-url
   "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/"

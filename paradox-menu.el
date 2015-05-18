@@ -393,6 +393,24 @@ shown."
   (tabulated-list-init-header)
   (paradox--update-mode-line))
 
+(defcustom paradox-hide-wiki-packages nil
+  "If non-nil, don't display packages from the emacswiki."
+  :type 'boolean)
+
+(defun paradox--maybe-remove-wiki-packages (pkgs)
+  "Remove wiki packages from PKGS.
+If `paradox-hide-wiki-packages' is nil, just return PKGS."
+  (if (not paradox-hide-wiki-packages)
+      pkgs
+    (remq nil
+          (mapcar
+           (lambda (entry)
+             (when (gethash (car entry) paradox--wiki-packages)
+               (car entry)))
+           (if (or (not pkgs) (eq t pkgs))
+               package-archive-contents
+             pkgs)))))
+
 (defun paradox-menu--refresh (&optional packages keywords)
   "Call `package-menu--refresh' retaining current filter.
 PACKAGES and KEYWORDS are passed to `package-menu--refresh'.  If
@@ -403,7 +421,9 @@ used to define keywords."
         (paradox--desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
     (cond
      ((or packages keywords (not paradox--current-filter))
-      (package-menu--refresh packages keywords)
+      (package-menu--refresh
+       (paradox--maybe-remove-wiki-packages packages)
+       keywords)
       (paradox-refresh-upgradeable-packages))
      ((string= paradox--current-filter "Upgradable")
       (paradox-refresh-upgradeable-packages)

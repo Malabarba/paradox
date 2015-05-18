@@ -130,7 +130,7 @@ No questions asked."
 (defun paradox--star-package-safe (pkg &optional delete query)
   "Star PKG without throwing errors, unless DELETE is non-nil, then unstar.
 If QUERY is non-nil, ask the user first."
-  (let ((repo (cdr-safe (assoc pkg paradox--package-repo-list))))
+  (let ((repo (gethash pkg paradox--package-repo-list)))
     (when (and repo (not (assoc repo paradox--user-starred-list)))
       (paradox--star-repo repo delete query))))
 

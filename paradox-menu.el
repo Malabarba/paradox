@@ -258,14 +258,14 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
 (defun paradox--count-print (pkg)
   "Return counts of PKG as a package-desc list."
   (append
-   (when (and paradox-display-star-count (listp paradox--star-count))
+   (when (and paradox-display-star-count (hash-table-p paradox--star-count))
      (list (paradox--package-star-count pkg)))
-   (when (and paradox-display-download-count (listp paradox--download-count))
+   (when (and paradox-display-download-count (hash-table-p paradox--download-count))
      (list (paradox--package-download-count pkg)))))
 
 (defun paradox--package-download-count (pkg)
   "Return propertized string with the download count of PKG."
-  (let ((c (cdr-safe (assoc pkg paradox--download-count))))
+  (let ((c (gethash pkg paradox--download-count nil)))
     (propertize
      (if (numberp c)
          (if (> c 999) (format "%sK" (truncate c 1000)) (format "%s" c))
@@ -280,7 +280,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
          (extras   (package-desc-extras object))
          (homepage (and (listp extras) (cdr-safe (assoc :url extras)))))
     (or homepage
-        (and (setq extras (cdr (assoc name paradox--package-repo-list)))
+        (and (setq extras (gethash name paradox--package-repo-list))
              (format "https://github.com/%s" extras)))))
 (defun paradox--get-or-return-package (pkg)
   "Take a marker or package name PKG and return a package name."
@@ -313,12 +313,14 @@ Also increments the count for \"total\"."
 (defun paradox--handle-failed-download (&rest _)
   "Handle the case when Emacs fails to download Github data."
   (paradox--update-downloads-in-progress 'paradox--data)
-  (unless (listp paradox--download-count)
+  (unless (hash-table-p paradox--download-count)
     (setq paradox--download-count nil))
-  (unless (listp paradox--package-repo-list)
+  (unless (hash-table-p paradox--package-repo-list)
     (setq paradox--package-repo-list nil))
-  (unless (listp paradox--star-count)
+  (unless (hash-table-p paradox--star-count)
     (setq paradox--star-count nil))
+  (unless (hash-table-p paradox--wiki-packages)
+    (setq paradox--wiki-packages nil))
   (message "[Paradox] Error downloading Github data"))
 
 (defmacro paradox--with-work-buffer (location file &rest body)
@@ -346,13 +348,14 @@ automatically decides whether to download asynchronously based on
       (paradox--with-work-buffer paradox--data-url "data"
         (setq paradox--star-count (read (current-buffer)))
         (setq paradox--package-repo-list (read (current-buffer)))
-        (setq paradox--download-count (read (current-buffer))))
+        (setq paradox--download-count (read (current-buffer)))
+        (setq paradox--wiki-packages (read (current-buffer))))
     (error (paradox--handle-failed-download))))
 
 (defun paradox--package-star-count (package)
   "Get the star count of PACKAGE."
-  (let ((count (cdr (assoc package paradox--star-count)))
-        (repo (cdr-safe (assoc package paradox--package-repo-list))))
+  (let ((count (gethash package paradox--star-count nil))
+        (repo  (gethash package paradox--package-repo-list nil)))
     (propertize
      (format "%s" (or count ""))
      'font-lock-face
@@ -545,10 +548,12 @@ defaults to: \"No %s packages\"."
 (defun paradox-filter-stars ()
   "Show only starred packages."
   (interactive)
-  (paradox--apply-filter Starred
-    (cl-remove-if-not
-     (lambda (pkg-repo) (assoc-string (cdr pkg-repo) paradox--user-starred-list))
-     paradox--package-repo-list)))
+  (let ((list))
+    (maphash (lambda (pkg repo)
+               (when (assoc-string (cdr repo) paradox--user-starred-list)
+                 (push pkg list)))
+             paradox--package-repo-list)
+    (paradox--apply-filter Starred list)))
 
 (defun paradox-filter-regexp (regexp)
   "Show only packages matching REGEXP.
@@ -669,17 +674,16 @@ PKG is a symbol.  Interactively it is the package under point."
    (unless paradox--user-starred-list
      (paradox--refresh-user-starred-list))
    ;; Get package name
-   (let ((pkg (paradox--get-or-return-package nil))
-         will-delete repo)
+   (let* ((pkg (paradox--get-or-return-package nil))
+          (repo (gethash pkg paradox--package-repo-list))
+          will-delete)
      (unless pkg (error "Couldn't find package-name for this entry"))
-     ;; get repo for this package
-     (setq repo (cdr-safe (assoc pkg paradox--package-repo-list)))
      ;; (Un)Star repo
      (if (not repo)
          (message "This package is not a GitHub repo.")
        (setq will-delete (member repo paradox--user-starred-list))
        (paradox--star-repo repo will-delete)
-       (cl-incf (cdr (assoc pkg paradox--star-count))
+       (cl-incf (gethash pkg paradox--star-count 0)
                 (if will-delete -1 1))
        (tabulated-list-set-col paradox--column-name-star
                                (paradox--package-star-count pkg)))))
@@ -690,7 +694,7 @@ PKG is a symbol.  Interactively it is the package under point."
 PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let* ((name (paradox--get-or-return-package pkg))
-         (repo (cdr (assoc name paradox--package-repo-list))))
+         (repo (gethash name paradox--package-repo-list)))
     (if repo
         (with-selected-window
             (display-buffer (get-buffer-create paradox--commit-list-buffer))

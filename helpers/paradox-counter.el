@@ -29,7 +29,9 @@
 ;; 0.1 - 2014/04/03 - Created File.
 ;;; Code:
 
+
 (require 'paradox-github)
+(require 'json)
 (eval-when-compile (require 'cl))
 
 (defcustom paradox-melpa-directory
@@ -69,22 +71,27 @@ Also saves result to `package-star-count'"
   (setq paradox--star-count nil)
   (setq paradox--package-repo-list nil)
   (require 'json)
-  (setq paradox--download-count
-        (paradox--github-action paradox-download-count-url nil 'json-read))
-  (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
-    (search-forward "\n\n")
-    (let* ((i 0))
-      (dolist (it (json-read))
-        (let ((name (car it)))
-          (let-alist (cdr it)
-            (paradox-log "%s / %s" (incf i) name)
-            (pcase .fetcher
-              (`"github"
-               (push (cons name (paradox-fetch-star-count .repo))
-                     paradox--star-count)
-               (push (cons name .repo) paradox--package-repo-list) )
-              (`"wiki"
-               (push name paradox--wiki-packages))))))))
+  (let ((json-key-type 'symbol)
+        (json-object-type 'hash-table))
+    (setq paradox--download-count
+          (paradox--github-action paradox-download-count-url :reader #'json-read))
+    (setq paradox--wiki-packages (make-hash-table))
+    (setq paradox--package-repo-list (make-hash-table))
+    (setq paradox--star-count (make-hash-table))
+    (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
+      (search-forward "\n\n")
+      (let ((i 0))
+        (dolist (it (json-read))
+          (let ((name (car it)))
+            (let-alist (cdr it)
+              (paradox-log "%s / %s" (incf i) name)
+              (pcase .fetcher
+                (`"github"
+                 (puthash name (paradox-fetch-star-count .repo)
+                          paradox--star-count)
+                 (puthash name .repo paradox--package-repo-list))
+                (`"wiki"
+                 (puthash name t paradox--wiki-packages)))))))))
   (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
@@ -109,9 +116,8 @@ Also saves result to `package-star-count'"
 
 (defun paradox-fetch-star-count (repo)
   (let ((sc (cdr (assq 'stargazers_count
-                       (paradox--github-action
-                        (format "repos/%s" repo)
-                        nil #'json-read)))))
+                       (paradox--github-action (format "repos/%s" repo)
+                                               :reader #'json-read)))))
     ;; (unless (numberp sc)
     ;;   (paradox-error "%s	%s" repo sc))
     sc))

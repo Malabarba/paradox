@@ -343,12 +343,11 @@ user."
 ;;; Aux functions
 (defun paradox--repo-alist ()
   "List of known repos."
-  (cl-remove-duplicates
-   (remove
-    nil
-    (mapcar
-     (lambda (it) (cdr-safe (assoc (car it) paradox--package-repo-list)))
-     package-alist))))
+  (delete-dups
+   (remove nil
+           (mapcar
+            (lambda (it) (gethash it paradox--package-repo-list))
+            package-alist))))
 
 (defun paradox--format-message (question-p install-list delete-list)
   "Format a message regarding a transaction.

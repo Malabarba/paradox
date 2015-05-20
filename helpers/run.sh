@@ -5,9 +5,7 @@ if [[ -z "$EMACS" ]]; then
     exit 1;
 else
     # Paradox
-    cd ~/.melpa &&
-        git pull &> /dev/null &&
-        cd ~/.paradox &&
+    cd ~/.paradox &&
         git checkout data &> /dev/null &&
         git pull &> /dev/null &&
         cd ~/.paradox/helpers &&

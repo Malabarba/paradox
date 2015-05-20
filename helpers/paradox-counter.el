@@ -45,53 +45,45 @@
   :type 'string
   :group 'paradox)
 
-(defcustom paradox-recipes-directory
-  (when (file-directory-p (concat paradox-melpa-directory "recipes/"))
-    (concat paradox-melpa-directory "recipes/"))
-  "Directory with melpa package recipes."
-  :type 'directory
-  :group 'paradox)
-
 (defcustom paradox--output-data-file
-  (expand-file-name "../data")
+  (expand-file-name "../data-hashtables")
   "File where a list of star counts will be saved."
   :type 'file
   :group 'paradox-counter
   :package-version '(paradox-counter . "0.1"))
 
 ;;;###autoload
-(defun paradox-generate-star-count (&optional recipes-dir)
+(defun paradox-generate-star-count (&optional _recipes-dir)
   "Get the number of stars for each github repo and return.
 Also saves result to `package-star-count'"
   (interactive)
   (setq paradox-github-token
         (or (getenv "GHTOKEN") paradox-github-token))
-  (unless recipes-dir
-    (setq recipes-dir paradox-recipes-directory))
   (setq paradox--star-count nil)
   (setq paradox--package-repo-list nil)
   (require 'json)
   (let ((json-key-type 'symbol)
         (json-object-type 'hash-table))
     (setq paradox--download-count
-          (paradox--github-action paradox-download-count-url :reader #'json-read))
-    (setq paradox--wiki-packages (make-hash-table))
-    (setq paradox--package-repo-list (make-hash-table))
-    (setq paradox--star-count (make-hash-table))
-    (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
-      (search-forward "\n\n")
-      (let ((i 0))
-        (dolist (it (json-read))
-          (let ((name (car it)))
-            (let-alist (cdr it)
-              (paradox-log "%s / %s" (incf i) name)
-              (pcase .fetcher
-                (`"github"
-                 (puthash name (paradox-fetch-star-count .repo)
-                          paradox--star-count)
-                 (puthash name .repo paradox--package-repo-list))
-                (`"wiki"
-                 (puthash name t paradox--wiki-packages)))))))))
+          (paradox--github-action paradox-download-count-url :reader #'json-read)))
+  (setq paradox--wiki-packages (make-hash-table))
+  (setq paradox--package-repo-list (make-hash-table))
+  (setq paradox--star-count (make-hash-table))
+  (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
+    (search-forward "\n\n")
+    (let ((i 0))
+      (dolist (it (json-read))
+        (let ((name (car it)))
+          (let-alist (cdr it)
+            (paradox-log "%s / %s" (incf i) name)
+            (pcase .fetcher
+              (`"github"
+               (let ((count (paradox-fetch-star-count .repo)))
+                 (when (numberp count)
+                   (puthash name count paradox--star-count)
+                   (puthash name .repo paradox--package-repo-list))))
+              (`"wiki"
+               (puthash name t paradox--wiki-packages))))))))
   (paradox-list-to-file))
 
 (defun paradox-log (&rest s)
@@ -105,9 +97,6 @@ Also saves result to `package-star-count'"
 
 (defun paradox-list-to-file ()
   "Save lists in \"data\" file."
-  (with-temp-file paradox--output-error-file
-    (pp (cl-remove-if #'cdr paradox--star-count)
-        (current-buffer)))
   (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
     (pp paradox--package-repo-list (current-buffer))

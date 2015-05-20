@@ -36,7 +36,7 @@
 (defvar paradox--user-starred-list nil)
 (make-obsolete-variable
  'paradox--user-starred-list 'paradox--user-starred-repos "2.1")
-(defvar paradox--user-starred-repos nil)
+(defvar paradox--user-starred-repos (make-hash-table))
 
 
 ;;; Github token

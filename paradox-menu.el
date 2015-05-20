@@ -314,13 +314,13 @@ Also increments the count for \"total\"."
   "Handle the case when Emacs fails to download Github data."
   (paradox--update-downloads-in-progress 'paradox--data)
   (unless (hash-table-p paradox--download-count)
-    (setq paradox--download-count nil))
+    (setq paradox--download-count (make-hash-table)))
   (unless (hash-table-p paradox--package-repo-list)
-    (setq paradox--package-repo-list nil))
+    (setq paradox--package-repo-list (make-hash-table)))
   (unless (hash-table-p paradox--star-count)
-    (setq paradox--star-count nil))
+    (setq paradox--star-count (make-hash-table)))
   (unless (hash-table-p paradox--wiki-packages)
-    (setq paradox--wiki-packages nil))
+    (setq paradox--wiki-packages (make-hash-table)))
   (message "[Paradox] Error downloading Github data"))
 
 (defmacro paradox--with-work-buffer (location file &rest body)
@@ -345,7 +345,7 @@ automatically decides whether to download asynchronously based on
   (when (boundp 'package--downloads-in-progress)
     (add-to-list 'package--downloads-in-progress 'paradox--data))
   (condition-case-unless-debug nil
-      (paradox--with-work-buffer paradox--data-url "data"
+      (paradox--with-work-buffer paradox--data-url "data-hashtables"
         (setq paradox--star-count (read (current-buffer)))
         (setq paradox--package-repo-list (read (current-buffer)))
         (setq paradox--download-count (read (current-buffer)))
@@ -405,7 +405,7 @@ If `paradox-hide-wiki-packages' is nil, just return PKGS."
     (remq nil
           (mapcar
            (lambda (entry)
-             (when (gethash (car entry) paradox--wiki-packages)
+             (unless (gethash (car entry) paradox--wiki-packages)
                (car entry)))
            (if (or (not pkgs) (eq t pkgs))
                package-archive-contents

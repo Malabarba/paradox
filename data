@@ -2161,7 +2161,7 @@
  (ac-anaconda . 2)
  (abl-mode . 19)
  (abc-mode . 3)
- (@ . 27)
+ (@ . 28)
  (4clojure))
 ((zygospore . "louiskottmann/zygospore.el")
  (ztree . "fourier/ztree")

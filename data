@@ -1290,7 +1290,7 @@
  (helm-cscope . 1)
  (helm-company . 17)
  (helm-cmd-t)
- (helm-circe . 2)
+ (helm-circe . 3)
  (helm-chrome . 3)
  (helm-c-yasnippet . 24)
  (helm-c-moccur . 1)

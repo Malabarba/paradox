@@ -235,14 +235,11 @@ deleted, and activated packages, and errors."
      (condition-case err
          (progn
            (dolist (pkg ,install)
-             (progn
-               ;; 2nd arg introduced in 25.
-               (if (version<= "25" emacs-version)
-                   (package-install pkg (and (not (package-installed-p pkg))
-                                             (package-installed-p
-                                              (package-desc-name pkg))))
-                 (package-install pkg))
-               (push pkg installed)))
+             ;; 2nd arg introduced in 25.
+             (if (version<= "25" emacs-version)
+                 (package-install pkg 'dont-select)
+               (package-install pkg))
+             (push pkg installed))
            (dolist (pkg ,delete)
              (condition-case err
                  (progn (package-delete pkg)
@@ -289,6 +286,10 @@ user."
       ;; Confirm with the user.
       (when (or noquery
                 (y-or-n-p (paradox--format-message 'question install-list delete-list)))
+        ;; On Emacs 25, update the selected packages list.
+        (when (fboundp 'package--update-selected-packages)
+          (let-alist (package-menu--partition-transaction install-list delete-list)
+            (package--update-selected-packages .install .delete)))
         ;; Background or foreground?
         (if (or (not install-list)
                 (not (cl-case paradox-execute-asynchronously

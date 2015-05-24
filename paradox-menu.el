@@ -761,7 +761,7 @@ nil) on the Packages buffer."
 (defun paradox--update-mode-line ()
   "Update `mode-line-format'."
   (mapc #'paradox--set-local-value paradox-local-variables)
-  (let ((total-lines (int-to-string (line-number-at-pos (point-max)))))
+  (let ((total-lines (int-to-string (length tabulated-list-entries))))
     (paradox--update-mode-line-front-space total-lines)
     (paradox--update-mode-line-buffer-identification total-lines))
   (set-face-foreground

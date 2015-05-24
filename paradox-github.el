@@ -195,9 +195,10 @@ DELETE and NO-RESULT are passed on."
 ;;; The Base (generic) function
 (defun paradox--github-report (text)
   "Write TEXT to the *Paradox Github* buffer."
-  (with-current-buffer (get-buffer-create "*Paradox Report*")
-    (erase-buffer)
-    (insert text)
+  (with-current-buffer (get-buffer-create "*Paradox Github Report*")
+    (let ((inhibit-read-only))
+      (erase-buffer)
+      (insert text))
     (goto-char (point-min))))
 
 (defun paradox--github-error (format &rest args)

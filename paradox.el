@@ -1,12 +1,12 @@
 ;;; paradox.el --- A modern Packages Menu. Colored, with package ratings, and customizable. -*- lexical-binding:t -*-
 
-;; Copyright (C) 2014-2015 Artur Malabarba <bruce.connor.am@gmail.com>
+;; Copyright (C) 2014-2015 Artur Malabarba <emacs@endlessparentheses.com>
 
-;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
-;; URL: http://github.com/Bruce-Connor/paradox
+;; Author: Artur Malabarba <emacs@endlessparentheses.com>
+;; URL: http://github.com/Malabarba/paradox
 ;; Version: 2.1
-;; Keywords: package packages mode-line
-;; Package-Requires: ((emacs "24.4") (dash "2.6.0") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.0"))
+;; Keywords: package packages
+;; Package-Requires: ((emacs "24.4") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.3"))
 ;; Prefix: paradox
 ;; Separator: -
 
@@ -96,48 +96,12 @@
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;;
 
-;;; Change Log:
-;; 2.0   - 2015/01/11 - paradox-menu-mark-star-unstar no longer takes a prefix argument.
-;; 2.0   - 2015/01/10 - New command `paradox-filter-clear'. Bound to `f c'.
-;; 2.0   - 2015/01/10 - New hook `paradox-after-execute-functions'.
-;; 2.0   - 2015/01/05 - Drop 24.3 support.
-;; 2.0   - 2014/12/25 - `paradox-upgrade-packages' upgrades everything without question.
-;; 2.0   - 2014/12/13 - `paradox-menu-execute' can do asynchronous (background) operations.
-;; 1.2   - 2014/05/15 - Integration with smart-mode-line.
-;; 1.1   - 2014/07/02 - NEW FUNCTION: paradox-require.
-;; 1.1   - 2014/05/10 - Added Download column.
-;; 1.0.2 - 2014/05/09 - Small improvements to paradox--github-action.
-;; 1.0.1 - 2014/05/09 - Fix weird corner case in --package-homepage.
-;; 1.0   - 2014/05/05 - New Feature! The l key displays a list of recent commits under a package.
-;; 1.0   - 2014/05/04 - q key is smarter. It closes other generated windows.
-;; 1.0   - 2014/05/04 - j and k describe the next and previous entries.
-;; 0.11  - 2014/05/01 - Sorting commands and keys (under "S").
-;; 0.10  - 2014/04/26 - New help menu!
-;; 0.10  - 2014/04/25 - Display description on a separate line with paradox-lines-per-entry.
-;; 0.10  - 2014/04/25 - Links to package homepages.
-;; 0.9.2 - 2014/04/15 - Fix advice being enabled automatically.
-;; 0.9.2 - 2014/04/15 - Ask the user before automatically starring.
-;; 0.9.1 - 2014/04/14 - paradox-filter-upgrades is informative when there are no upgrades.
-;; 0.9   - 2014/04/14 - First full feature release.
-;; 0.5   - 2014/04/14 - Star all installed packages.
-;; 0.5   - 2014/04/13 - (Un)Star packages with the "s" key!.
-;; 0.2   - 2014/04/13 - Control the face used for each status with paradox-status-face-alist.
-;; 0.2   - 2014/04/13 - New archive face.
-;; 0.2   - 2014/04/13 - Define filtering keys (fk, fu, fr).
-;; 0.2   - 2014/04/11 - Hide buffer-name with paradox-display-buffer-name.
-;; 0.2   - 2014/04/08 - Even better mode-line.
-;; 0.2   - 2014/04/08 - Intelligent width for the "archive" column.
-;; 0.2   - 2014/04/08 - Customizable widths.
-;; 0.2   - 2014/04/08 - Prettier trunctation.
-;; 0.1   - 2014/04/03 - Created File.
 
 ;;; Code:
 
 (require 'package)
 (require 'cl-lib)
-(require 'dash)
 
 (require 'paradox-core)
 (require 'paradox-execute)
@@ -145,11 +109,11 @@
 
 (defconst paradox-version "2.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
-  "Opens github issues page in a web browser. Please send any bugs you find.
+  "Opens github issues page in a web browser.  Please send any bugs you find.
 Please include your Emacs and paradox versions."
   (interactive)
   (message "Your paradox-version is: %s, and your emacs version is: %s.\nPlease include this in your report!"
-           paradox-version emacs-version)
+    paradox-version emacs-version)
   (browse-url "https://github.com/Bruce-Connor/paradox/issues/new"))
 (defun paradox-customize ()
   "Open the customization menu in the `paradox' group."
@@ -165,7 +129,7 @@ Please include your Emacs and paradox versions."
 ;;; External Commands
 ;;;###autoload
 (defun paradox-list-packages (no-fetch)
-  "Improved version of `package-list-packages'. The heart of Paradox.
+  "Improved version of `package-list-packages'.  The heart of Paradox.
 Function is equivalent to `package-list-packages' (including the
 prefix NO-FETCH), but the resulting Package Menu is improved in
 several ways.
@@ -184,21 +148,31 @@ for packages.
   (interactive "P")
   (when (paradox--check-github-token)
     (paradox-enable)
-    (unless no-fetch (paradox--refresh-star-count))
-    (package-list-packages no-fetch)))
+    (unless no-fetch
+      (if (fboundp 'package--update-downloads-in-progress)
+          (when (boundp 'package--downloads-in-progress)
+            (add-to-list 'package--downloads-in-progress 'paradox--data))
+        (paradox--refresh-star-count)))
+    (package-list-packages no-fetch)
+    (unless no-fetch
+      (when (stringp paradox-github-token)
+        (paradox--refresh-user-starred-list
+         (bound-and-true-p package-menu-async)))
+      (when (fboundp 'package--update-downloads-in-progress)
+        (paradox--refresh-star-count)))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)
-  "Upgrade all packages. No questions asked.
+  "Upgrade all packages.  No questions asked.
 This function is equivalent to `list-packages', followed by a
-`package-menu-mark-upgrades' and a `package-menu-execute'. Except
+`package-menu-mark-upgrades' and a `package-menu-execute'.  Except
 the user isn't asked to confirm deletion of packages.
 
 If `paradox-execute-asynchronously' is non-nil, part of this
 operation may be performed in the background.
 
-The NO-FETCH prefix argument is passed to `list-packages'. It
-prevents re-download of information about new versions. It does
+The NO-FETCH prefix argument is passed to `list-packages'.  It
+prevents re-download of information about new versions.  It does
 not prevent downloading the actual packages (obviously)."
   (interactive "P")
   (save-window-excursion
@@ -210,27 +184,28 @@ not prevent downloading the actual packages (obviously)."
   "Enable paradox, overriding the default package-menu."
   (interactive)
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
+  (when (fboundp 'package-menu--print-info-simple)
+    (paradox--override-definition 'package-menu--print-info-simple 'paradox--print-info))
   (paradox--override-definition 'package-menu--generate 'paradox--generate-menu)
+  ;; Tough it may not look like it, this is totally necessary too.
   (paradox--override-definition 'package-menu-mode 'paradox-menu-mode)
   (paradox--core-enable))
 
 ;;;###autoload
 (defun paradox-require (feature &optional filename noerror package refresh)
-  "A replacement for `require' which also installs the feature if it is absent.
+  "Like `require', but also install FEATURE if it is absent.
+FILENAME is passed to `require'.
+If NOERROR is non-nil, don't complain if the feature couldn't be
+installed, just return nil.
+
 - If FEATURE is present, `require' it and return t.
 
 - If FEATURE is not present, install PACKAGE with `package-install'.
 If PACKAGE is nil, assume FEATURE is the package name.
 After installation, `require' FEATURE.
 
-FILENAME is passed to `require'.
-
-If NOERROR is non-nil, don't complain if the feature couldn't be
-installed, just return nil.
-
-By default, the current package database (stored in
-`package-archive-contents') is only updated if it is empty.
-Passing a non-nil REFRESH argument forces this update."
+By default, the current package database is only updated if it is
+empty.  Passing a non-nil REFRESH argument forces this update."
   (or (require feature filename t)
       (let ((package (or package
                          (if (stringp feature)
@@ -245,4 +220,4 @@ Passing a non-nil REFRESH argument forces this update."
              (require feature filename noerror)))))
 
 (provide 'paradox)
-;;; paradox.el ends here.
+;;; paradox.el ends here

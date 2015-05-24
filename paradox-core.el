@@ -21,9 +21,8 @@
 ;; GNU General Public License for more details.
 ;;
 
-
 ;;; Code:
-
+(require 'subr-x)
 
 
 ;;; Configurations
@@ -41,21 +40,26 @@
 
 
 ;;; Internal variables
-(defvar paradox--star-count nil)
-(defvar paradox--download-count nil)
-(defvar paradox--package-repo-list nil)
+(defvar paradox--star-count (make-hash-table))
+(defvar paradox--download-count (make-hash-table))
+(defvar paradox--package-repo-list (make-hash-table))
+(defvar paradox--wiki-packages (make-hash-table))
 
-(defvar paradox--star-count-url
-  "https://raw.githubusercontent.com/Bruce-Connor/paradox/data/data"
+(defconst paradox--data-url
+  "https://raw.githubusercontent.com/Malabarba/paradox/data/"
+  "Address of Paradox's data directory.")
+
+(defconst paradox--star-count-url (concat paradox--data-url "data-hashtables")
   "Address of the raw star-count file.")
+(make-obsolete-variable 'paradox--star-count-url 'paradox--data-url "2.1")
 
-(defvar paradox--package-count
+(defconst paradox--package-count
   '(("total" . 0) ("built-in" . 0)
     ("obsolete" . 0) ("deleted" . 0)
     ("available" . 0) ("new" . 0)
     ("held" . 0) ("disabled" . 0)
-    ("dependency" . 0)
-    ("incompat" . 0)
+    ("dependency" . 0) ("avail-obso" . 0)
+    ("incompat" . 0)  ("external" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 
 (defvar paradox--truncate-string-to-width-backup)
@@ -102,6 +106,52 @@ The original definition is saved to paradox--SYM-backup."
       (add-to-list 'paradox--backups (cons sym backup-name))
       (set backup-name def)
       (fset sym newdef))))
+
+
+;;; Pre 25.1 support
+(declare-function paradox--update-downloads-in-progress "paradox-menu")
+(if (fboundp 'package--update-downloads-in-progress)
+    (defun paradox--update-downloads-in-progress (&optional name)
+      (when name
+        (package--update-downloads-in-progress name)))
+  (defalias 'paradox--update-downloads-in-progress #'ignore))
+(define-obsolete-function-alias
+  'paradox--pdate-downloads-in-progress
+  'paradox--update-downloads-in-progress
+  "2.1")
+
+
+;;; Spinner
+(defvar paradox--spinner nil)
+
+(eval-and-compile (require 'spinner))
+(defcustom paradox-spinner-type 'horizontal-moving
+  "Holds the type of spinner to be used in the mode-line.
+Takes a value accepted by `spinner-start'."
+  :type `(choice (choice :tag "Choose a spinner by name"
+                         ,@(mapcar (lambda (c) (list 'const (car c)))
+                                   spinner-types))
+                 (const :tag "A random spinner" random)
+                 (repeat :tag "A list of symbols from `spinner-types' to randomly choose from"
+                         (choice :tag "Choose a spinner by name"
+                                 ,@(mapcar (lambda (c) (list 'const (car c)))
+                                           spinner-types)))
+                 (vector :tag "A user defined vector"
+                         (repeat :inline t string)))
+  :package-version '(paradox . "2.1")
+  :group 'paradox-execute)
+
+(defun paradox--start-spinner ()
+  (when (spinner-p paradox--spinner)
+    (spinner-stop paradox--spinner))
+  (setq paradox--spinner
+        (make-spinner paradox-spinner-type t 10))
+  (spinner-start paradox--spinner))
+
+(defun paradox--stop-spinner ()
+  (when (spinner-p paradox--spinner)
+    (spinner-stop paradox--spinner))
+  (setq paradox--spinner nil))
 
 (provide 'paradox-core)
 ;;; paradox-core.el ends here.

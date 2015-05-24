@@ -21,9 +21,15 @@
 ;; GNU General Public License for more details.
 ;;
 
+;;; Commentary:
+;; 
+;; Functions related to executing package-menu transactions.
+;; Everything that happens when you hit `x' is in here.
+
 
 ;;; Code:
-(require 'dash)
+(require 'cl-lib)
+
 (require 'package)
 (require 'paradox-core)
 (require 'paradox-github)
@@ -34,6 +40,7 @@
   :package-version '(paradox . "2.0")
   :group 'paradox)
 
+(defvar paradox--current-filter)
 
 ;;; Customization Variables
 (defcustom paradox-execute-asynchronously 'ask
@@ -49,7 +56,7 @@ Possible values are:
   :group 'paradox-execute)
 
 (defcustom paradox-async-display-buffer-function #'display-buffer
-  "Function used to display the *Paradox Report* buffer after an asynchronous upgrade.
+  "Function used to display *Paradox Report* buffer after asynchronous upgrade.
 Set this to nil to avoid displaying the buffer. Or set this to a
 function like `display-buffer' or `pop-to-buffer'.
 
@@ -62,13 +69,7 @@ NOQUERY argument. Otherwise, only a message is displayed."
 
 
 ;;; Execution Hook
-(defvar paradox-after-execute-functions
-  '(paradox--activate-if-asynchronous
-    paradox--refresh-package-buffer
-    paradox--report-buffer-print
-    paradox--report-buffer-display-if-noquery
-    paradox--report-message
-    )
+(defvar paradox-after-execute-functions nil
   "List of functions run after performing package transactions.
 These are run after a set of installation, deletion, or upgrades
 has been performed. Each function in this hook must take a single
@@ -87,17 +88,24 @@ occurred during the execution:
   `async'     Non-nil if transaction was performed asynchronously.
   `noquery'   The NOQUERY argument given to `paradox-menu-execute'.")
 (put 'risky-local-variable-p 'paradox-after-execute-functions t)
+(mapc (lambda (x) (add-hook 'paradox-after-execute-functions x t))
+      '(paradox--activate-if-asynchronous
+        paradox--refresh-package-buffer
+        paradox--report-buffer-print
+        paradox--report-buffer-display-if-noquery
+        paradox--report-message
+        ))
 
-(declare-function paradox--generate-menu "paradox-menu")
 (defun paradox--refresh-package-buffer (_)
   "Refresh the *Packages* buffer, if it exists."
   (let ((buf (get-buffer "*Packages*")))
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (paradox--generate-menu t t)))))
+        (revert-buffer)))))
 
 (defun paradox--activate-if-asynchronous (alist)
-  "Activate packages after an asynchronous operation."
+  "Activate packages after an asynchronous operation.
+Argument ALIST describes the operation."
   (let-alist alist
     (when .async
       (mapc #'package-activate-1 .activated))))
@@ -115,13 +123,14 @@ occurred during the execution:
      (lambda (p) (tabulated-list-print-entry
              p
              `[,(symbol-name (package-desc-name p))
-               ,(mapconcat #'number-to-string (package-desc-version p) ".")]))
+               ,(package-version-join (package-desc-version p))]))
      list)))
 
 (defun paradox--report-buffer-print (alist)
   "Print a transaction report in *Package Report* buffer.
 Possibly display the buffer or message the user depending on the
-situation."
+situation.
+Argument ALIST describes the operation."
   (let-alist alist
     (let ((buf (get-buffer-create "*Paradox Report*"))
           (inhibit-read-only t))
@@ -192,12 +201,12 @@ Packages marked for installation are downloaded and installed;
 packages marked for deletion are removed.
 
 Afterwards, if `paradox-automatically-star' is t, automatically
-star new packages, and unstar removed packages. Upgraded packages
+star new packages, and unstar removed packages.  Upgraded packages
 aren't changed.
 
 Synchronicity of the actions depends on
-`paradox-execute-asynchronously'. Optional argument NOQUERY
-non-nil means do not ask the user to confirm. If asynchronous,
+`paradox-execute-asynchronously'.  Optional argument NOQUERY
+non-nil means do not ask the user to confirm.  If asynchronous,
 never ask anyway."
   (interactive "P")
   (unless (derived-mode-p 'paradox-menu-mode)
@@ -206,7 +215,12 @@ never ask anyway."
              (eq paradox-automatically-star 'unconfigured))
     (customize-save-variable
      'paradox-automatically-star
-     (y-or-n-p "When you install new packages would you like them to be automatically starred?\n(They will be unstarred when you delete them) ")))
+     (y-or-n-p "When you install new packages would you like them to be automatically starred?
+\(They will be unstarred when you delete them) ")))
+  (when (and (stringp paradox--current-filter)
+             (string-match "Upgradable" paradox--current-filter))
+    (setq tabulated-list-sort-key '("Status" . nil))
+    (setq paradox--current-filter nil))
   (paradox--menu-execute-1 noquery))
 
 (defmacro paradox--perform-package-transaction (install delete)
@@ -218,14 +232,20 @@ deleted, and activated packages, and errors."
                  (lambda (pkg &rest _)
                    (ignore-errors (add-to-list 'activated pkg 'append)))
                  '((name . paradox--track-activated)))
-     (dolist (pkg ,install)
-       (condition-case err
-           (progn (package-install pkg) (push pkg installed))
-         (error (push err errored))))
-     (dolist (pkg ,delete)
-       (condition-case err
-           (progn (package-delete pkg) (push pkg deleted))
-         (error (push err errored))))
+     (condition-case err
+         (progn
+           (dolist (pkg ,install)
+             ;; 2nd arg introduced in 25.
+             (if (version<= "25" emacs-version)
+                 (package-install pkg 'dont-select)
+               (package-install pkg))
+             (push pkg installed))
+           (dolist (pkg ,delete)
+             (condition-case err
+                 (progn (package-delete pkg)
+                        (push pkg deleted))
+               (error (push err errored)))))
+       (error (push err errored)))
      (advice-remove #'package-activate-1 'paradox--track-activated)
      (list (cons 'installed (nreverse installed))
            (cons 'deleted (nreverse deleted))
@@ -234,10 +254,12 @@ deleted, and activated packages, and errors."
            (cons 'error (nreverse errored)))))
 
 (defvar paradox--current-filter)
-(defvar paradox--spinner-stop nil
-  "Holds the function that stops the spinner.")
 
+(declare-function async-inject-variables "async")
 (defun paradox--menu-execute-1 (&optional noquery)
+  "Implementation used by `paradox-menu-execute'.
+NOQUERY, if non-nil, means to execute without prompting the
+user."
   (let ((before-alist (paradox--repo-alist))
         install-list delete-list)
     (save-excursion
@@ -261,18 +283,21 @@ deleted, and activated packages, and errors."
             (set-window-start (selected-window) (point-min))))))
     (if (not (or delete-list install-list))
         (message "No operations specified.")
-      ;; Display the transaction about to be performed.
-      (setq paradox--current-filter "Executing Transaction")
       ;; Confirm with the user.
       (when (or noquery
                 (y-or-n-p (paradox--format-message 'question install-list delete-list)))
+        ;; On Emacs 25, update the selected packages list.
+        (when (fboundp 'package--update-selected-packages)
+          (let-alist (package-menu--partition-transaction install-list delete-list)
+            (package--update-selected-packages .install .delete)))
         ;; Background or foreground?
-        (if (not (cl-case paradox-execute-asynchronously
-                   ((nil) nil)
-                   ((ask)
-                    (if noquery nil
-                      (y-or-n-p "Execute in the background? (see `paradox-execute-asynchronously')")))
-                   (t t)))
+        (if (or (not install-list)
+                (not (cl-case paradox-execute-asynchronously
+                       ((nil) nil)
+                       ((ask)
+                        (if noquery nil
+                          (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))
+                       (t t))))
             ;; Synchronous execution
             (progn
               (let ((alist (paradox--perform-package-transaction install-list delete-list)))
@@ -281,7 +306,8 @@ deleted, and activated packages, and errors."
               (when (and (stringp paradox-github-token) paradox-automatically-star)
                 (paradox--post-execute-star-unstar before-alist (paradox--repo-alist))))
           ;; Start spinning
-          (setq paradox--spinner-stop (spinner-start 'horizontal-moving))
+          (paradox--start-spinner)
+          
           ;; Async execution
           (unless (require 'async nil t)
             (error "For asynchronous execution please install the `async' package"))
@@ -290,22 +316,27 @@ deleted, and activated packages, and errors."
           (eval
            `(async-start
              (lambda ()
-               (setq package-user-dir ,package-user-dir
-                     package-archives ',package-archives
-                     package-archive-contents ',package-archive-contents)
-               (package-initialize)
+               (require 'package)
+               ,(async-inject-variables "\\`package-")
+               (setq package-menu-async nil)
+               (dolist (elt package-alist)
+                 (package-activate (car elt) 'force))
                (let ((alist ,(macroexpand
                               `(paradox--perform-package-transaction ',install-list ',delete-list))))
                  (list package-alist
+                       (when (boundp 'package-selected-packages)
+                         package-selected-packages)
                        package-archive-contents
                        ;; This is the alist that will be passed to the hook.
                        (cons '(noquery . ,noquery) (cons '(async . t) alist)))))
              (lambda (x)
                (setq package-alist (pop x)
+                     package-selected-packages (pop x)
                      package-archive-contents (pop x))
-               (when (functionp paradox--spinner-stop)
-                 (funcall paradox--spinner-stop)
-                 (setq paradox--spinner-stop nil))
+               (when (spinner-p paradox--spinner)
+                 (spinner-stop paradox--spinner)
+                 (setq paradox--spinner nil))
+               (setq paradox--executing nil)
                (run-hook-with-args 'paradox-after-execute-functions (pop x))
                (paradox--post-execute-star-unstar ',before-alist (paradox--repo-alist))))))))))
 
@@ -313,10 +344,11 @@ deleted, and activated packages, and errors."
 ;;; Aux functions
 (defun paradox--repo-alist ()
   "List of known repos."
-  (cl-remove-duplicates
+  (delete-dups
    (remove nil
-           (--map (cdr-safe (assoc (car it) paradox--package-repo-list))
-                  package-alist))))
+           (mapcar
+            (lambda (it) (gethash it paradox--package-repo-list))
+            package-alist))))
 
 (defun paradox--format-message (question-p install-list delete-list)
   "Format a message regarding a transaction.
@@ -345,10 +377,11 @@ installed and deleted, respectively."
 
 (defun paradox--post-execute-star-unstar (before after)
   "Star repos in AFTER absent from BEFORE, unstar vice-versa."
-  (mapc #'paradox--star-repo
-    (-difference (-difference after before) paradox--user-starred-list))
-  (mapc #'paradox--unstar-repo
-    (-intersection (-difference before after) paradox--user-starred-list)))
+  (let ((repos (hash-table-keys paradox--user-starred-repos)))
+    (mapc #'paradox--star-repo
+          (seq-difference (seq-difference after before) repos))
+    (mapc #'paradox--unstar-repo
+          (seq-intersection (seq-difference before after) repos))))
 
 (provide 'paradox-execute)
-;;; paradox-execute.el ends here.
+;;; paradox-execute.el ends here

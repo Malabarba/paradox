@@ -23,8 +23,9 @@
 
 
 ;;; Code:
+(require 'subr-x)
+(require 'cl-lib)
 (require 'package)
-(require 'dash)
 
 (require 'paradox-github)
 
@@ -86,13 +87,15 @@ nil means `default'.")
   "Get REPO's tag list and associate them to commit hashes."
   (require 'json)
   (mapcar
-      (lambda (x)
-        (cons
-         (cdr (assoc 'sha (cdr (assoc 'commit x))))
-         (cdr (assoc 'name x))))
-    (paradox--github-action
-     (format "repos/%s/tags?per_page=100" repo)
-     "GET" 'json-read paradox-commit-list-query-max-pages)))
+   (lambda (x)
+     (cons
+      (cdr (assoc 'sha (cdr (assoc 'commit x))))
+      (cdr (assoc 'name x))))
+   (let ((json-array-type 'list))
+     (paradox--github-action
+      (format "repos/%s/tags?per_page=100" repo)
+      :reader #'json-read
+      :max-pages paradox-commit-list-query-max-pages))))
 
 (defun paradox--get-installed-version (pkg)
   "Return the installed version of PKG.
@@ -100,25 +103,28 @@ nil means `default'.")
 - If it has a Melpa-like version (YYYYMMDD HHMM), return it as a
   time value.
 - If it has a regular version number, return it as a string."
-  (-if-let (desc (cadr (assoc pkg package-alist)))
-      (let ((version (package-desc-version desc)))
-        (if (> (car version) 19000000)
-            (date-to-time
-             (format "%8dT%02d:%02d"
-               (car version)
-               (/ (cadr version) 100)
-               (% (cadr version) 100)))
-          ;; Regular version numbers.
-          (mapconcat 'int-to-string version ".")))
-    '(0 0)))
+  (let ((desc (cadr (assoc pkg package-alist))))
+    (if desc
+        (let ((version (package-desc-version desc)))
+          (if (> (car version) 19000000)
+              (date-to-time
+               (format "%8dT%02d:%02d"
+                 (car version)
+                 (/ (cadr version) 100)
+                 (% (cadr version) 100)))
+            ;; Regular version numbers.
+            (mapconcat 'int-to-string version ".")))
+      '(0 0))))
 
 (defun paradox--commit-tabulated-list (repo)
   "Return the tabulated list for REPO's commit list."
   (require 'json)
-  (let ((paradox--commit-message-face nil)
-        (feed (paradox--github-action
-               (format "repos/%s/commits?per_page=100" repo)
-               "GET" 'json-read paradox-commit-list-query-max-pages)))
+  (let* ((paradox--commit-message-face nil)
+         (json-array-type 'list)
+         (feed (paradox--github-action
+                (format "repos/%s/commits?per_page=100" repo)
+                :reader #'json-read
+                :max-pages paradox-commit-list-query-max-pages)))
     (apply 'append (mapcar 'paradox--commit-print-info feed))))
 
 (defun paradox--commit-print-info (x)

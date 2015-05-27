@@ -1716,7 +1716,7 @@
  (save-sexp . 0)
  (save-visited-files . 7)
  (sbt-mode . 64)
- (scad-mode . 871)
+ (scad-mode . 872)
  (scala-mode . 9)
  (scala-mode2 . 222)
  (scala-outline-popup . 7)

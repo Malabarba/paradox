@@ -1740,7 +1740,7 @@
  (semi . 29)
  (sensitive . 4)
  (sentence-navigation . 8)
- (seq . 75)
+ (seq . 76)
  (sequences . 0)
  (serverspec . 12)
  (session . 4)

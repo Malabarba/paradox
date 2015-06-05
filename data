@@ -2010,7 +2010,7 @@
  (unkillable-scratch . 5)
  (url-shortener . 1)
  (urlenc . 2)
- (use-package . 507)
+ (use-package . 508)
  (utop . 167)
  (uuid . 4)
  (uuidgen . 7)

@@ -267,7 +267,7 @@
  (color-theme-buffer-local . 32)
  (color-theme-sanityinc-solarized . 49)
  (color-theme-sanityinc-tomorrow . 63)
- (color-theme-solarized . 822)
+ (color-theme-solarized . 823)
  (colorsarenice-theme . 8)
  (column-enforce-mode . 8)
  (command-log-mode . 38)

@@ -1636,7 +1636,7 @@
  (python-docstring . 3)
  (python-environment . 36)
  (python-info . 8)
- (pyvenv . 45)
+ (pyvenv . 46)
  (qiita . 16)
  (qml-mode . 5)
  (quack . 3)

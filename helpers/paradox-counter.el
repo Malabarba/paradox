@@ -61,16 +61,11 @@
 
 (defun paradox-list-to-file ()
   "Save lists in \"data\" file."
-  (with-temp-file paradox--output-data-file-old
+  (with-temp-file paradox--output-data-file
     (pp paradox--star-count (current-buffer))
     (pp paradox--package-repo-list (current-buffer))
     (pp paradox--download-count (current-buffer))
-    (pp paradox--wiki-packages (current-buffer)))
-  (with-temp-file paradox--output-data-file
-    (pp (paradox--alist-to-table paradox--star-count) (current-buffer))
-    (pp (paradox--alist-to-table paradox--package-repo-list) (current-buffer))
-    (pp (paradox--alist-to-table paradox--download-count) (current-buffer))
-    (pp (paradox--alist-to-table paradox--wiki-packages) (current-buffer))))
+    (pp paradox--wiki-packages (current-buffer))))
 
 (defun paradox-fetch-star-count (repo)
   (cdr (assq 'stargazers_count

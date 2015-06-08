@@ -81,33 +81,6 @@ Also saves result to `package-star-count'"
   (setq paradox-github-token
         (or (getenv "GHTOKEN") paradox-github-token))
   (require 'json)
-  ;; First, generate the list file. Remove this once the hash tables
-  ;; are on a stable release.
-  (setq paradox--star-count nil)
-  (setq paradox--package-repo-list nil)
-  (setq paradox--wiki-packages nil)
-  (let ((json-key-type 'symbol)
-        (json-object-type 'alist))
-    (setq paradox--download-count
-          (paradox--github-action paradox-download-count-url :reader #'json-read)))
-  (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
-    (search-forward "\n\n")
-    (let ((i 0))
-      (dolist (it (json-read))
-        (let ((name (car it)))
-          (let-alist (cdr it)
-            (paradox-log "%s / %s" (incf i) name)
-            (pcase .fetcher
-              (`"github"
-               (let ((count (paradox-fetch-star-count .repo)))
-                 (when (numberp count)
-                   (push (cons name count) paradox--star-count)
-                   (push (cons name .repo) paradox--package-repo-list))))
-              (`"wiki"
-               (push name paradox--wiki-packages))))))))
-  (let ((paradox--output-data-file paradox--output-data-file-old))
-    (paradox-list-to-file))
-  ;; Then the hashtable file.
   (let ((json-key-type 'symbol)
         (json-object-type 'hash-table))
     (setq paradox--download-count
@@ -115,7 +88,8 @@ Also saves result to `package-star-count'"
   (setq paradox--wiki-packages (make-hash-table))
   (setq paradox--package-repo-list (make-hash-table))
   (setq paradox--star-count (make-hash-table))
-  (with-current-buffer (url-retrieve-synchronously "http://melpa.org/recipes.json")
+  (with-current-buffer (let ((inhibit-message t))
+                         (url-retrieve-synchronously "http://melpa.org/recipes.json"))
     (search-forward "\n\n")
     (let ((i 0))
       (dolist (it (json-read))

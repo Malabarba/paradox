@@ -29,6 +29,7 @@
 
 ;;; Code:
 (require 'cl-lib)
+(require 'seq)
 
 (require 'package)
 (require 'paradox-core)

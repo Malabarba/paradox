@@ -294,7 +294,7 @@ user."
         ;; Background or foreground?
         (if (or (not install-list)
                 (not (pcase paradox-execute-asynchronously
-                       (nil nil)
+                       ('nil nil)
                        ('ask
                         (if noquery nil
                           (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))

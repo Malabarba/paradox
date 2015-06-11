@@ -224,25 +224,25 @@ Leave point at the return code on the first line."
     (error "Tried contacting Github, but I can't understand the result.  See *Paradox Github* buffer for the full result"))
   (pcase (thing-at-point 'number)
     ((pred (lambda (n) (member n paradox--github-errors-to-ignore))) nil)
-    (204 nil) ;; OK, but no content.
-    (200 t)   ;; OK, with content.
+    (`204 nil) ;; OK, but no content.
+    (`200 t)   ;; OK, with content.
     ;; I'll implement redirection if anyone ever reports this.
     ;; For now, I haven't found a place where it's used.
-    ((or 301 302 303 304 305 306 307)
+    ((or `301 `302 `303 `304 `305 `306 `307)
      (paradox--github-error
       "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')"))
-    ((or 403 404) ;; Not found.
+    ((or `403 `404) ;; Not found.
      (paradox--github-report (buffer-string))
      (message "This repo doesn't seem to exist, Github replied with: %s"
        (substring (thing-at-point 'line) 0 -1))
      nil)
-    ((or 400 422) ;; Bad request.
+    ((or `400 `422) ;; Bad request.
      (paradox--github-error
       "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))
-    (401 (paradox--github-error
-          (if (stringp paradox-github-token)
-              "Github says you're not authenticated, try creating a new Github token"
-            "Github says you're not authenticated, you need to configure `paradox-github-token'")))
+    (`401 (paradox--github-error
+           (if (stringp paradox-github-token)
+               "Github says you're not authenticated, try creating a new Github token"
+             "Github says you're not authenticated, you need to configure `paradox-github-token'")))
     (_ (paradox--github-error "Github returned: %S"
                               (substring (thing-at-point 'line) 0 -1)))))
 

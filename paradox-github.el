@@ -193,11 +193,12 @@ DELETE and NO-RESULT are passed on."
 
 
 ;;; The Base (generic) function
-(defun paradox--github-report (text)
+(defun paradox--github-report (&rest text)
   "Write TEXT to the *Paradox Github* buffer."
   (with-current-buffer (get-buffer-create "*Paradox Report*")
-    (erase-buffer)
-    (insert text)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (apply #'insert text))
     (goto-char (point-min))))
 
 (defun paradox--github-error (format &rest args)
@@ -229,8 +230,9 @@ Leave point at the return code on the first line."
     ;; I'll implement redirection if anyone ever reports this.
     ;; For now, I haven't found a place where it's used.
     ((or `301 `302 `303 `304 `305 `306 `307)
-     (paradox--github-error
-      "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')"))
+     (paradox--github-report "Redirect received:\n\n" (buffer-string))
+     (message "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')")
+     nil)
     ((or `403 `404) ;; Not found.
      (paradox--github-report (buffer-string))
      (message "This repo doesn't seem to exist, Github replied with: %s"

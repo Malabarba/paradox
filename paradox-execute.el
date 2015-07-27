@@ -29,6 +29,7 @@
 
 ;;; Code:
 (require 'cl-lib)
+(require 'seq)
 
 (require 'package)
 (require 'paradox-core)
@@ -272,8 +273,8 @@ user."
                 (forward-line 1)
               (push (tabulated-list-get-id)
                     (pcase c
-                      (?D delete-list)
-                      (?I install-list)))
+                      (`?D delete-list)
+                      (`?I install-list)))
               (delete-region p (point))
               (forward-line 1)
               (setq p (point)))))
@@ -293,8 +294,8 @@ user."
         ;; Background or foreground?
         (if (or (not install-list)
                 (not (pcase paradox-execute-asynchronously
-                       (nil nil)
-                       ('ask
+                       (`nil nil)
+                       (`ask
                         (if noquery nil
                           (y-or-n-p "Execute in the background (see `paradox-execute-asynchronously')? ")))
                        (_ t))))

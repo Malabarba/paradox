@@ -214,8 +214,12 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
          (url (paradox--package-homepage pkg-desc))
          (name (symbol-name (package-desc-name pkg-desc)))
          (name-length (length name))
+         (counts (paradox--count-print (package-desc-name pkg-desc)))
          (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
+    (if-let ((cell (assq :stars (package-desc-extras pkg-desc))))
+        (setcdr cell counts)
+      (push (cons :stars counts) (package-desc-extras pkg-desc)))
     (list pkg-desc
           `[,(concat
               (propertize name
@@ -245,7 +249,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
             ,@(if (cdr package-archives)
                   (list (propertize (or (package-desc-archive pkg-desc) "")
                                     'font-lock-face 'paradox-archive-face)))
-            ,@(paradox--count-print (package-desc-name pkg-desc))
+            ,@counts
             ,(propertize
               (concat (propertize " " 'display paradox--desc-prefix)
                       (package-desc-summary pkg-desc)

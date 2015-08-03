@@ -217,9 +217,10 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
          (counts (paradox--count-print (package-desc-name pkg-desc)))
          (button-length (length paradox-homepage-button-string)))
     (paradox--incf status)
-    (if-let ((cell (assq :stars (package-desc-extras pkg-desc))))
-        (setcdr cell counts)
-      (push (cons :stars counts) (package-desc-extras pkg-desc)))
+    (let ((cell (assq :stars (package-desc-extras pkg-desc))))
+      (if cell
+          (setcdr cell counts)
+        (push (cons :stars counts) (package-desc-extras pkg-desc))))
     (list pkg-desc
           `[,(concat
               (propertize name

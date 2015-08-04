@@ -81,6 +81,7 @@ ELLIPSIS are passed to `truncate-string-to-width'."
 
 (defun paradox--core-enable ()
   "Enable core features."
+  (ignore-errors (setcdr (assq 'menu-bar package-menu-mode-map) nil))
   (advice-add #'truncate-string-to-width :filter-args
               #'paradox--truncate-string-to-width-filter
               '((name . :paradox-override)))

@@ -617,7 +617,7 @@ Test match against name and summary."
 (define-key paradox--filter-map "c" #'paradox-filter-clear)
 
 (easy-menu-define paradox-menu-mode-menu paradox-menu-mode-map
-  "Menu for `package-menu-mode'."
+  "Menu for `paradox-menu-mode'."
   `("Paradox"
     ["Describe Package" package-menu-describe-package :help "Display information about this package"]
     ["Help" paradox-menu-quick-help :help "Show short key binding help for package-menu-mode"]

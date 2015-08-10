@@ -84,7 +84,8 @@
   :package-version '(paradox . "1.2.3"))
 
 (defface paradox-mode-line-face
-  '((t :inherit mode-line-buffer-id :weight normal :foreground "Black"))
+  '((t :inherit (mode-line-buffer-id font-lock-keyword-face)
+       :weight normal))
   "Face used on the package's name."
   :group 'paradox)
 (defface paradox-name-face
@@ -820,15 +821,7 @@ nil) on the Packages buffer."
   (mapc #'paradox--set-local-value paradox-local-variables)
   (let ((total-lines (int-to-string (length tabulated-list-entries))))
     (paradox--update-mode-line-front-space total-lines)
-    (paradox--update-mode-line-buffer-identification total-lines))
-  (set-face-foreground
-   'paradox-mode-line-face
-   (let ((fg (or (face-foreground 'mode-line-buffer-id nil t)
-                 (face-foreground 'default nil t))))
-     (when fg
-       (if (> (color-distance "white" fg)
-              (color-distance "black" fg))
-           "black" "white")))))
+    (paradox--update-mode-line-buffer-identification total-lines)))
 
 (defun paradox--update-mode-line-buffer-identification (_total-lines)
   "Update `mode-line-buffer-identification'.

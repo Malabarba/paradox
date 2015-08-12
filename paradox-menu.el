@@ -840,8 +840,7 @@ TOTAL-LINES is currently unused."
                                                       (paradox--cas "dependency")
                                                       (paradox--cas "unsigned")))
           (paradox--current-filter
-           "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents)))
-          (spinner-current " Executing Transaction"))))
+           "" ,(paradox--build-buffer-id " Total:" (length package-archive-contents))))))
 
 (defvar sml/col-number)
 (defvar sml/numbers-separator)

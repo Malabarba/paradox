@@ -6,7 +6,7 @@
 ;; URL: http://github.com/Malabarba/paradox
 ;; Version: 2.3.5
 ;; Keywords: package packages
-;; Package-Requires: ((emacs "24.4") (seq "1.7") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.3"))
+;; Package-Requires: ((emacs "24.4") (seq "1.7") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.4"))
 ;; Prefix: paradox
 ;; Separator: -
 

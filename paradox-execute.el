@@ -109,7 +109,10 @@ occurred during the execution:
 Argument ALIST describes the operation."
   (let-alist alist
     (when .async
-      (mapc #'package-activate-1 .activated))))
+      (dolist (pkg .activated)
+        (if (fboundp 'package--list-loaded-files)
+            (package-activate-1 pkg 'reload)
+          (package-activate-1 pkg))))))
 
 (defun paradox--print-package-list (list)
   "Print LIST at point."
@@ -231,7 +234,7 @@ deleted, and activated packages, and errors."
   `(let (activated installed deleted errored)
      (advice-add #'package-activate-1 :after
                  (lambda (pkg &rest _)
-                   (ignore-errors (add-to-list 'activated pkg 'append)))
+                   (ignore-errors (push pkg activated)))
                  '((name . paradox--track-activated)))
      (condition-case err
          (progn
@@ -249,10 +252,9 @@ deleted, and activated packages, and errors."
        (error (push err errored)))
      (advice-remove #'package-activate-1 'paradox--track-activated)
      (list (cons 'installed (nreverse installed))
-           (cons 'deleted (nreverse deleted))
-           ;; Because we used 'append, this is in the right order.
-           (cons 'activated activated)
-           (cons 'error (nreverse errored)))))
+           (cons 'deleted   (nreverse deleted))
+           (cons 'activated (nreverse activated))
+           (cons 'error     (nreverse errored)))))
 
 (defvar paradox--current-filter)
 

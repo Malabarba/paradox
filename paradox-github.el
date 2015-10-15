@@ -231,12 +231,12 @@ Leave point at the return code on the first line."
     ;; For now, I haven't found a place where it's used.
     ((or `301 `302 `303 `304 `305 `306 `307)
      (paradox--github-report "Redirect received:\n\n" (buffer-string))
-     (message "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')")
+     ;; (message "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')")
      nil)
     ((or `403 `404) ;; Not found.
      (paradox--github-report (buffer-string))
      (message "This repo doesn't seem to exist, Github replied with: %s"
-       (substring (thing-at-point 'line) 0 -1))
+              (substring (thing-at-point 'line) 0 -1))
      nil)
     ((or `400 `422) ;; Bad request.
      (paradox--github-error

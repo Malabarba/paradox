@@ -3,10 +3,10 @@
 ;; Copyright (C) 2014-2015 Artur Malabarba <emacs@endlessparentheses.com>
 
 ;; Author: Artur Malabarba <emacs@endlessparentheses.com>
-;; URL: http://github.com/Malabarba/paradox
-;; Version: 2.3.5
+;; URL: https://github.com/Malabarba/paradox
+;; Version: 2.4
 ;; Keywords: package packages
-;; Package-Requires: ((emacs "24.4") (seq "1.7") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.4"))
+;; Package-Requires: ((emacs "24.4") (seq "1.7") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.4") (hydra "0.13.2"))
 ;; Prefix: paradox
 ;; Separator: -
 
@@ -107,7 +107,7 @@
 (require 'paradox-execute)
 (require 'paradox-menu)
 
-(defconst paradox-version "2.3.5" "Version of the paradox.el package.")
+(defconst paradox-version "2.4" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser.  Please send any bugs you find.
 Please include your Emacs and paradox versions."

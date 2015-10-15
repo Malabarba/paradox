@@ -595,14 +595,11 @@ Test match against name and summary."
   (setq paradox--current-filter (concat "Regexp:" regexp)))
 
 (set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
-(defvar paradox--filter-map)
-(define-prefix-command 'paradox--filter-map)
 (define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
 (define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
 (define-key paradox-menu-mode-map "n" #'paradox-next-entry)
 (define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
 (define-key paradox-menu-mode-map "j" #'paradox-next-describe)
-(define-key paradox-menu-mode-map "f" 'paradox--filter-map)
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
@@ -610,6 +607,49 @@ Test match against name and summary."
 (define-key paradox-menu-mode-map "x" #'paradox-menu-execute)
 (define-key paradox-menu-mode-map "\r" #'paradox-push-button)
 (define-key paradox-menu-mode-map "F" 'package-menu-filter)
+(if (version< emacs-version "25")
+    (defhydra hydra-paradox-filter (:color blue :hint nil)
+      "
+Filter by:
+_u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
+"
+      ("f" package-menu-filter)
+      ("k" package-menu-filter)
+      ("r" paradox-filter-regexp)
+      ("u" paradox-filter-upgrades)
+      ("s" paradox-filter-stars)
+      ("c" paradox-filter-clear)
+      ("g" paradox-filter-clear)
+      ("q" nil "cancel" :color blue))
+  (defhydra hydra-paradox-filter (:color blue :hint nil)
+    "
+Filter by:
+_u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
+_a_rchive  g_n_u-archive _o_ther-archives
+Status:  _i_nstalled   _a_vailable _d_ependency _b_uilt-in
+"
+    ("f" package-menu-filter)
+    ("k" package-menu-filter)
+    ("n" (package-menu-filter "arc:gnu"))
+    ("o" (package-menu-filter
+          (remove "arc:gnu"
+                  (mapcar (lambda (e) (concat "arc:" (car e)))
+                          package-archives))))
+    ("r" paradox-filter-regexp)
+    ("u" paradox-filter-upgrades)
+    ("s" paradox-filter-stars)
+    ("i" (package-menu-filter "status:installed"))
+    ("a" (package-menu-filter "status:available"))
+    ("b" (package-menu-filter "status:built-in"))
+    ("d" (package-menu-filter "status:dependency"))
+    ("c" paradox-filter-clear)
+    ("g" paradox-filter-clear)
+    ("q" nil "cancel" :color blue)))
+(define-key paradox-menu-mode-map "f" #'hydra-paradox-filter/body)
+
+;;; for those who don't want a hydra
+(defvar paradox--filter-map)
+(define-prefix-command 'paradox--filter-map)
 (define-key paradox--filter-map "k" #'package-menu-filter)
 (define-key paradox--filter-map "f" #'package-menu-filter)
 (define-key paradox--filter-map "r" #'paradox-filter-regexp)

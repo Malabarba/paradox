@@ -624,9 +624,9 @@ _u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
   (defhydra hydra-paradox-filter (:color blue :hint nil)
     "
 Filter by:
-_u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
-_a_rchive  g_n_u-archive _o_ther-archives
-Status:  _i_nstalled   _a_vailable _d_ependency _b_uilt-in
+_u_pgrades _r_egexp    _k_eyword   _s_tarred    _c_lear
+Archive: g_n_u       _o_ther
+Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
 "
     ("f" package-menu-filter)
     ("k" package-menu-filter)

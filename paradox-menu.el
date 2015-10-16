@@ -27,6 +27,7 @@
 (require 'cl-lib)
 (require 'package)
 (require 'subr-x)
+(require 'hydra)
 
 (require 'paradox-core)
 (require 'paradox-github)

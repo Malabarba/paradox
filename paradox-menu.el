@@ -21,8 +21,6 @@
 ;; GNU General Public License for more details.
 ;;
 
-;;; Change Log:
-;; 
 ;;; Code:
 (require 'cl-lib)
 (require 'package)
@@ -392,10 +390,11 @@ shown."
         (if keywords (mapconcat 'identity keywords ",")
           nil))
   (let ((idx (paradox--column-index "Package")))
-    (setcar (elt tabulated-list-format idx)
-            (if keywords
-                (concat "Package[" paradox--current-filter "]")
-              "Package")))
+    (when (integerp idx)
+      (setcar (elt tabulated-list-format idx)
+              (if keywords
+                  (concat "Package[" paradox--current-filter "]")
+                "Package"))))
   (tabulated-list-print remember-pos)
   (tabulated-list-init-header)
   (paradox--update-mode-line))

@@ -45,12 +45,9 @@
 Currently, that means (un)starring repos.
 
 To generate an access token:
-  1. Visit the page https://github.com/settings/tokens/new and
-     login to github (if asked).
-  2. Give the token any name you want (Paradox, for instance).
-  3. The only permission we need is \"public_repo\", so unmark
-     all others.
-  4. Click on \"Generate Token\", copy the generated token, and
+  1. Visit the page https://github.com/settings/tokens/new?scopes=public_repo&description=Paradox
+     and login to github (if asked).
+  2. Click on \"Generate Token\", copy the generated token, and
      save it to this variable by writing
          (setq paradox-github-token TOKEN)
      somewhere in your configuration and evaluating it (or just
@@ -117,7 +114,7 @@ This will allow you to star/unstar packages from the Package Menu. "))
           (delete-other-windows))
         (if (y-or-n-p "Follow the instructions on the `paradox-github-token' variable.
 May I take you to the token generation page? ")
-            (browse-url "https://github.com/settings/tokens/new"))
+            (browse-url "https://github.com/settings/tokens/new?scopes=public_repo&description=Paradox"))
         (message "Once you're finished, simply call `paradox-list-packages' again.")
         nil))))
 

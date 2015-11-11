@@ -244,6 +244,8 @@ Leave point at the return code on the first line."
     (_ (paradox--github-error "Github returned: %S"
          (substring (thing-at-point 'line) 0 -1)))))
 
+(defvar paradox--github-next-page nil)
+
 (defmacro paradox--with-github-buffer (method action async unwind-form
                                               &rest body)
   "Run BODY in a Github request buffer.
@@ -265,7 +267,8 @@ value."
                         (let ((next-page))
                           (when (search-forward-regexp
                                  "^Link: .*<\\([^>]+\\)>; rel=\"next\"" nil t)
-                            (setq next-page (match-string-no-properties 1)))
+                            (setq next-page (match-string-no-properties 1))
+                            (setq paradox--github-next-page next-page))
                           (ignore next-page)
                           (search-forward-regexp "^?$")
                           (skip-chars-forward "[:blank:]\n\r")

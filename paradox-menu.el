@@ -335,11 +335,11 @@ automatically decides whether to download asynchronously based on
 `package-menu-async'."
   (declare (indent 2) (debug t))
   (require 'package)
-  (if (fboundp 'package--with-work-buffer-async)
-      `(package--with-work-buffer-async
-           ,location ,file
-           (when package-menu-async
-             #'paradox--handle-failed-download)
+  (if (fboundp 'package--with-response-buffer)
+      `(package--with-response-buffer
+         ,location :file ,file
+         :async package-menu-async
+         :error-form (paradox--handle-failed-download)
          ,@body
          (paradox--update-downloads-in-progress 'paradox--data))
     `(package--with-work-buffer ,location ,file ,@body)))

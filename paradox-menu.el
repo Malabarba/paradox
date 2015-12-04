@@ -411,8 +411,9 @@ If `paradox-hide-wiki-packages' is nil, just return PKGS."
     (remq nil
           (mapcar
            (lambda (entry)
-             (unless (gethash (car entry) paradox--wiki-packages)
-               (car entry)))
+             (let ((name (or (car-safe entry) entry)))
+               (unless (gethash name paradox--wiki-packages)
+                 name)))
            (if (or (not pkgs) (eq t pkgs))
                package-archive-contents
              pkgs)))))

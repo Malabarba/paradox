@@ -148,18 +148,18 @@ for packages.
   (interactive "P")
   (when (paradox--check-github-token)
     (paradox-enable)
-    (unless no-fetch
-      (if (fboundp 'package--update-downloads-in-progress)
-          (when (boundp 'package--downloads-in-progress)
-            (add-to-list 'package--downloads-in-progress 'paradox--data))
-        (paradox--refresh-star-count)))
-    (package-list-packages no-fetch)
-    (unless no-fetch
-      (when (stringp paradox-github-token)
-        (paradox--refresh-user-starred-list
-         (bound-and-true-p package-menu-async)))
-      (when (fboundp 'package--update-downloads-in-progress)
-        (paradox--refresh-star-count)))))
+    (let ((is-25 (fboundp 'package--with-response-buffer)))
+      (unless no-fetch
+        (if is-25
+            (add-to-list 'package--downloads-in-progress 'paradox--data)
+          (paradox--refresh-star-count)))
+      (package-list-packages no-fetch)
+      (unless no-fetch
+        (when (stringp paradox-github-token)
+          (paradox--refresh-user-starred-list
+           (bound-and-true-p package-menu-async)))
+        (when is-25
+          (paradox--refresh-star-count))))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)
@@ -183,6 +183,10 @@ not prevent downloading the actual packages (obviously)."
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
+  (when (and (fboundp 'package--update-downloads-in-progress)
+             (not (fboundp 'package--with-response-buffer)))
+    (message "[Paradox] Your Emacs snapshot is outdated, please install a more recent one."))
+  (setq package-menu-async nil)
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
   (when (fboundp 'package-menu--print-info-simple)
     (paradox--override-definition 'package-menu--print-info-simple 'paradox--print-info))

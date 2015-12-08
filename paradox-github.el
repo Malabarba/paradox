@@ -229,11 +229,14 @@ Leave point at the return code on the first line."
      (paradox--github-report "Redirect received:\n\n" (buffer-string))
      ;; (message "Received a redirect reply, please file a bug report (M-x `paradox-bug-report')")
      nil)
-    ((or `403 `404) ;; Not found.
+    ((or `404) ;; Not found.
      (paradox--github-report (buffer-string))
      (message "This repo doesn't seem to exist, Github replied with: %s"
               (substring (thing-at-point 'line) 0 -1))
      nil)
+    ((or `403) ;; Forbidden
+     (paradox--github-error
+         "Github wouldn't let me do this - does your token have the right permissions?"))
     ((or `400 `422) ;; Bad request.
      (paradox--github-error
          "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))
@@ -270,7 +273,8 @@ value."
                             (setq next-page (match-string-no-properties 1))
                             (setq paradox--github-next-page next-page))
                           (ignore next-page)
-                          (search-forward-regexp "^?$")
+                          (search-forward-regexp "^
+?$")
                           (skip-chars-forward "[:blank:]\n\r")
                           (delete-region (point-min) (point))
                           ,@body))

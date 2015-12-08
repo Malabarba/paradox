@@ -236,7 +236,7 @@ Leave point at the return code on the first line."
      nil)
     ((or `403) ;; Forbidden
      (paradox--github-error
-         "Github wouldn't let me do this - does your token have the right permissions?"))
+         "Github wouldn't let me do this - does your token have the right permissions? They're here: https://github.com/settings/tokens"))
     ((or `400 `422) ;; Bad request.
      (paradox--github-error
          "Github didn't understand my request, please file a bug report (M-x `paradox-bug-report')"))

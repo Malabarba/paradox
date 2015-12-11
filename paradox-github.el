@@ -273,8 +273,7 @@ value."
                             (setq next-page (match-string-no-properties 1))
                             (setq paradox--github-next-page next-page))
                           (ignore next-page)
-                          (search-forward-regexp "^
-?$")
+                          (search-forward-regexp "^\r?$")
                           (skip-chars-forward "[:blank:]\n\r")
                           (delete-region (point-min) (point))
                           ,@body))

@@ -14,6 +14,8 @@
   (package-initialize))
 
 (require 'ert)
+(require 'undercover)
+(undercover "*.el")
 (require 'paradox)
 
 (provide 'test-helper)

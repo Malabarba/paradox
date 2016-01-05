@@ -1,7 +1,13 @@
-Paradox [![Build Status](https://secure.travis-ci.org/Malabarba/paradox.png?branch=master)](http://travis-ci.org/Malabarba/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+Paradox
 =======
 
-[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba)
+[![Build Status](https://secure.travis-ci.org/Malabarba/paradox.svg?branch=master)](http://travis-ci.org/Malabarba/paradox)
+[![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+[![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+[![Coverage Status](https://coveralls.io/repos/Malabarba/paradox/badge.svg)](https://coveralls.io/r/Malabarba/paradox)
+[![License](http://img.shields.io/:license-gpl3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
+
+[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/Malabarba)
 
 Project for modernizing Emacs' Package Menu. With improved appearance,
 mode-line information. Github integration, customizability,

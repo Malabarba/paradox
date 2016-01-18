@@ -78,7 +78,7 @@ And some more...
 
 ### Execution Hook ###
 
-Paradox defines a hook called `paradox-after-execute-hook`. Functions
+Paradox defines a hook called `paradox-after-execute-functions`. Functions
 added to this hook are run whenever packages are installed, deleted,
 or upgraded. This is used to implement part of the Paradox
 functionality, which makes it very easy to customize and extend.

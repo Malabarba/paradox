@@ -7,7 +7,7 @@ Paradox
 [![Coverage Status](https://coveralls.io/repos/Malabarba/paradox/badge.svg)](https://coveralls.io/r/Malabarba/paradox)
 [![License](http://img.shields.io/:license-gpl3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
-[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/Malabarba)
+[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/endless-parentheses)
 
 Project for modernizing Emacs' Package Menu. With improved appearance,
 mode-line information. Github integration, customizability,

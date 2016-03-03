@@ -520,6 +520,8 @@ Letters do not insert themselves; instead, they are commands.
   (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
   (run-hooks 'package-menu-mode-hook))
 
+(put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
+
 (defun paradox--define-sort (name &optional key)
   "Define sorting by column NAME and bind it to KEY.
 Defines a function called paradox-sort-by-NAME."

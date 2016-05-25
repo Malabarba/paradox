@@ -176,7 +176,8 @@ prevents re-download of information about new versions.  It does
 not prevent downloading the actual packages (obviously)."
   (interactive "P")
   (save-window-excursion
-    (paradox-list-packages no-fetch)
+    (let ((package-menu-async nil))
+      (paradox-list-packages no-fetch))
     (package-menu-mark-upgrades)
     (paradox-menu-execute 'noquery)))
 

@@ -83,9 +83,9 @@
   :package-version '(paradox . "1.2.3"))
 
 (defface paradox-mode-line-face
-  '((t :inherit (mode-line-buffer-id font-lock-keyword-face)
+  '((t :inherit (font-lock-keyword-face mode-line-buffer-id)
        :weight normal))
-  "Face used on the package's name."
+  "Face used on mode line statuses."
   :group 'paradox)
 (defface paradox-name-face
   '((t :inherit link))

@@ -215,7 +215,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
          (name (symbol-name (package-desc-name pkg-desc)))
          (name-length (length name))
          (counts (paradox--count-print (package-desc-name pkg-desc)))
-         (button-length (length paradox-homepage-button-string)))
+         (button-length (if paradox-use-homepage-buttons (length paradox-homepage-button-string) 0)))
     (paradox--incf status)
     (let ((cell (assq :stars (package-desc-extras pkg-desc))))
       (if cell
@@ -223,26 +223,26 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
         (push (cons :stars counts) (package-desc-extras pkg-desc))))
     (list pkg-desc
           `[,(concat
-              (propertize name
-                          'font-lock-face 'paradox-name-face
-                          'button t
-                          'follow-link t
-                          'help-echo (format "Package: %s" name)
-                          'package-desc pkg-desc
-                          'action 'package-menu-describe-package)
-              (if (and paradox-use-homepage-buttons url
-                       (< (+ name-length button-length) paradox-column-width-package))
-                  (concat
-                   (make-string (- paradox-column-width-package name-length button-length) ?\s)
-                   (propertize paradox-homepage-button-string
-                               'font-lock-face 'paradox-homepage-button-face
-                               'mouse-face 'custom-button-mouse
-                               'help-echo (format "Visit %s" url)
-                               'button t
-                               'follow-link t
-                               'keymap '(keymap (mouse-2 . push-button))
-                               'action #'paradox-menu-visit-homepage))
-                ""))
+              (truncate-string-to-width
+               (propertize name
+                           'font-lock-face 'paradox-name-face
+                           'button t
+                           'follow-link t
+                           'help-echo (format "Package: %s" name)
+                           'package-desc pkg-desc
+                           'action 'package-menu-describe-package)
+               (- paradox-column-width-package button-length) 0 nil t)
+              (when (and paradox-use-homepage-buttons url)
+                (make-string (max 0 (- paradox-column-width-package name-length button-length)) ?\s))
+              (when (and paradox-use-homepage-buttons url)
+                (propertize paradox-homepage-button-string
+                            'font-lock-face 'paradox-homepage-button-face
+                            'mouse-face 'custom-button-mouse
+                            'help-echo (format "Visit %s" url)
+                            'button t
+                            'follow-link t
+                            'keymap '(keymap (mouse-2 . push-button))
+                            'action #'paradox-menu-visit-homepage)))
             ,(propertize (package-version-join
                           (package-desc-version pkg-desc))
                          'font-lock-face face)

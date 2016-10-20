@@ -9,6 +9,7 @@ env:
   - EVM_EMACS=emacs-24.3-travis
   - EVM_EMACS=emacs-24.4-travis
   - EVM_EMACS=emacs-24.5-travis
+  - EVM_EMACS=emacs-25.1-travis
   - EVM_EMACS=emacs-git-snapshot-travis
 
 matrix:
@@ -16,6 +17,7 @@ matrix:
   allow_failures:
     - env: EVM_EMACS=emacs-24.2-travis
     - env: EVM_EMACS=emacs-24.3-travis
+    - env: EVM_EMACS=emacs-25.1-travis
     - env: EVM_EMACS=emacs-git-snapshot-travis
 script:
   - emacs --version

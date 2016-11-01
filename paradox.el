@@ -4,7 +4,7 @@
 
 ;; Author: Artur Malabarba <emacs@endlessparentheses.com>
 ;; URL: https://github.com/Malabarba/paradox
-;; Version: 2.4
+;; Version: 2.5
 ;; Keywords: package packages
 ;; Package-Requires: ((emacs "24.4") (seq "1.7") (let-alist "1.0.3") (spinner "1.4") (hydra "0.13.2"))
 ;; Prefix: paradox
@@ -107,7 +107,7 @@
 (require 'paradox-execute)
 (require 'paradox-menu)
 
-(defconst paradox-version "2.4" "Version of the paradox.el package.")
+(defconst paradox-version "2.5" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser.  Please send any bugs you find.
 Please include your Emacs and paradox versions."

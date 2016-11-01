@@ -694,7 +694,7 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
 
     "--"
     ("Filter Package List"
-     ["Clear filer" paradox-filter-clear :help "Go back to unfiltered list"]
+     ["Clear filter" paradox-filter-clear :help "Go back to unfiltered list"]
      ["By Keyword" package-menu-filter :help "Filter by package keyword"]
      ["By Upgrades" paradox-filter-upgrades :help "List only upgradeable packages"]
      ["By Regexp" paradox-filter-regexp :help "Filter packages matching a regexp"]

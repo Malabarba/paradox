@@ -16,7 +16,7 @@
 #     make all
 #
 
-VERSIONS = 24.2 24.3 24.4 25.1
+VERSIONS = 24.2 24.3 24.4 24.5 25.1
 
 all :: $(VERSIONS)
 

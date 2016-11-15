@@ -152,14 +152,14 @@ for packages.
       (unless no-fetch
         (if is-25
             (add-to-list 'package--downloads-in-progress 'paradox--data)
-          (paradox--refresh-star-count)))
+          (paradox--refresh-remote-data)))
       (package-list-packages no-fetch)
       (unless no-fetch
         (when (stringp paradox-github-token)
           (paradox--refresh-user-starred-list
            (bound-and-true-p package-menu-async)))
         (when is-25
-          (paradox--refresh-star-count))))))
+          (paradox--refresh-remote-data))))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)

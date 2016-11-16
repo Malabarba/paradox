@@ -287,6 +287,7 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
     (or homepage
         (and (setq extras (gethash name paradox--package-repo-list))
              (format "https://github.com/%s" extras)))))
+
 (defun paradox--get-or-return-package (pkg)
   "Take a marker or package name PKG and return a package name."
   (if (or (markerp pkg) (null pkg))
@@ -344,8 +345,8 @@ automatically decides whether to download asynchronously based on
          (paradox--update-downloads-in-progress 'paradox--data))
     `(package--with-work-buffer ,location ,file ,@body)))
 
-(defun paradox--refresh-star-count ()
-  "Download the star-count file and populate the respective variable."
+(defun paradox--refresh-remote-data ()
+  "Download metadata and populate the respective variables."
   (interactive)
   (when (boundp 'package--downloads-in-progress)
     (add-to-list 'package--downloads-in-progress 'paradox--data))
@@ -369,11 +370,11 @@ automatically decides whether to download asynchronously based on
        'paradox-star-face))))
 
 (defun paradox--star-predicate (A B)
-  "Non-nil t if star count of A is larget than B."
+  "Non-nil t if star count of A is larger than B."
   (> (string-to-number (elt (cadr A) paradox--column-index-star))
      (string-to-number (elt (cadr B) paradox--column-index-star))))
 (defun paradox--download-predicate (A B)
-  "Non-nil t if download count of A is larget than B."
+  "Non-nil t if download count of A is larger than B."
   (> (get-text-property 0 'value (elt (cadr A) paradox--column-index-download))
      (get-text-property 0 'value (elt (cadr B) paradox--column-index-download))))
 
@@ -510,7 +511,7 @@ Letters do not insert themselves; instead, they are commands.
   (setq tabulated-list-sort-key (cons "Status" nil))
   (add-hook 'tabulated-list-revert-hook #'paradox-menu--refresh nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
-  ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-star-count nil t)
+  ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-remote-data nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
   (tabulated-list-init-header)
   ;; We need package-menu-mode to be our parent, otherwise some

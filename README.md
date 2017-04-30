@@ -22,7 +22,7 @@ Here are some visual comparisons:
 ![Paradox Package Menu](after.png)
 
 #### Paradox (multi-line) ####
-![Paradox Package Menu](multi-line.png)
+![Paradox Package Menu](multi-line.png)  
 *These screenshots use smart-mode-line, but a similar effect is obtained with the regular mode-line.*
 
 Usage

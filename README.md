@@ -46,6 +46,16 @@ If you'd like to stop using Paradox, you may call `paradox-disable`
 (or just restart Emacs) and go back to using the regular
 `list-packages`.
 
+### Use Paradox as the Default Interface
+In order to use the Paradox interface by default (and just having to
+call the standard `list-packages` command), add the following in your
+init file:
+
+```Emacs Lisp
+(require 'paradox)
+(paradox-enable)
+```
+
 ## Current Features ##
 
 ### Several Improvements ###

@@ -607,6 +607,7 @@ Test match against name and summary."
 (define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
 (define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
 (define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
+(define-key paradox-menu-mode-map "w" #'paradox-menu-copy-homepage-as-kill)
 (define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
 (define-key paradox-menu-mode-map "x" #'paradox-menu-execute)
 (define-key paradox-menu-mode-map "\r" #'paradox-push-button)
@@ -788,6 +789,19 @@ PKG is a symbol.  Interactively it is the package under point."
       (message "Package %s has no homepage."
                (propertize (symbol-name pkg)
                            'face 'font-lock-keyword-face)))))
+
+(defun paradox-menu-copy-homepage-as-kill (pkg)
+  "Save the homepage of package named PKG as kill
+PKG is a symbol.  Interactively it is the package under point."
+  (interactive '(nil))
+  (let ((url (paradox--package-homepage
+	      (paradox--get-or-return-package pkg))))
+    (if (stringp url)
+	(progn (kill-new url)
+	       (message "copied \"%s\"" url))
+      (message "Package %s has no homepage."
+	       (propertize (symbol-name pkg)
+			   'face 'font-lock-keyword-face)))))
 
 (defun paradox-menu-mark-star-unstar ()
   "Star or unstar a package and move to the next line."

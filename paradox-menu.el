@@ -795,7 +795,7 @@ PKG is a symbol.  Interactively it is the package under point."
 PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let ((url (paradox--package-homepage
-	      (paradox--get-or-return-package pkg))))
+	       (paradox--get-or-return-package pkg))))
     (if (stringp url)
 	(progn (kill-new url)
 	       (message "copied \"%s\"" url))

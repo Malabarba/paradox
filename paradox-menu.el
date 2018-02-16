@@ -791,7 +791,7 @@ PKG is a symbol.  Interactively it is the package under point."
                            'face 'font-lock-keyword-face)))))
 
 (defun paradox-menu-copy-homepage-as-kill (pkg)
-  "Save the homepage of package named PKG as kill
+  "Save the homepage of package named PKG as kill.
 PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let ((url (paradox--package-homepage

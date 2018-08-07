@@ -289,7 +289,7 @@ value."
                (set-process-sentinel
                 (apply #'start-process "paradox-github"
                        (generate-new-buffer "*Paradox http*")
-                       "curl" "-s" "-i" "-d" "" "-X" ,method ,action
+                       "curl" "-L" "-s" "-i" "-d" "" "-X" ,method ,action
                        (when (stringp paradox-github-token)
                          (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
                 ,call-name)
@@ -298,7 +298,7 @@ value."
            ;; Make the request.
            (condition-case nil
                (apply #'call-process
-                      "curl" nil t nil "-s" "-i" "-d" "" "-X" ,method ,action
+                      "curl" nil t nil "-L" "-s" "-i" "-d" "" "-X" ,method ,action
                       (when (stringp paradox-github-token)
                         (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
              (error ,unwind-form))

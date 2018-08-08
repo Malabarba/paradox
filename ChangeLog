@@ -1,0 +1,3 @@
+2018-08-07  R Primus  <rprimus@gmail.com>
+
+	* paradox-github.el (paradox--with-github-buffer):

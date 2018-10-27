@@ -61,6 +61,10 @@ When you save this variable, DON'T WRITE IT ANYWHERE PUBLIC. This
 token grants (very) limited access to your account.
 END DISCLAIMER
 
+One way to make this variable safer is to set it from your
+authinfo.gpg file. See this issue for instructions on how to do that:
+https://github.com/Malabarba/paradox/issues/147#issuecomment-409336111
+
 Paradox will ask you whether you want github integration the
 first time you start it. If you answer \"no\", it will remember
 your choice via `customize-save-variable'. You can do this

@@ -138,7 +138,7 @@ first time you call `paradox-list-packages`).
 We generate a map of `Package Name -> Repository` from
 [Melpa](https://github.com/milkypostman/melpa.git)'s `recipe`
 directory, some repos may correspond to more than one package.
-This map is used count the stars a given package has.
+This map is used to count the stars a given package has.
 _This doesn't mean you need Melpa to see the star counts, the numbers
 will be displayed regardless of what archives you use._
 

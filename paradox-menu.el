@@ -23,6 +23,7 @@
 
 ;;; Code:
 (require 'cl-lib)
+(require 'cus-edit)
 (require 'package)
 (require 'subr-x)
 (require 'hydra)

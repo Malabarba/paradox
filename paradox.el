@@ -39,7 +39,7 @@
 ;; * Shortcuts for package filtering:
 ;;     * <f r> filters by regexp (`occur');
 ;;     * <f u> display only packages with upgrades;
-;;     * <f k> filters by keyword (Emacs 24.4 only).
+;;     * <f k> filters by keyword.
 ;; * `hl-line-mode' enabled by default.
 ;; * Display useful information on the mode-line and cleanup a bunch of
 ;;   useless stuff.

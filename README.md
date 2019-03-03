@@ -71,7 +71,7 @@ itself. They all work out of the box and are completely customizable!
 * Shortcuts for package filtering:
     * `f r` filters by regexp.
     * `f u` display only packages with upgrades.
-    * `f k` filters by keyword (emacs 24.4 only).
+    * `f k` filters by keyword.
     * `f s` filters by user starred packages.
 
 And some more...

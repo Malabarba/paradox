@@ -62,50 +62,48 @@
     ("incompat" . 0)  ("external" . 0)
     ("installed" . 0) ("unsigned" . 0)))
 
-(defvar paradox--truncate-string-to-width-backup)
-
 (defmacro paradox--cas (string)
   "Same as (cdr (assoc-string ,STRING paradox--package-count))."
   `(cdr (assoc-string ,string paradox--package-count)))
 
-(defun paradox--truncate-string-to-width (&rest args)
-  "Like `truncate-string-to-width', but uses \"…\" on package buffer.
+(defun paradox--truncate-string-to-width-filter (args)
+  "Filter the args of `truncate-string-to-width' to use \"…\".
 All arguments STR, END-COLUMN, START-COLUMN, PADDING, and
-ELLIPSIS are passed to `truncate-string-to-width'.
-
-\(fn STR END-COLUMN &optional START-COLUMN PADDING ELLIPSIS)"
+ELLIPSIS are passed to `truncate-string-to-width'."
   (when (and (eq major-mode 'paradox-menu-mode)
              (eq t (nth 4 args)))
     (setf (nth 4 args) (if (char-displayable-p ?…) "…" "$")))
-  (apply paradox--truncate-string-to-width-backup args))
+  args)
 
 
 ;;; Overriding definitions
+(defvar paradox--backups nil)
+
 (defun paradox--core-enable ()
   "Enable core features."
-  (paradox--override-definition 'truncate-string-to-width 'paradox--truncate-string-to-width))
-
-(defvar paradox--backups nil)
+  (ignore-errors (setcdr (assq 'menu-bar package-menu-mode-map) nil))
+  (advice-add #'truncate-string-to-width :filter-args
+              #'paradox--truncate-string-to-width-filter
+              '((name . :paradox-override)))
+  (add-to-list 'paradox--backups 'truncate-string-to-width))
 
 (defun paradox-disable ()
   "Disable paradox, and go back to regular package-menu."
   (interactive)
-  (dolist (it paradox--backups)
-    (message "Restoring %s to %s" (car it) (eval (cdr it)))
-    (fset (car it) (eval (cdr it))))
-  (setq paradox--backups nil))
+  (when paradox--backups
+    (message "Restoring %s" (mapconcat #'symbol-name paradox--backups ", "))
+    (dolist (it paradox--backups)
+      (advice-remove it :paradox-override))
+    (setq paradox--backups nil)))
 
 (defun paradox--override-definition (sym newdef)
   "Temporarily override SYM's function definition with NEWDEF.
-The original definition is saved to paradox--SYM-backup."
-  (let ((backup-name (intern (format "paradox--%s-backup" sym)))
-        (def (symbol-function sym)))
-    (unless (assoc sym paradox--backups)
-      (message "Overriding %s with %s" sym newdef)
-      (eval (list 'defvar backup-name nil))
-      (add-to-list 'paradox--backups (cons sym backup-name))
-      (set backup-name def)
-      (fset sym newdef))))
+Record that in `paradox--backups', but do nothing if
+`paradox--backups' reports that it is already overriden."
+  (unless (memq sym paradox--backups)
+    (message "Overriding %s with %s" sym newdef)
+    (advice-add sym :override newdef '((name . :paradox-override)))
+    (add-to-list 'paradox--backups sym)))
 
 
 ;;; Pre 25.1 support

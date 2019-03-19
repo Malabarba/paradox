@@ -1,7 +1,13 @@
-Paradox [![Build Status](https://secure.travis-ci.org/Malabarba/paradox.png?branch=master)](http://travis-ci.org/Malabarba/paradox) [![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox) [![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+Paradox
 =======
 
-[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/Malabarba)
+[![Build Status](https://secure.travis-ci.org/Malabarba/paradox.svg?branch=master)](http://travis-ci.org/Malabarba/paradox)
+[![Melpa](http://melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+[![Melpa-stable](http://stable.melpa.org/packages/paradox-badge.svg)](http://melpa.org/#/paradox)
+[![Coverage Status](https://coveralls.io/repos/Malabarba/paradox/badge.svg)](https://coveralls.io/r/Malabarba/paradox)
+[![License](http://img.shields.io/:license-gpl3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
+
+[![Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/endless-parentheses)
 
 Project for modernizing Emacs' Package Menu. With improved appearance,
 mode-line information. Github integration, customizability,
@@ -16,7 +22,7 @@ Here are some visual comparisons:
 ![Paradox Package Menu](after.png)
 
 #### Paradox (multi-line) ####
-![Paradox Package Menu](multi-line.png)
+![Paradox Package Menu](multi-line.png)  
 *These screenshots use smart-mode-line, but a similar effect is obtained with the regular mode-line.*
 
 Usage
@@ -40,6 +46,16 @@ If you'd like to stop using Paradox, you may call `paradox-disable`
 (or just restart Emacs) and go back to using the regular
 `list-packages`.
 
+### Use Paradox as the Default Interface
+In order to use the Paradox interface by default (and just having to
+call the standard `list-packages` command), add the following in your
+init file:
+
+```Emacs Lisp
+(require 'paradox)
+(paradox-enable)
+```
+
 ## Current Features ##
 
 ### Several Improvements ###
@@ -55,7 +71,7 @@ itself. They all work out of the box and are completely customizable!
 * Shortcuts for package filtering:
     * `f r` filters by regexp.
     * `f u` display only packages with upgrades.
-    * `f k` filters by keyword (emacs 24.4 only).
+    * `f k` filters by keyword.
     * `f s` filters by user starred packages.
 
 And some more...
@@ -72,7 +88,7 @@ And some more...
 
 ### Execution Hook ###
 
-Paradox defines a hook called `paradox-after-execute-hook`. Functions
+Paradox defines a hook called `paradox-after-execute-functions`. Functions
 added to this hook are run whenever packages are installed, deleted,
 or upgraded. This is used to implement part of the Paradox
 functionality, which makes it very easy to customize and extend.
@@ -122,7 +138,7 @@ first time you call `paradox-list-packages`).
 We generate a map of `Package Name -> Repository` from
 [Melpa](https://github.com/milkypostman/melpa.git)'s `recipe`
 directory, some repos may correspond to more than one package.
-This map is used count the stars a given package has.
+This map is used to count the stars a given package has.
 _This doesn't mean you need Melpa to see the star counts, the numbers
 will be displayed regardless of what archives you use._
 

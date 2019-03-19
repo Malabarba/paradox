@@ -3,10 +3,10 @@
 ;; Copyright (C) 2014-2015 Artur Malabarba <emacs@endlessparentheses.com>
 
 ;; Author: Artur Malabarba <emacs@endlessparentheses.com>
-;; URL: http://github.com/Malabarba/paradox
-;; Version: 2.3.2
+;; URL: https://github.com/Malabarba/paradox
+;; Version: 2.5.1
 ;; Keywords: package packages
-;; Package-Requires: ((emacs "24.4") (seq "1.7") (cl-lib "0.5") (json "1.3") (let-alist "1.0.3") (spinner "1.3"))
+;; Package-Requires: ((emacs "24.4") (seq "1.7") (let-alist "1.0.3") (spinner "1.7.3") (hydra "0.13.2"))
 ;; Prefix: paradox
 ;; Separator: -
 
@@ -39,7 +39,7 @@
 ;; * Shortcuts for package filtering:
 ;;     * <f r> filters by regexp (`occur');
 ;;     * <f u> display only packages with upgrades;
-;;     * <f k> filters by keyword (Emacs 24.4 only).
+;;     * <f k> filters by keyword.
 ;; * `hl-line-mode' enabled by default.
 ;; * Display useful information on the mode-line and cleanup a bunch of
 ;;   useless stuff.
@@ -107,7 +107,7 @@
 (require 'paradox-execute)
 (require 'paradox-menu)
 
-(defconst paradox-version "2.3.2" "Version of the paradox.el package.")
+(defconst paradox-version "2.5.1" "Version of the paradox.el package.")
 (defun paradox-bug-report ()
   "Opens github issues page in a web browser.  Please send any bugs you find.
 Please include your Emacs and paradox versions."
@@ -148,18 +148,18 @@ for packages.
   (interactive "P")
   (when (paradox--check-github-token)
     (paradox-enable)
-    (unless no-fetch
-      (if (fboundp 'package--update-downloads-in-progress)
-          (when (boundp 'package--downloads-in-progress)
-            (add-to-list 'package--downloads-in-progress 'paradox--data))
-        (paradox--refresh-star-count)))
-    (package-list-packages no-fetch)
-    (unless no-fetch
-      (when (stringp paradox-github-token)
-        (paradox--refresh-user-starred-list
-         (bound-and-true-p package-menu-async)))
-      (when (fboundp 'package--update-downloads-in-progress)
-        (paradox--refresh-star-count)))))
+    (let ((is-25 (fboundp 'package--with-response-buffer)))
+      (unless no-fetch
+        (if is-25
+            (add-to-list 'package--downloads-in-progress 'paradox--data)
+          (paradox--refresh-remote-data)))
+      (package-list-packages no-fetch)
+      (unless no-fetch
+        (when (stringp paradox-github-token)
+          (paradox--refresh-user-starred-list
+           (bound-and-true-p package-menu-async)))
+        (when is-25
+          (paradox--refresh-remote-data))))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)
@@ -176,13 +176,18 @@ prevents re-download of information about new versions.  It does
 not prevent downloading the actual packages (obviously)."
   (interactive "P")
   (save-window-excursion
-    (paradox-list-packages no-fetch)
+    (let ((package-menu-async nil))
+      (paradox-list-packages no-fetch))
     (package-menu-mark-upgrades)
     (paradox-menu-execute 'noquery)))
 
 (defun paradox-enable ()
   "Enable paradox, overriding the default package-menu."
   (interactive)
+  (when (and (fboundp 'package--update-downloads-in-progress)
+             (not (fboundp 'package--with-response-buffer)))
+    (message "[Paradox] Your Emacs snapshot is outdated, please install a more recent one.")
+    (setq package-menu-async nil))
   (paradox--override-definition 'package-menu--print-info 'paradox--print-info)
   (when (fboundp 'package-menu--print-info-simple)
     (paradox--override-definition 'package-menu--print-info-simple 'paradox--print-info))

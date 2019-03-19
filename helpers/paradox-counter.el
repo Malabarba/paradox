@@ -70,7 +70,7 @@
 (defun paradox-fetch-star-count (repo)
   (cdr (assq 'stargazers_count
              (paradox--github-action (format "repos/%s" repo)
-                                     :reader #'json-read))))
+               :reader #'json-read))))
 
 
 ;;;###autoload
@@ -94,17 +94,19 @@ Also saves result to `package-star-count'"
     (let ((i 0)
           (paradox--github-errors-to-ignore '(403 404)))
       (dolist (it (json-read))
-        (let ((name (car it)))
-          (let-alist (cdr it)
-            (paradox-log "%s / %s" (incf i) name)
-            (pcase .fetcher
-              (`"github"
-               (let ((count (paradox-fetch-star-count .repo)))
-                 (when (numberp count)
-                   (puthash name count paradox--star-count)
-                   (puthash name .repo paradox--package-repo-list))))
-              (`"wiki"
-               (puthash name t paradox--wiki-packages))))))))
+        (redisplay)
+        (ignore-errors
+          (let ((name (car it)))
+            (let-alist (cdr it)
+              (paradox-log "%s / %s" (incf i) name)
+              (pcase .fetcher
+                (`"github"
+                 (let ((count (paradox-fetch-star-count .repo)))
+                   (when (numberp count)
+                     (puthash name count paradox--star-count)
+                     (puthash name .repo paradox--package-repo-list))))
+                (`"wiki"
+                 (puthash name t paradox--wiki-packages)))))))))
   (paradox-list-to-file))
 
 (provide 'paradox-counter)

@@ -253,6 +253,13 @@ Leave point at the return code on the first line."
 
 (defvar paradox--github-next-page nil)
 
+(defun paradox--https-proxy ()
+  "Get https proxy if url-proxy-services has been defined."
+  (if (and (boundp 'url-proxy-services)
+           (assoc "https" url-proxy-services))
+      (cdr (assoc "https" url-proxy-services))
+    ""))
+
 (defmacro paradox--with-github-buffer (method action async unwind-form
                                               &rest body)
   "Run BODY in a Github request buffer.
@@ -293,7 +300,9 @@ value."
                (set-process-sentinel
                 (apply #'start-process "paradox-github"
                        (generate-new-buffer "*Paradox http*")
-                       "curl" "-s" "-i" "-d" "" "-X" ,method ,action
+                       "curl"
+                       "-x" (paradox-https-proxy)
+                       "-s" "-i" "-d" "" "-X" ,method ,action
                        (when (stringp paradox-github-token)
                          (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
                 ,call-name)
@@ -302,7 +311,9 @@ value."
            ;; Make the request.
            (condition-case nil
                (apply #'call-process
-                      "curl" nil t nil "-s" "-i" "-d" "" "-X" ,method ,action
+                      "curl" nil t nil
+                      "-x" (paradox--https-proxy)
+                      "-s" "-i" "-d" "" "-X" ,method ,action
                       (when (stringp paradox-github-token)
                         (list "-u" (concat paradox-github-token ":x-oauth-basic"))))
              (error ,unwind-form))

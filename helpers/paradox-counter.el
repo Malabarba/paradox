@@ -85,9 +85,10 @@ Also saves result to `package-star-count'"
         (json-object-type 'hash-table))
     (setq paradox--download-count
           (paradox--github-action paradox-download-count-url :reader #'json-read)))
-  (setq paradox--wiki-packages (make-hash-table))
-  (setq paradox--package-repo-list (make-hash-table))
-  (setq paradox--star-count (make-hash-table))
+  (let ((table-size (hash-table-count paradox--download-count)))
+    (setq paradox--wiki-packages (make-hash-table :size table-size))
+    (setq paradox--package-repo-list (make-hash-table :size table-size))
+    (setq paradox--star-count (make-hash-table :size table-size)))
   (with-current-buffer (let ((inhibit-message t))
                          (url-retrieve-synchronously "http://melpa.org/recipes.json"))
     (search-forward "\n\n")
@@ -102,9 +103,11 @@ Also saves result to `package-star-count'"
               (pcase .fetcher
                 (`"github"
                  (let ((count (paradox-fetch-star-count .repo)))
-                   (when (numberp count)
-                     (puthash name count paradox--star-count)
-                     (puthash name .repo paradox--package-repo-list))))
+                   (if (numberp count)
+                       (progn
+                         (puthash name count paradox--star-count)
+                         (puthash name .repo paradox--package-repo-list))
+                     (paradox-log "FAILED: %s / %s" i name))))
                 (`"wiki"
                  (puthash name t paradox--wiki-packages)))))))))
   (paradox-list-to-file))

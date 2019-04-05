@@ -6,8 +6,10 @@ if [[ -z "$EMACS" ]]; then
 else
     # Paradox
     cd ~/.paradox
+    git fetch origin
     git checkout data &> /dev/null
     git pull &> /dev/null
+    git merge origin/master
     cd ~/.paradox/helpers
     /usr/bin/nice $EMACS --batch -Q \
                   -L . -L .. -l paradox-counter.el \

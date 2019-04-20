@@ -29,5 +29,6 @@
   ""
   (let ((paradox-github-token t))
     (should (progn (paradox-list-packages nil) t)))
-  (let ((paradox-github-token "okokok"))
-    (should-error (progn (paradox-list-packages nil) t))))
+  ;; (let ((paradox-github-token "okokok"))
+  ;;   (should-error (progn (paradox-list-packages nil) t)))
+  )

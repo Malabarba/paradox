@@ -730,7 +730,7 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
   "Move to previous entry, which might not be the previous line.
 With prefix N, move to the N-th previous entry."
   (interactive "p")
-  (paradox-next-entry (- n))
+  (paradox-next-entry (- (prefix-numeric-value n)))
   (forward-line 0)
   (forward-button 1))
 
@@ -738,9 +738,10 @@ With prefix N, move to the N-th previous entry."
   "Move to next entry, which might not be the next line.
 With prefix N, move to the N-th next entry."
   (interactive "p")
-  (dotimes (_ (abs n))
-    (let ((d (cl-signum n)))
-      (forward-line (if (> n 0) 1 0))
+  (setq n (prefix-numeric-value n))
+  (let ((d (cl-signum n)))
+    (dotimes (_ (abs n))
+      (forward-line (max d 0))
       (if (eobp) (forward-line -1))
       (forward-button d))))
 

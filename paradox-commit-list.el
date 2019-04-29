@@ -81,6 +81,13 @@ nil means `default'.")
 (defvar-local paradox--package-tag-commit-alist nil
   "Alist of (COMMIT-SHA . TAG) for this package's repo.")
 
+(define-button-type 'paradox-commit
+  'action      #'paradox-commit-list-visit-commit
+  'follow-link t)
+
+;; Use `font-lock-face' on creation instead.
+(button-type-put 'paradox-commit 'face nil)
+
 
 ;;; Functions
 (defun paradox--get-tag-commit-alist (repo)
@@ -150,11 +157,10 @@ nil means `default'.")
              ,@x)
            ;; The actual displayed data
            (vector
-            (propertize (format-time-string paradox-date-format date)
-                        'button t
-                        'follow-link t
-                        'action 'paradox-commit-list-visit-commit
-                        'face (or paradox--commit-message-face 'link))
+            (make-text-button
+             (format-time-string paradox-date-format date) nil
+             'type           'paradox-commit
+             'font-lock-face (or paradox--commit-message-face 'button))
             (concat (if (> cc 0)
                         (propertize (format "(%s comments) " cc)
                                     'face 'font-lock-function-name-face)

@@ -193,6 +193,19 @@ This button takes you to the package's homepage."
 
 (defvar paradox--commit-list-buffer "*Package Commit List*")
 
+(define-button-type 'paradox-name
+  'action      #'package-menu-describe-package
+  'follow-link t)
+
+(define-button-type 'paradox-homepage
+  'action      #'paradox-menu-visit-homepage
+  'follow-link t
+  'mouse-face  'custom-button-mouse)
+
+;; Use `font-lock-face' on creation instead.
+(button-type-put 'paradox-name     'face nil)
+(button-type-put 'paradox-homepage 'face nil)
+
 
 ;;; Building the packages buffer.
 (defun paradox-refresh-upgradeable-packages ()
@@ -224,26 +237,22 @@ Return (PKG-DESC [STAR NAME VERSION STATUS DOC])."
         (push (cons :stars counts) (package-desc-extras pkg-desc))))
     (list pkg-desc
           `[,(concat
-              (truncate-string-to-width
-               (propertize name
-                           'font-lock-face 'paradox-name-face
-                           'button t
-                           'follow-link t
-                           'help-echo (format "Package: %s" name)
-                           'package-desc pkg-desc
-                           'action 'package-menu-describe-package)
-               (- paradox-column-width-package button-length) 0 nil t)
+              (make-text-button
+               (truncate-string-to-width
+                name (- paradox-column-width-package button-length) 0 nil t)
+               nil
+               'type           'paradox-name
+               'font-lock-face 'paradox-name-face
+               'help-echo      (concat "Package: " name)
+               'package-desc   pkg-desc)
               (when (and paradox-use-homepage-buttons url)
                 (make-string (max 0 (- paradox-column-width-package name-length button-length)) ?\s))
               (when (and paradox-use-homepage-buttons url)
-                (propertize paradox-homepage-button-string
-                            'font-lock-face 'paradox-homepage-button-face
-                            'mouse-face 'custom-button-mouse
-                            'help-echo (format "Visit %s" url)
-                            'button t
-                            'follow-link t
-                            'keymap '(keymap (mouse-2 . push-button))
-                            'action #'paradox-menu-visit-homepage)))
+                (make-text-button
+                 (copy-sequence paradox-homepage-button-string) nil
+                 'type           'paradox-homepage
+                 'font-lock-face 'paradox-homepage-button-face
+                 'help-echo      (format "Visit %s" url))))
             ,(propertize (package-version-join
                           (package-desc-version pkg-desc))
                          'font-lock-face face)
@@ -721,7 +730,7 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
   "Move to previous entry, which might not be the previous line.
 With prefix N, move to the N-th previous entry."
   (interactive "p")
-  (paradox-next-entry (- n))
+  (paradox-next-entry (- (prefix-numeric-value n)))
   (forward-line 0)
   (forward-button 1))
 
@@ -729,9 +738,10 @@ With prefix N, move to the N-th previous entry."
   "Move to next entry, which might not be the next line.
 With prefix N, move to the N-th next entry."
   (interactive "p")
-  (dotimes (_ (abs n))
-    (let ((d (cl-signum n)))
-      (forward-line (if (> n 0) 1 0))
+  (setq n (prefix-numeric-value n))
+  (let ((d (cl-signum n)))
+    (dotimes (_ (abs n))
+      (forward-line (max d 0))
       (if (eobp) (forward-line -1))
       (forward-button d))))
 
@@ -752,9 +762,8 @@ With prefix N, move to the N-th previous package instead."
 (defun paradox-push-button ()
   "Push button under point, or describe package."
   (interactive)
-  (if (get-text-property (point) 'action)
-      (call-interactively 'push-button)
-    (call-interactively 'package-menu-describe-package)))
+  (or (push-button)
+      (call-interactively #'package-menu-describe-package)))
 
 (defvar paradox--key-descriptors
   '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")

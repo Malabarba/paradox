@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: silex/emacs:26.2-dev
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install Deps
+          command: cask install || cask install
+
+      - run:
+          name: Run tests
+          command: cask exec ert-runner

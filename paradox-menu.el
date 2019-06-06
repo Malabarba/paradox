@@ -508,7 +508,7 @@ Letters do not insert themselves; instead, they are commands.
   (paradox--update-mode-line)
   (setq tabulated-list-format
         `[("Package" ,paradox-column-width-package package-menu--name-predicate)
-          ("Version" ,paradox-column-width-version nil)
+          ("Version" ,paradox-column-width-version paradox--version-predicate)
           ("Status" ,paradox-column-width-status package-menu--status-predicate)
           ,@(paradox--archive-format)
           ,@(paradox--count-format)
@@ -553,7 +553,19 @@ Defines a function called paradox-sort-by-NAME."
 (paradox--define-sort "Package")
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
+(paradox--define-sort "Version")
 (declare-function paradox-sort-by-package "paradox-menu")
+(declare-function paradox-sort-by-version "paradox-menu")
+
+(defun paradox--version-predicate (package-a package-b)
+  "Predicate for sorting by the Version column.
+Versions are compared semantically in descending order."
+  (let ((a (package-desc-version (car package-a)))
+        (b (package-desc-version (car package-b))))
+    (cond ((version-list-= a b)
+           (package-menu--name-predicate package-a package-b))
+          (t
+           (version-list-< b a)))))
 
 (defalias 'paradox-filter-clear #'package-show-package-list
   "Clear current Package filter.
@@ -714,7 +726,8 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
     ("Sort Package List"
      ["By Package Name" paradox-sort-by-package]
      ["By Status (default)" paradox-sort-by-status]
-     ["By Number of Stars" paradox-sort-by-★])
+     ["By Number of Stars" paradox-sort-by-★]
+     ["By Version" paradox-sort-by-version])
     ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
     ["Display Older Versions" package-menu-toggle-hiding
      :style toggle :selected (not package-menu--hide-packages)

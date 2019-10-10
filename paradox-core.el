@@ -107,12 +107,12 @@ Record that in `paradox--backups', but do nothing if
 
 
 ;;; Pre 25.1 support
-(declare-function paradox--update-downloads-in-progress "paradox-menu")
-(if (fboundp 'package--update-downloads-in-progress)
-    (defun paradox--update-downloads-in-progress (&optional name)
-      (when name
-        (package--update-downloads-in-progress name)))
-  (defalias 'paradox--update-downloads-in-progress #'ignore))
+(defun paradox--update-downloads-in-progress (&optional name)
+  (if (and name (fboundp 'package--update-downloads-in-progress))
+      (package--update-downloads-in-progress name)
+    (when (bound-and-true-p package--downloads-in-progress)
+      (setq package--downloads-in-progress
+            (remove name package--downloads-in-progress)))))
 (define-obsolete-function-alias
   'paradox--pdate-downloads-in-progress
   'paradox--update-downloads-in-progress

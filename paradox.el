@@ -150,16 +150,16 @@ for packages.
     (paradox-enable)
     (let ((is-25 (fboundp 'package--with-response-buffer)))
       (unless no-fetch
-        (if is-25
-            (add-to-list 'package--downloads-in-progress 'paradox--data)
+        (unless is-25
           (paradox--refresh-remote-data)))
       (package-list-packages no-fetch)
       (unless no-fetch
+        (when is-25
+          (add-to-list 'package--downloads-in-progress 'paradox--data)
+          (paradox--refresh-remote-data))
         (when (stringp paradox-github-token)
           (paradox--refresh-user-starred-list
-           (bound-and-true-p package-menu-async)))
-        (when is-25
-          (paradox--refresh-remote-data))))))
+           (bound-and-true-p package-menu-async)))))))
 
 ;;;###autoload
 (defun paradox-upgrade-packages (&optional no-fetch)

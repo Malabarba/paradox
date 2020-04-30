@@ -102,12 +102,11 @@ Also saves result to `package-star-count'"
               (paradox-log "%s / %s" (incf i) name)
               (pcase .fetcher
                 (`"github"
-                 (let ((count (paradox-fetch-star-count .repo)))
-                   (if (numberp count)
-                       (progn
-                         (puthash name count paradox--star-count)
-                         (puthash name .repo paradox--package-repo-list))
-                     (paradox-log "FAILED: %s / %s" i name))))
+                 (progn
+		   (let ((count (paradox-fetch-star-count .repo)))
+		     (when (numberp count)
+		       (puthash name count paradox--star-count)))
+		   (puthash name .repo paradox--package-repo-list)))
                 (`"wiki"
                  (puthash name t paradox--wiki-packages)))))))))
   (paradox-list-to-file))

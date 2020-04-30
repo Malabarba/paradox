@@ -524,6 +524,11 @@ Letters do not insert themselves; instead, they are commands.
   ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-remote-data nil t)
   (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
   (tabulated-list-init-header)
+  (setq revert-buffer-function 'package-menu--refresh-contents)
+  (setf imenu-prev-index-position-function
+        #'package--imenu-prev-index-position-function)
+  (setf imenu-extract-index-name-function
+        #'package--imenu-extract-index-name-function)
   ;; We need package-menu-mode to be our parent, otherwise some
   ;; commands throw errors.  But we can't actually derive from it,
   ;; otherwise its initialization will screw up the header-format.  So

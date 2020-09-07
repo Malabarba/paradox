@@ -78,6 +78,11 @@ ELLIPSIS are passed to `truncate-string-to-width'."
 
 ;;; Overriding definitions
 (defvar paradox--backups nil)
+(defcustom paradox-less-verbose nil
+  "If non-nil, don't display messages about overriding definitions when enabling."
+  :type 'boolean
+  :package-version '(paradox . "2.5.4")
+  :group 'paradox-execute)
 
 (defun paradox--core-enable ()
   "Enable core features."
@@ -101,7 +106,7 @@ ELLIPSIS are passed to `truncate-string-to-width'."
 Record that in `paradox--backups', but do nothing if
 `paradox--backups' reports that it is already overriden."
   (unless (memq sym paradox--backups)
-    (message "Overriding %s with %s" sym newdef)
+    (unless paradox-less-verbose (message "Overriding %s with %s" sym newdef))
     (advice-add sym :override newdef '((name . :paradox-override)))
     (add-to-list 'paradox--backups sym)))
 

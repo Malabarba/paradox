@@ -540,8 +540,8 @@ defaults to: \"No %s packages\"."
          (setq paradox--current-filter ,cn)))))
 
 (unless (version< emacs-version "25")
-  (defun paradox-filter-elpa ()
-    "Show only packages from ELPA."
+  (defun paradox-filter-gnu-elpa ()
+    "Show only packages from Gnu ELPA."
     (interactive)
     (package-menu-filter "arc:gnu"))
 
@@ -881,7 +881,7 @@ TOTAL-LINES is the number of lines in the buffer."
   (unless (version< emacs-version "25")
     (paradox--bind-keys
      map
-     '(("n" . paradox-filter-elpa)
+     '(("n" . paradox-filter-gnu-elpa)
        ("o" . paradox-filter-other-archive)
        ("i" . paradox-filter-installed)
        ("a" . paradox-filter-available)
@@ -923,7 +923,7 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
 "
             ("f" package-menu-filter)
             ("k" package-menu-filter)
-            ("n" paradox-filter-elpa)
+            ("n" paradox-filter-gnu-elpa)
             ("o" paradox-filter-other-archive)
             ("r" paradox-filter-regexp)
             ("u" paradox-filter-upgrades)

@@ -82,7 +82,7 @@
   :group 'paradox-menu
   :package-version '(paradox . "1.2.3"))
 
-(defcustom paradox-menu-hail-hydra t
+(defcustom paradox-menu-hail-hydra nil
   "Whether `paradox-menu-mode' should use `hydra' to bind to filter commands."
   :type 'boolean
   :group 'paradox-menu

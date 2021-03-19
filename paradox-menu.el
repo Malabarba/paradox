@@ -645,19 +645,24 @@ With prefix N, move to the N-th previous package instead."
   (or (push-button)
       (call-interactively #'package-menu-describe-package)))
 
-(defvar paradox--key-descriptors
-  '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
-    ("star," "visit homepage," "unmark," ("mark Upgrades," . 5) "~delete obsolete")
-    ("list commits")
-    ("filter by" "+" "upgrades" "regexp" "keyword" "starred" "clear")
-    ("Sort by" "+" "Package name" "Status" "*(star)")))
+(defun paradox--key-descriptors ()
+  `(("next" "previous" "j-next description" "k-previous description" "install" "delete" ("execute" . 1) "refresh" "help")
+    (,(if paradox-github-token "star") "visit homepage" "copy homepage" "unmark" ("mark Upgrades" . 5) "~delete obsolete")
+    ,(if paradox-github-token '("list commits"))
+    ("Hide-package" "describe" "(-toggle-hidden")
+    ("filter by" "+" "upgrades" "keyword" "regexp"
+     ,(if paradox-github-token "starred")
+     "clear"
+     ,@(unless (version< emacs-version "25")
+         '("installed" "available" "built-in" "dependency" ("Gnu ELPA" . 1) "other archives")))
+    ("Sort by" "+" "package name" "status" "version" "*-stars")))
 
 (defun paradox-menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
   (message (mapconcat 'paradox--prettify-key-descriptor
-                      paradox--key-descriptors "\n")))
+                      (paradox--key-descriptors) "\n")))
 
 (defun paradox-quit-and-close (kill)
   "Bury this buffer and close the window.

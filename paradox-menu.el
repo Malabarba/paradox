@@ -477,7 +477,7 @@ used to define keywords."
   "List containing archive to be used as part of the entry."
   (when (cdr package-archives)
     (list (list "Archive"
-                (apply 'max (mapcar 'length (mapcar 'car package-archives)))
+                (max 8 (1+ (apply 'max (mapcar 'length (mapcar 'car package-archives)))))
                 'package-menu--archive-predicate))))
 
 (add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)

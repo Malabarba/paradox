@@ -646,16 +646,19 @@ With prefix N, move to the N-th previous package instead."
       (call-interactively #'package-menu-describe-package)))
 
 (defun paradox--key-descriptors ()
-  `(("next" "previous" "j-next description" "k-previous description" "install" "delete" ("execute" . 1) "refresh" "help")
-    (,(if paradox-github-token "star") "visit homepage" "copy homepage" "unmark" ("mark Upgrades" . 5) "~delete obsolete")
-    ,(if paradox-github-token '("list commits"))
-    ("Hide-package" "describe" "(-toggle-hidden")
-    ("filter by" "+" "upgrades" "keyword" "regexp"
-     ,(if paradox-github-token "starred")
-     "clear"
-     ,@(unless (version< emacs-version "25")
-         '("installed" "available" "built-in" "dependency" ("Gnu ELPA" . 1) "other archives")))
-    ("Sort by" "+" "package name" "status" "version" "*-stars")))
+  (cl-loop for i in
+           `(("next" "previous" "j-next description" "k-previous description" "install" "delete" ("execute" . 1) "refresh" "help")
+             (,(if paradox-github-token "star") "visit homepage" "copy homepage" "unmark" ("mark Upgrades" . 5) "~delete obsolete")
+             ,(if paradox-github-token '("list commits"))
+             ("Hide-package" "describe" "(-toggle-hidden")
+             ("filter by" "+" "upgrades" "keyword" "regexp"
+              ,(if paradox-github-token "starred")
+              "clear"
+              ,@(unless (version< emacs-version "25")
+                  '("installed" "available" "built-in" "dependency" ("Gnu ELPA" . 1) "other archives")))
+             ("Sort by" "+" "package name" "status" "version" "*-stars"))
+           if i
+           collect (cl-loop for j in i if j collect j)))
 
 (defun paradox-menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.

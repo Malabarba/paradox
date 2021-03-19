@@ -865,8 +865,9 @@ TOTAL-LINES is the number of lines in the buffer."
        ("S p" . paradox-sort-by-package)
        ("S s" . paradox-sort-by-status)
        ("S v" . paradox-sort-by-version)
-       ("S S" . paradox-sort-by-stars)))
-    map))
+       ("S *" . paradox-sort-by-stars)))
+    map)
+  "Local keymap for `paradox-menu-mode' buffers.")
 
 (let ((map (define-prefix-command 'paradox-menu-filter-prefix-map)))
   (paradox--bind-keys

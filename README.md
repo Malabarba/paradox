@@ -1,3 +1,7 @@
+This package has been Archived
+=======
+It is no longer being maintained.
+
 Paradox
 =======
 

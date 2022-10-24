@@ -553,6 +553,7 @@ Defines a function called paradox-sort-by-NAME."
 (paradox--define-sort "Package")
 (paradox--define-sort "Status")
 (paradox--define-sort paradox--column-name-star "*")
+(paradox--define-sort paradox--column-name-download "d")
 (paradox--define-sort "Version")
 (declare-function paradox-sort-by-package "paradox-menu")
 (declare-function paradox-sort-by-version "paradox-menu")
@@ -727,6 +728,7 @@ Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
      ["By Package Name" paradox-sort-by-package]
      ["By Status (default)" paradox-sort-by-status]
      ["By Number of Stars" paradox-sort-by-★]
+     ["By Number of Downloads" paradox-sort-by-↓]
      ["By Version" paradox-sort-by-version])
     ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
     ["Display Older Versions" package-menu-toggle-hiding
@@ -783,7 +785,7 @@ With prefix N, move to the N-th previous package instead."
     ("star," "visit homepage," "unmark," ("mark Upgrades," . 5) "~delete obsolete")
     ("list commits")
     ("filter by" "+" "upgrades" "regexp" "keyword" "starred" "clear")
-    ("Sort by" "+" "Package name" "Status" "*(star)")))
+    ("Sort by" "+" "Package name" "Status" "*(stars)" "↓(downloads)")))
 
 (defun paradox-menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.

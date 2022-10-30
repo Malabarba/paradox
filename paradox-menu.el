@@ -26,7 +26,6 @@
 (require 'cus-edit)
 (require 'package)
 (require 'subr-x)
-(require 'hydra)
 
 (require 'paradox-core)
 (require 'paradox-github)
@@ -82,6 +81,12 @@
   :type 'boolean
   :group 'paradox-menu
   :package-version '(paradox . "1.2.3"))
+
+(defcustom paradox-menu-hail-hydra nil
+  "Whether `paradox-menu-mode' should use `hydra' to bind to filter commands."
+  :type 'boolean
+  :group 'paradox-menu
+  :package-version '(paradox . "2.5.5"))
 
 (defface paradox-mode-line-face
   '((t :inherit (font-lock-keyword-face mode-line-buffer-id)
@@ -482,62 +487,10 @@ used to define keywords."
 
 (add-hook 'paradox-menu-mode-hook 'paradox-refresh-upgradeable-packages)
 
-
-;;; Mode Definition
-(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
-  "Major mode for browsing a list of packages.
-Letters do not insert themselves; instead, they are commands.
-\\<paradox-menu-mode-map>
-\\{paradox-menu-mode-map}"
-  (hl-line-mode 1)
-  (when (boundp 'package--post-download-archives-hook)
-    (add-hook 'package--post-download-archives-hook
-              #'paradox--stop-spinner))
-  (if (boundp 'package--downloads-in-progress)
-      (setq mode-line-process
-            '("" (package--downloads-in-progress
-                  (":Loading "
-                   (paradox--spinner
-                    (:eval (spinner-print paradox--spinner))
-                    (:eval (paradox--start-spinner))))
-                  (paradox--spinner
-                   (":Executing " (:eval (spinner-print paradox--spinner)))))))
-    (setq mode-line-process
-          '(paradox--spinner
-            (":Executing " (:eval (spinner-print paradox--spinner))))))
-  (paradox--update-mode-line)
-  (setq tabulated-list-format
-        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
-          ("Version" ,paradox-column-width-version paradox--version-predicate)
-          ("Status" ,paradox-column-width-status package-menu--status-predicate)
-          ,@(paradox--archive-format)
-          ,@(paradox--count-format)
-          ("Description" 0 nil)])
-  (setq paradox--column-index-star
-        (paradox--column-index paradox--column-name-star))
-  (setq paradox--column-index-download
-        (paradox--column-index paradox--column-name-download))
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key (cons "Status" nil))
-  (add-hook 'tabulated-list-revert-hook #'paradox-menu--refresh nil t)
-  (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
-  ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-remote-data nil t)
-  (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
-  (tabulated-list-init-header)
-  ;; We need package-menu-mode to be our parent, otherwise some
-  ;; commands throw errors.  But we can't actually derive from it,
-  ;; otherwise its initialization will screw up the header-format.  So
-  ;; we "patch" it like this.
-  (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
-  (run-hooks 'package-menu-mode-hook))
-
-(put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
-
-(defun paradox--define-sort (name &optional key)
-  "Define sorting by column NAME and bind it to KEY.
+(defun paradox--define-sort (name)
+  "Define sorting by column NAME.
 Defines a function called paradox-sort-by-NAME."
-  (let ((symb (intern (format "paradox-sort-by-%s" (downcase name))))
-        (key (or key (substring name 0 1))))
+  (let ((symb (intern (format "paradox-sort-by-%s" (downcase name)))))
     (eval
      `(progn
         (defun ,symb
@@ -546,16 +499,12 @@ Defines a function called paradox-sort-by-NAME."
           (interactive "P")
           (when invert
             (setq tabulated-list-sort-key (cons ,name nil)))
-          (tabulated-list--sort-by-column-name ,name))
-        (define-key paradox-menu-mode-map ,(concat "S" (upcase key)) ',symb)
-        (define-key paradox-menu-mode-map ,(concat "S" (downcase key)) ',symb)))))
+          (tabulated-list--sort-by-column-name ,name))))))
 
 (paradox--define-sort "Package")
 (paradox--define-sort "Status")
-(paradox--define-sort paradox--column-name-star "*")
+(paradox--define-sort "Stars")
 (paradox--define-sort "Version")
-(declare-function paradox-sort-by-package "paradox-menu")
-(declare-function paradox-sort-by-version "paradox-menu")
 
 (defun paradox--version-predicate (package-a package-b)
   "Predicate for sorting by the Version column.
@@ -590,6 +539,40 @@ defaults to: \"No %s packages\"."
           (mapcar (lambda (p) (or (car-safe p) p)) ,pl))
          (setq paradox--current-filter ,cn)))))
 
+(unless (version< emacs-version "25")
+  (defun paradox-filter-gnu-elpa ()
+    "Show only packages from Gnu ELPA."
+    (interactive)
+    (package-menu-filter "arc:gnu"))
+
+  (defun paradox-filter-other-archive ()
+    "Show only packages from achives other than ELPA."
+    (interactive)
+    (package-menu-filter
+     (remove "arc:gnu"
+             (mapcar (lambda (e) (concat "arc:" (car e)))
+                     package-archives))))
+
+  (defun paradox-filter-installed ()
+    "Show only installed pacakges."
+    (interactive)
+    (package-menu-filter "status:installed"))
+
+  (defun paradox-filter-available ()
+    "Show only package available for installation."
+    (interactive)
+    (package-menu-filter "status:available"))
+
+  (defun paradox-filter-built-in ()
+    "Show only built-in packages."
+    (interactive)
+    (package-menu-filter "status:built-in"))
+
+  (defun paradox-filter-dependency ()
+    "Show only the dependencies of user-selected packages."
+    (interactive)
+    (package-menu-filter "status:dependency")))
+
 (defun paradox-filter-upgrades ()
   "Show only upgradable packages."
   (interactive)
@@ -620,122 +603,6 @@ Test match against name and summary."
     "No packages match this regexp.")
   (setq paradox--current-filter (concat "Regexp:" regexp)))
 
-(set-keymap-parent paradox-menu-mode-map package-menu-mode-map)
-(define-key paradox-menu-mode-map "q" #'paradox-quit-and-close)
-(define-key paradox-menu-mode-map "p" #'paradox-previous-entry)
-(define-key paradox-menu-mode-map "n" #'paradox-next-entry)
-(define-key paradox-menu-mode-map "k" #'paradox-previous-describe)
-(define-key paradox-menu-mode-map "j" #'paradox-next-describe)
-(define-key paradox-menu-mode-map "s" #'paradox-menu-mark-star-unstar)
-(define-key paradox-menu-mode-map "h" #'paradox-menu-quick-help)
-(define-key paradox-menu-mode-map "v" #'paradox-menu-visit-homepage)
-(define-key paradox-menu-mode-map "w" #'paradox-menu-copy-homepage-as-kill)
-(define-key paradox-menu-mode-map "l" #'paradox-menu-view-commit-list)
-(define-key paradox-menu-mode-map "x" #'paradox-menu-execute)
-(define-key paradox-menu-mode-map "\r" #'paradox-push-button)
-(define-key paradox-menu-mode-map "F" 'package-menu-filter)
-(if (version< emacs-version "25")
-    (defhydra hydra-paradox-filter (:color blue :hint nil)
-      "
-Filter by:
-_u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
-"
-      ("f" package-menu-filter)
-      ("k" package-menu-filter)
-      ("r" paradox-filter-regexp)
-      ("u" paradox-filter-upgrades)
-      ("s" paradox-filter-stars)
-      ("c" paradox-filter-clear)
-      ("g" paradox-filter-clear)
-      ("q" nil "cancel" :color blue))
-  (defhydra hydra-paradox-filter (:color blue :hint nil)
-    "
-Filter by:
-_u_pgrades _r_egexp    _k_eyword   _s_tarred    _c_lear
-Archive: g_n_u       _o_ther
-Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
-"
-    ("f" package-menu-filter)
-    ("k" package-menu-filter)
-    ("n" (package-menu-filter "arc:gnu"))
-    ("o" (package-menu-filter
-          (remove "arc:gnu"
-                  (mapcar (lambda (e) (concat "arc:" (car e)))
-                          package-archives))))
-    ("r" paradox-filter-regexp)
-    ("u" paradox-filter-upgrades)
-    ("s" paradox-filter-stars)
-    ("i" (package-menu-filter "status:installed"))
-    ("a" (package-menu-filter "status:available"))
-    ("b" (package-menu-filter "status:built-in"))
-    ("d" (package-menu-filter "status:dependency"))
-    ("c" paradox-filter-clear)
-    ("g" paradox-filter-clear)
-    ("q" nil "cancel" :color blue)))
-(define-key paradox-menu-mode-map "f" #'hydra-paradox-filter/body)
-
-;;; for those who don't want a hydra
-(defvar paradox--filter-map)
-(define-prefix-command 'paradox--filter-map)
-(define-key paradox--filter-map "k" #'package-menu-filter)
-(define-key paradox--filter-map "f" #'package-menu-filter)
-(define-key paradox--filter-map "r" #'paradox-filter-regexp)
-(define-key paradox--filter-map "u" #'paradox-filter-upgrades)
-(define-key paradox--filter-map "s" #'paradox-filter-stars)
-(define-key paradox--filter-map "c" #'paradox-filter-clear)
-
-(easy-menu-define paradox-menu-mode-menu paradox-menu-mode-map
-  "Menu for `paradox-menu-mode'."
-  `("Paradox"
-    ["Describe Package" package-menu-describe-package :help "Display information about this package"]
-    ["Help" paradox-menu-quick-help :help "Show short key binding help for package-menu-mode"]
-
-    "--"
-    ["Refresh Package List" package-menu-refresh
-     :help "Redownload the ELPA archive"
-     :active (not package--downloads-in-progress)]
-    ["Execute Marked Actions" paradox-menu-execute :help "Perform all the marked actions"]
-    ["Mark All Available Upgrades" package-menu-mark-upgrades
-     :help "Mark packages that have a newer version for upgrading"
-     :active (not package--downloads-in-progress)]
-
-    ("Other Mark Actions"
-     ["Mark All Obsolete for Deletion" package-menu-mark-obsolete-for-deletion :help "Mark all obsolete packages for deletion"]
-     ["Mark for Install" package-menu-mark-install :help "Mark a package for installation and move to the next line"]
-     ["Mark for Deletion" package-menu-mark-delete :help "Mark a package for deletion and move to the next line"]
-     ["Unmark" package-menu-mark-unmark :help "Clear any marks on a package and move to the next line"])
-
-    "--"
-    ("Github" :visible (stringp paradox-github-token)
-     ["Star or unstar this package" paradox-menu-mark-star-unstar]
-     ["Star all installed packages" paradox-star-all-installed-packages]
-     ["Star packages when installing" (customize-save-variable 'paradox-automatically-star (not paradox-automatically-star))
-      :help "Automatically star packages that you install (and unstar packages you delete)"
-      :style toggle :selected paradox-automatically-star])
-    ["Configure Github Inegration" (paradox--check-github-token) :visible (not paradox-github-token)]
-    ["View Changelog" paradox-menu-view-commit-list :help "Show a package's commit list on Github"]
-    ["Visit Homepage" paradox-menu-visit-homepage :help "Visit a package's Homepage on a browser"]
-
-    "--"
-    ("Filter Package List"
-     ["Clear filter" paradox-filter-clear :help "Go back to unfiltered list"]
-     ["By Keyword" package-menu-filter :help "Filter by package keyword"]
-     ["By Upgrades" paradox-filter-upgrades :help "List only upgradeable packages"]
-     ["By Regexp" paradox-filter-regexp :help "Filter packages matching a regexp"]
-     ["By Starred" paradox-filter-stars :help "List only packages starred by the user"])
-    ("Sort Package List"
-     ["By Package Name" paradox-sort-by-package]
-     ["By Status (default)" paradox-sort-by-status]
-     ["By Number of Stars" paradox-sort-by-★]
-     ["By Version" paradox-sort-by-version])
-    ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
-    ["Display Older Versions" package-menu-toggle-hiding
-     :style toggle :selected (not package-menu--hide-packages)
-     :help "Display package even if a newer version is already installed"]
-
-    "--"
-    ["Quit" quit-window :help "Quit package selection"]
-    ["Customize" (customize-group 'package)]))
 
 
 ;;; Menu Mode Commands
@@ -778,19 +645,27 @@ With prefix N, move to the N-th previous package instead."
   (or (push-button)
       (call-interactively #'package-menu-describe-package)))
 
-(defvar paradox--key-descriptors
-  '(("next," "previous," "install," "delete," ("execute," . 1) "refresh," "help")
-    ("star," "visit homepage," "unmark," ("mark Upgrades," . 5) "~delete obsolete")
-    ("list commits")
-    ("filter by" "+" "upgrades" "regexp" "keyword" "starred" "clear")
-    ("Sort by" "+" "Package name" "Status" "*(star)")))
+(defun paradox--key-descriptors ()
+  (cl-loop for i in
+           `(("next" "previous" "j-next description" "k-previous description" "install" "delete" ("execute" . 1) "refresh" "help")
+             (,(if paradox-github-token "star") "visit homepage" "copy homepage" "unmark" ("mark Upgrades" . 5) "~delete obsolete")
+             ,(if paradox-github-token '("list commits"))
+             ("Hide-package" "describe" "(-toggle-hidden")
+             ("filter by +" "upgrades" "keyword" "regexp"
+              ,(if paradox-github-token "starred")
+              "clear"
+              ,@(unless (version< emacs-version "25")
+                  '("installed" "available" "built-in" "dependency" ("Gnu ELPA" . 1) "other archives")))
+             ("Sort by +" "package name" "status" "version" "*-stars"))
+           if i
+           collect (cl-loop for j in i if j collect j)))
 
 (defun paradox-menu-quick-help ()
   "Show short key binding help for `paradox-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
   (message (mapconcat 'paradox--prettify-key-descriptor
-                      paradox--key-descriptors "\n")))
+                      (paradox--key-descriptors) "\n")))
 
 (defun paradox-quit-and-close (kill)
   "Bury this buffer and close the window.
@@ -818,13 +693,13 @@ PKG is a symbol.  Interactively it is the package under point."
 PKG is a symbol.  Interactively it is the package under point."
   (interactive '(nil))
   (let ((url (paradox--package-homepage
-	       (paradox--get-or-return-package pkg))))
+         (paradox--get-or-return-package pkg))))
     (if (stringp url)
-	(progn (kill-new url)
-	       (message "copied \"%s\"" url))
+  (progn (kill-new url)
+         (message "copied \"%s\"" url))
       (message "Package %s has no homepage."
-	       (propertize (symbol-name pkg)
-			   'face 'font-lock-keyword-face)))))
+         (propertize (symbol-name pkg)
+         'face 'font-lock-keyword-face)))))
 
 (defun paradox-menu-mark-star-unstar ()
   "Star or unstar a package and move to the next line."
@@ -968,6 +843,211 @@ TOTAL-LINES is the number of lines in the buffer."
           (add-text-properties place (1+ place) '(face paradox-highlight-face) out)
           out))
     (paradox--prettify-key-descriptor (cons desc 0))))
+
+
+;;; Mode Definition
+
+(defun paradox--bind-keys (keymap bindings)
+  (cl-loop for (key . def)
+           in bindings
+           do (define-key keymap (kbd key) def)))
+
+(defvar paradox-menu-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map package-menu-mode-map)
+    (paradox--bind-keys
+     map
+     '(("q"   . paradox-quit-and-close)
+       ("p"   . paradox-previous-entry)
+       ("n"   . paradox-next-entry)
+       ("k"   . paradox-previous-describe)
+       ("j"   . paradox-next-describe)
+       ("h"   . paradox-menu-quick-help)
+       ("v"   . paradox-menu-visit-homepage)
+       ("w"   . paradox-menu-copy-homepage-as-kill)
+       ("s"   . paradox-menu-mark-star-unstar)
+       ("l"   . paradox-menu-view-commit-list)
+       ("x"   . paradox-menu-execute)
+       ("RET" . paradox-push-button)
+       ("F"   . package-menu-filter)
+       ("S p" . paradox-sort-by-package)
+       ("S s" . paradox-sort-by-status)
+       ("S v" . paradox-sort-by-version)
+       ("S *" . paradox-sort-by-stars)))
+    map)
+  "Local keymap for `paradox-menu-mode' buffers.")
+
+(let ((map (define-prefix-command 'paradox-menu-filter-prefix-map)))
+  (paradox--bind-keys
+   map
+   '(("k" . package-menu-filter)
+     ("f" . package-menu-filter)
+     ("r" . paradox-filter-regexp)
+     ("u" . paradox-filter-upgrades)
+     ("s" . paradox-filter-stars)
+     ("c" . paradox-filter-clear)))
+  (unless (version< emacs-version "25")
+    (paradox--bind-keys
+     map
+     '(("n" . paradox-filter-gnu-elpa)
+       ("o" . paradox-filter-other-archive)
+       ("i" . paradox-filter-installed)
+       ("a" . paradox-filter-available)
+       ("b" . paradox-filter-built-in)
+       ("d" . paradox-filter-dependency)))))
+
+(defun paradox--menu-bind-filters ()
+  "Setup key bindings for filtering commands.
+
+If `paradox-menu-hail-hydra' is non-nil, set up a hydra menu for
+all the filtering commands.  Otherwise bind the same commands to
+a regular prefix map `paradox-menu-filter-prefix-map'.
+
+In both cases, the same commands will be available under the
+prefix key \"f\" in `paradox-menu-mode-map'."
+  (if (and paradox-menu-hail-hydra
+           (featurep 'hydra))
+      (progn
+        (if (version< emacs-version "25")
+            (defhydra hydra-paradox-filter (:color blue :hint nil)
+              "
+Filter by:
+_u_pgrades _r_egexp      _k_eyword   _s_tarred    _c_lear
+"
+              ("f" package-menu-filter)
+              ("k" package-menu-filter)
+              ("r" paradox-filter-regexp)
+              ("u" paradox-filter-upgrades)
+              ("s" paradox-filter-stars)
+              ("c" paradox-filter-clear)
+              ("g" paradox-filter-clear)
+              ("q" nil "cancel" :color blue))
+          (defhydra hydra-paradox-filter (:color blue :hint nil)
+            "
+Filter by:
+_u_pgrades _r_egexp    _k_eyword   _s_tarred    _c_lear
+Archive: g_n_u       _o_ther
+Status:  _i_nstalled _a_vailable _d_ependency _b_uilt-in
+"
+            ("f" package-menu-filter)
+            ("k" package-menu-filter)
+            ("n" paradox-filter-gnu-elpa)
+            ("o" paradox-filter-other-archive)
+            ("r" paradox-filter-regexp)
+            ("u" paradox-filter-upgrades)
+            ("s" paradox-filter-stars)
+            ("i" paradox-filter-installed)
+            ("a" paradox-filter-available)
+            ("b" paradox-filter-built-in)
+            ("d" paradox-filter-dependency)
+            ("c" paradox-filter-clear)
+            ("g" paradox-filter-clear)
+            ("q" nil "cancel" :color blue))
+          (define-key paradox-menu-mode-map "f" 'hydra-paradox-filter/body)))
+    (define-key paradox-menu-mode-map "f" paradox-menu-filter-prefix-map)))
+
+(easy-menu-define paradox-menu-mode-menu paradox-menu-mode-map
+  "Menu for `paradox-menu-mode'."
+  `("Paradox"
+    ["Describe Package" package-menu-describe-package :help "Display information about this package"]
+    ["Help" paradox-menu-quick-help :help "Show short key binding help for package-menu-mode"]
+
+    "--"
+    ["Refresh Package List" package-menu-refresh
+     :help "Redownload the ELPA archive"
+     :active (not package--downloads-in-progress)]
+    ["Execute Marked Actions" paradox-menu-execute :help "Perform all the marked actions"]
+    ["Mark All Available Upgrades" package-menu-mark-upgrades
+     :help "Mark packages that have a newer version for upgrading"
+     :active (not package--downloads-in-progress)]
+
+    ("Other Mark Actions"
+     ["Mark All Obsolete for Deletion" package-menu-mark-obsolete-for-deletion :help "Mark all obsolete packages for deletion"]
+     ["Mark for Install" package-menu-mark-install :help "Mark a package for installation and move to the next line"]
+     ["Mark for Deletion" package-menu-mark-delete :help "Mark a package for deletion and move to the next line"]
+     ["Unmark" package-menu-mark-unmark :help "Clear any marks on a package and move to the next line"])
+
+    "--"
+    ("Github" :visible (stringp paradox-github-token)
+     ["Star or unstar this package" paradox-menu-mark-star-unstar]
+     ["Star all installed packages" paradox-star-all-installed-packages]
+     ["Star packages when installing" (customize-save-variable 'paradox-automatically-star (not paradox-automatically-star))
+      :help "Automatically star packages that you install (and unstar packages you delete)"
+      :style toggle :selected paradox-automatically-star])
+    ["Configure Github Inegration" (paradox--check-github-token) :visible (not paradox-github-token)]
+    ["View Changelog" paradox-menu-view-commit-list :help "Show a package's commit list on Github"]
+    ["Visit Homepage" paradox-menu-visit-homepage :help "Visit a package's Homepage on a browser"]
+
+    "--"
+    ("Filter Package List"
+     ["Clear filter" paradox-filter-clear :help "Go back to unfiltered list"]
+     ["By Keyword" package-menu-filter :help "Filter by package keyword"]
+     ["By Upgrades" paradox-filter-upgrades :help "List only upgradeable packages"]
+     ["By Regexp" paradox-filter-regexp :help "Filter packages matching a regexp"]
+     ["By Starred" paradox-filter-stars :help "List only packages starred by the user"])
+    ("Sort Package List"
+     ["By Package Name" paradox-sort-by-package]
+     ["By Status (default)" paradox-sort-by-status]
+     ["By Number of Stars" paradox-sort-by-stars]
+     ["By Version" paradox-sort-by-version])
+    ["Hide by Regexp" package-menu-hide-package :help "Permanently hide all packages matching a regexp"]
+    ["Display Older Versions" package-menu-toggle-hiding
+     :style toggle :selected (not package-menu--hide-packages)
+     :help "Display package even if a newer version is already installed"]
+
+    "--"
+    ["Quit" quit-window :help "Quit package selection"]
+    ["Customize" (customize-group 'package)]))
+
+(define-derived-mode paradox-menu-mode tabulated-list-mode "Paradox Menu"
+  "Major mode for browsing a list of packages.
+Letters do not insert themselves; instead, they are commands.
+\\<paradox-menu-mode-map>
+\\{paradox-menu-mode-map}"
+  (paradox--menu-bind-filters)
+  (hl-line-mode 1)
+  (when (boundp 'package--post-download-archives-hook)
+    (add-hook 'package--post-download-archives-hook
+              #'paradox--stop-spinner))
+  (if (boundp 'package--downloads-in-progress)
+      (setq mode-line-process
+            '("" (package--downloads-in-progress
+                  (":Loading "
+                   (paradox--spinner
+                    (:eval (spinner-print paradox--spinner))
+                    (:eval (paradox--start-spinner))))
+                  (paradox--spinner
+                   (":Executing " (:eval (spinner-print paradox--spinner)))))))
+    (setq mode-line-process
+          '(paradox--spinner
+            (":Executing " (:eval (spinner-print paradox--spinner))))))
+  (paradox--update-mode-line)
+  (setq tabulated-list-format
+        `[("Package" ,paradox-column-width-package package-menu--name-predicate)
+          ("Version" ,paradox-column-width-version paradox--version-predicate)
+          ("Status" ,paradox-column-width-status package-menu--status-predicate)
+          ,@(paradox--archive-format)
+          ,@(paradox--count-format)
+          ("Description" 0 nil)])
+  (setq paradox--column-index-star
+        (paradox--column-index paradox--column-name-star))
+  (setq paradox--column-index-download
+        (paradox--column-index paradox--column-name-download))
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Status" nil))
+  (add-hook 'tabulated-list-revert-hook #'paradox-menu--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox-refresh-upgradeable-packages nil t)
+  ;; (add-hook 'tabulated-list-revert-hook #'paradox--refresh-remote-data nil t)
+  (add-hook 'tabulated-list-revert-hook #'paradox--update-mode-line 'append t)
+  (tabulated-list-init-header)
+  ;; We need package-menu-mode to be our parent, otherwise some
+  ;; commands throw errors.  But we can't actually derive from it,
+  ;; otherwise its initialization will screw up the header-format.  So
+  ;; we "patch" it like this.
+  (put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
+  (run-hooks 'package-menu-mode-hook))
+
+(put 'paradox-menu-mode 'derived-mode-parent 'package-menu-mode)
 
 (provide 'paradox-menu)
 ;;; paradox-menu.el ends here

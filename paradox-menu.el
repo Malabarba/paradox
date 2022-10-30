@@ -335,8 +335,6 @@ Also increments the count for \"total\"."
     (setq paradox--package-repo-list (make-hash-table)))
   (unless (hash-table-p paradox--star-count)
     (setq paradox--star-count (make-hash-table)))
-  (unless (hash-table-p paradox--wiki-packages)
-    (setq paradox--wiki-packages (make-hash-table)))
   (message "[Paradox] Error downloading Github data"))
 
 (defmacro paradox--with-work-buffer (location file &rest body)
@@ -364,8 +362,7 @@ automatically decides whether to download asynchronously based on
       (paradox--with-work-buffer paradox--data-url "data-hashtables"
         (setq paradox--star-count (read (current-buffer)))
         (setq paradox--package-repo-list (read (current-buffer)))
-        (setq paradox--download-count (read (current-buffer)))
-        (setq paradox--wiki-packages (read (current-buffer))))
+        (setq paradox--download-count (read (current-buffer))))
     (error (paradox--handle-failed-download))))
 
 (defun paradox--package-star-count (package)
@@ -410,25 +407,6 @@ shown."
   (tabulated-list-init-header)
   (paradox--update-mode-line))
 
-(defcustom paradox-hide-wiki-packages nil
-  "If non-nil, don't display packages from the emacswiki."
-  :type 'boolean)
-
-(defun paradox--maybe-remove-wiki-packages (pkgs)
-  "Remove wiki packages from PKGS.
-If `paradox-hide-wiki-packages' is nil, just return PKGS."
-  (if (not paradox-hide-wiki-packages)
-      pkgs
-    (remq nil
-          (mapcar
-           (lambda (entry)
-             (let ((name (or (car-safe entry) entry)))
-               (unless (gethash name paradox--wiki-packages)
-                 name)))
-           (if (or (not pkgs) (eq t pkgs))
-               package-archive-contents
-             pkgs)))))
-
 (defun paradox-menu--refresh (&optional packages keywords)
   "Call `package-menu--refresh' retaining current filter.
 PACKAGES and KEYWORDS are passed to `package-menu--refresh'.  If
@@ -439,9 +417,7 @@ used to define keywords."
         (paradox--desc-suffix (make-string (max 0 (- paradox-lines-per-entry 2)) ?\n)))
     (cond
      ((or packages keywords (not paradox--current-filter))
-      (package-menu--refresh
-       (paradox--maybe-remove-wiki-packages packages)
-       keywords)
+      (package-menu--refresh packages keywords)
       (paradox-refresh-upgradeable-packages))
      ((string= paradox--current-filter "Upgradable")
       (paradox-refresh-upgradeable-packages)
